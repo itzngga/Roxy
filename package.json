@@ -1,0 +1,32 @@
+{
+    "name": "roxy-bot",
+    "version": "1.0.0",
+    "description": "roxy-bot based on typescript and javascript",
+    "main": "dist/index.js",
+    "scripts": {
+        "start": "ts-node-dev --debug --respawn --transpile-only --exit-child --no-notify ./index.ts",
+        "lint": "tsc --noEmit && eslint \"**/*.{js,ts}\" --quiet --fix",
+        "build": "tsc --noEmit",
+        "prepare": "npm run build",
+        "pretest": "npm run build",
+        "posttest": "npm run lint"
+    },
+    "author": "ItzNgga",
+    "license": "GNU",
+    "engines": {
+        "node": ">= 12"
+    },
+    "keywords": [
+        "bot"
+    ],
+    "devDependencies": {
+        "@types/node": "^16.11.10",
+        "@typescript-eslint/eslint-plugin": "^5.4.0",
+        "@typescript-eslint/parser": "^5.4.0",
+        "eslint-config-prettier": "^8.3.0",
+        "typescript": "^4.5.2"
+    },
+    "dependencies": {
+        "dotenv": "^10.0.0"
+    }
+}
