@@ -4,11 +4,13 @@
     "description": "roxy-bot based on typescript and javascript",
     "main": "dist/src/index.js",
     "scripts": {
+        "build": "tsc",
+        "start": "tsc && node dist/main.js",
+        "pm2": "npm install --production && tsc & pm2 start pm2.config.json --env production --only Roxy",
         "dev": "ts-node-dev --debug --respawn --transpile-only --exit-child --no-notify ./src/main.ts",
-        "lint": "tsc --noEmit && eslint \"**/*.{js,ts}\" --quiet --fix",
-        "build": "tsc --project tsconfig.json && tscpaths -p tsconfig.json -s ./src -o ./dist",
-        "prepare": "npm run build",
-        "pretest": "npm run build",
+        "lint": "tsc && eslint \"**/*.{js,ts}\" --quiet --fix",
+        "prepare": "npm run lint",
+        "pretest": "npm run lint",
         "posttest": "npm run lint"
     },
     "author": "ItzNgga",
@@ -16,25 +18,28 @@
     "engines": {
         "node": ">= 10"
     },
-    "files": ["dist"],
+    "files": [
+        "dist"
+    ],
     "bugs": {
         "url": "https://github.com/ItzNgga/Roxy/issues"
-      },
-      "homepage": "https://github.com/ItzNgga/Roxy",
-      "repository": {
+    },
+    "homepage": "https://github.com/ItzNgga/Roxy",
+    "repository": {
         "type": "git",
         "url": "git+https://github.com/ItzNgga/Roxy.git"
-      },
-      "keywords": [
+    },
+    "keywords": [
         "bot",
         "whatsapp",
         "roxy"
-      ],
+    ],
     "devDependencies": {
         "@types/node": "^16.11.10",
         "@typescript-eslint/eslint-plugin": "^5.4.0",
         "@typescript-eslint/parser": "^5.4.0",
         "eslint-config-prettier": "^8.3.0",
+        "eslint-plugin-prettier": "^4.0.0",
         "typescript": "^4.5.2"
     },
     "dependencies": {

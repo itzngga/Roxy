@@ -1,0 +1,21 @@
+{
+    "apps": [
+      {
+        "name": "Roxy",
+        "script": "dist/main.js",
+        "autorestart": true,
+        "watch": ["dist"],
+        "max_memory_restart": "1GB",
+        "merge_logs": true,
+        "error_file": "logs/err.log",
+        "ignore_watch": ["node_modules", "logs", "json"],
+        "env": {
+          "NODE_ENV": "development"
+        },
+        "env_production": {
+          "NODE_ENV": "production"
+        }
+      }
+    ]
+  }
+  
