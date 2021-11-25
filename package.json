@@ -2,11 +2,11 @@
     "name": "roxy-bot",
     "version": "1.0.0",
     "description": "roxy-bot based on typescript and javascript",
-    "main": "dist/index.js",
+    "main": "dist/src/index.js",
     "scripts": {
-        "start": "ts-node-dev --debug --respawn --transpile-only --exit-child --no-notify ./index.ts",
+        "dev": "ts-node-dev --debug --respawn --transpile-only --exit-child --no-notify ./src/main.ts",
         "lint": "tsc --noEmit && eslint \"**/*.{js,ts}\" --quiet --fix",
-        "build": "tsc --noEmit",
+        "build": "tsc --project tsconfig.json && tscpaths -p tsconfig.json -s ./src -o ./dist",
         "prepare": "npm run build",
         "pretest": "npm run build",
         "posttest": "npm run lint"
@@ -14,11 +14,22 @@
     "author": "ItzNgga",
     "license": "GNU",
     "engines": {
-        "node": ">= 12"
+        "node": ">= 10"
     },
-    "keywords": [
-        "bot"
-    ],
+    "files": ["dist"],
+    "bugs": {
+        "url": "https://github.com/ItzNgga/Roxy/issues"
+      },
+      "homepage": "https://github.com/ItzNgga/Roxy",
+      "repository": {
+        "type": "git",
+        "url": "git+https://github.com/ItzNgga/Roxy.git"
+      },
+      "keywords": [
+        "bot",
+        "whatsapp",
+        "roxy"
+      ],
     "devDependencies": {
         "@types/node": "^16.11.10",
         "@typescript-eslint/eslint-plugin": "^5.4.0",
@@ -27,6 +38,9 @@
         "typescript": "^4.5.2"
     },
     "dependencies": {
-        "dotenv": "^10.0.0"
+        "@adiwajshing/baileys": "github:adiwajshing/Baileys",
+        "dotenv": "^10.0.0",
+        "knex": "^0.95.14",
+        "node-json-db": "^1.4.1"
     }
 }
