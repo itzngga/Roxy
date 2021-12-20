@@ -35,7 +35,8 @@
         "roxy"
     ],
     "devDependencies": {
-        "@types/node": "^16.11.10",
+        "@types/node": "^16.11.12",
+        "@types/validator": "^13.7.0",
         "@typescript-eslint/eslint-plugin": "^5.4.0",
         "@typescript-eslint/parser": "^5.4.0",
         "eslint-config-prettier": "^8.3.0",
@@ -45,7 +46,9 @@
     "dependencies": {
         "@adiwajshing/baileys": "github:adiwajshing/Baileys",
         "dotenv": "^10.0.0",
-        "knex": "^0.95.14",
-        "node-json-db": "^1.4.1"
+        "mysql2": "^2.3.3",
+        "reflect-metadata": "^0.1.13",
+        "sequelize": "^6.11.0",
+        "sequelize-typescript": "^2.1.1"
     }
 }

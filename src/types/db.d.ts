@@ -3,14 +3,21 @@ import { AnyAuthenticationCredentialsBase64 } from "@adiwajshing/baileys";
 type promiseOrUndefined<Type> = Type | Promise<Type | undefined> | void;
 type getType<Type> = Type;
 
-interface iSettings {
-  masterId: string;
+interface ISettings {
+  id: string;
   prefix: string;
   selfMode: boolean;
   admins: string[];
+  autoRead: boolean;
+  autoReply: boolean;
+  fakeReply: boolean;
+  mentionReply: boolean;
+  fakeReplyText: string;
+  fakeReplyJID: string;
+  mentionedMsg: string;
 }
 
-interface iSession extends AnyAuthenticationCredentialsBase64 {
+interface ISession extends AnyAuthenticationCredentialsBase64 {
   sessionId: string;
 }
 

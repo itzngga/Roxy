@@ -18,6 +18,9 @@
     "esModuleInterop": false,
     "skipLibCheck": true,
     "noImplicitReturns": false,
+    "experimentalDecorators": true,
+    "emitDecoratorMetadata": true,
+    "strictPropertyInitialization": false,
     "typeRoots": ["./node_modules/@types", "./types"]
   },
   "include": ["src/**/*"],

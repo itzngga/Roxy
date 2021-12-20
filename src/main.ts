@@ -1,5 +1,6 @@
 require("dotenv").config({ path: ".env" });
 
-import db from "./db";
+import client from "./client/Client";
+import SettingService from "./services/settings";
 
-console.log(new db("master"));
+SettingService.__init();
