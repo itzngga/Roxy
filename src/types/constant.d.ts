@@ -6,4 +6,5 @@ export interface env {
   DB_PASS: string;
   DB_NAME: string;
   SQLITE_FILENAME: string;
+  CMDCD: number;
 }

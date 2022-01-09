@@ -1,6 +1,12 @@
+import { ISimplifiedMessage } from "./handler";
+import { MsgHandler, ISock } from "../handler";
 export interface ICmd {
-  wac: any;
-  run(Message: ParsedMessage, args: ParsedArgs[]);
+  sock: ISock;
+  msgHandler: MsgHandler;
+  run: (
+    msg: ISimplifiedMessage,
+    args: ParsedArgs[]
+  ) => Promise<void | never> | void | never;
   config: {
     onlyGroupAdmin?: boolean;
     onlyBotAdmin?: boolean;

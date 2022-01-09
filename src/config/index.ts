@@ -8,6 +8,7 @@ const env: env = {
   DB_PASS: <string>(<string>process.env.DB_PASS),
   DB_NAME: <string>(<string>process.env.DB_NAME),
   SQLITE_FILENAME: <string>(<string>process.env.SQLITE_FILENAME),
+  CMDCD: <number>parseInt(<string>process.env.CMDCD),
 };
 
 export default env;
