@@ -11,7 +11,8 @@
         "lint": "tsc && eslint \"**/*.{js,ts}\" --quiet --fix",
         "prepare": "npm run lint",
         "pretest": "npm run lint",
-        "posttest": "npm run lint"
+        "posttest": "npm run lint",
+        "dev:debug": "ts-node-dev --inspect=4321 --respawn --transpile-only ./src/main.ts"
     },
     "author": "ItzNgga",
     "license": "GNU",
@@ -44,11 +45,14 @@
         "typescript": "^4.5.2"
     },
     "dependencies": {
-        "@adiwajshing/baileys": "github:adiwajshing/Baileys",
+        "@adiwajshing/baileys-md": "github:adiwajshing/baileys#multi-device",
+        "chalk": "^4.1.2",
         "dotenv": "^10.0.0",
         "mysql2": "^2.3.3",
+        "pino": "^7.6.2",
         "reflect-metadata": "^0.1.13",
         "sequelize": "^6.11.0",
-        "sequelize-typescript": "^2.1.1"
+        "sequelize-typescript": "^2.1.1",
+        "tslib": "^2.3.1"
     }
 }
