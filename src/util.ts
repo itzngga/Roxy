@@ -92,6 +92,12 @@ export default class {
   };
 
   static roxyLog = <T>(code: pino.Level, args: T, error?: any) => {
+    const formated = <T>(obj: T) =>
+      util.inspect(obj, {
+        showHidden: true,
+        depth: 1,
+        colors: true,
+      });
     const icon =
       code === "info"
         ? chalk.blue("ℹ")
@@ -103,33 +109,59 @@ export default class {
         ? chalk.red("✖")
         : chalk.green("?");
     if (typeof args === "object" && args !== null) {
-      const formated = util.inspect(args, {
-        showHidden: true,
-        depth: 1,
-        colors: true,
-      });
       if (code === "fatal")
-        return console.log(
+        return void console.log(
           `[${icon}] [${chalk.red("FATAL")}] [${chalk.green(
             "OBJECT"
-          )}]\n${formated}\n${error.stack ? error.stack : error}`
+          )}]\n${formated(args)}\n${
+            error.stack ? error.stack : formated(error)
+          }`
         );
       return void console.log(
         `[${icon}] [${chalk.blue(
           new Date().toLocaleTimeString()
-        )}] [${chalk.green("OBJECT")}]\n${formated}`
+        )}] [${chalk.green("OBJECT")}]\n${formated(args)}`
       );
     } else {
       if (code === "fatal")
-        return console.log(
+        return void console.log(
           `[${icon}] [${chalk.red("FATAL")}] ${chalk.yellowBright(args)}\n${
-            error.stack ? error.stack : error
+            error.stack ? error.stack : formated(error)
           }`
         );
       return void console.log(
         `[${icon}] [${chalk.blueBright(
           new Date().toLocaleTimeString()
         )}] ${chalk.green(args)}`
+      );
+    }
+  };
+
+  static logExec = (
+    isCmd: boolean,
+    sender: string,
+    cmd: string,
+    gcName: string,
+    isGroup: boolean
+  ): void => {
+    if (isCmd && isGroup) {
+      return console.log(
+        "[" + chalk.blue("ℹ") + "]",
+        "[" + chalk.blue(new Date().toLocaleTimeString()) + "]",
+        chalk.greenBright(cmd),
+        "from",
+        chalk.greenBright(sender.split("@")[0]),
+        "in",
+        chalk.greenBright(gcName)
+      );
+    }
+    if (isCmd && !isGroup) {
+      return console.log(
+        "[" + chalk.blue("ℹ") + "]",
+        "[" + chalk.blue(new Date().toLocaleTimeString()) + "]",
+        chalk.greenBright(cmd),
+        "from",
+        chalk.greenBright(sender.split("@")[0])
       );
     }
   };

@@ -26,7 +26,7 @@ export interface ISock extends WASocket {
   reply: (msg: string, M: ISimplifiedMessage) => void;
   groupQueryInvite: (code: string) => void;
 }
-export interface IExtendedGroupMetadata extends WAGroupMetadata {
+export interface IGroupMetadata extends WAGroupMetadata {
   admins?: string[];
 }
 

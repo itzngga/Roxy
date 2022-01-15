@@ -8,7 +8,7 @@ import WAC, {
   useSingleFileAuthState,
 } from "@adiwajshing/baileys-md";
 import { MsgHandler } from "../handler";
-import { ISimplifiedMessage, ISock } from "../types/handler";
+import { ISimplifiedMessage, ISock } from "../types";
 
 const { state, saveState } = useSingleFileAuthState(
   "session-md.json",

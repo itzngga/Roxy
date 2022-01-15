@@ -37,6 +37,13 @@ export default class SettingService {
     };
   }
 
+  public static getSpecificSetting(
+    id: string,
+    element: Array<keyof ISettings>
+  ) {
+    return SettingService.ctx.findOne({ attributes: element, where: { id } });
+  }
+
   public static getOneSetting(id: string) {
     return SettingService.ctx.findOne({ where: { id } });
   }
@@ -46,14 +53,16 @@ export default class SettingService {
   }
 
   public static setSetting(setting: ISettings) {
-    SettingService.ctx.create(setting);
+    return void SettingService.ctx.create(setting);
   }
 
   public static updateSetting(setting: ISettings) {
-    return SettingService.ctx.update(setting, { where: { id: setting.id } });
+    return void SettingService.ctx.update(setting, {
+      where: { id: setting.id },
+    });
   }
 
   public static deleteSetting(setting: ISettings) {
-    return SettingService.ctx.destroy({ where: { id: setting.id } });
+    return void SettingService.ctx.destroy({ where: { id: setting.id } });
   }
 }

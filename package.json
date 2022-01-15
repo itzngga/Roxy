@@ -12,7 +12,7 @@
         "prepare": "npm run lint",
         "pretest": "npm run lint",
         "posttest": "npm run lint",
-        "dev:debug": "ts-node-dev --inspect=4321 --respawn --transpile-only ./src/main.ts"
+        "dev:debug": "ts-node-dev --inspect=4321 --respawn --transpile-only --exit-child --no-notify ./src/main.ts"
     },
     "author": "ItzNgga",
     "license": "GNU",
@@ -36,6 +36,7 @@
         "roxy"
     ],
     "devDependencies": {
+        "@types/fluent-ffmpeg": "^2.1.20",
         "@types/node": "^16.11.12",
         "@types/validator": "^13.7.0",
         "@typescript-eslint/eslint-plugin": "^5.4.0",
@@ -48,6 +49,7 @@
         "@adiwajshing/baileys-md": "github:adiwajshing/baileys#multi-device",
         "chalk": "^4.1.2",
         "dotenv": "^10.0.0",
+        "fluent-ffmpeg": "^2.1.2",
         "mysql2": "^2.3.3",
         "pino": "^7.6.2",
         "reflect-metadata": "^0.1.13",

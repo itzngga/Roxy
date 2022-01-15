@@ -1,21 +1,24 @@
 /* eslint-disable @typescript-eslint/ban-ts-comment */
 import util from "../util";
 import { join } from "path";
-import { ICmd } from "../types/cmd";
 import { EventEmitter } from "events";
 import { proto } from "@adiwajshing/baileys-md";
-import { MsgType, ISimplifiedMessage, ISock } from "../types/handler";
+import { MsgType, ISimplifiedMessage, ISock, ICmd, IMid } from "../types";
 const multi_pref = new RegExp(
   "^[" + "!#$%&?/;:,.<>~-+=".replace(/[|\\{}()[\]^$+*?.\-^]/g, "\\$&") + "]"
 );
-const cmdEvent = new EventEmitter();
+const mainEvent = new EventEmitter();
+const prefix = ["?", "#", "!", "#"];
 export class Cmd {
   static cmdMap: Map<string, ICmd> = new Map();
+  static midMap: Map<string, IMid> = new Map();
 
   static init = async () => {
     this.cmdMap.clear();
-    const files = util.readDirRecursive(join(__dirname, "\\..\\cmd"));
-    for await (const path of files) {
+    this.midMap.clear();
+    const cmds = util.readDirRecursive(join(__dirname, "\\..\\cmd"));
+    const mids = util.readDirRecursive(join(__dirname, "\\..\\mid"));
+    for await (const path of cmds) {
       try {
         import(path)
           .then((imp) => {
@@ -31,22 +34,41 @@ export class Cmd {
         return util.roxyLog("fatal", "some command error", error);
       }
     }
-    return util.roxyLog("info", `loaded cmd: ${this.cmdMap.size}`);
+    for await (const path of mids) {
+      try {
+        import(path)
+          .then((imp) => {
+            if (imp.default.prototype) {
+              const mid = new imp.default();
+              this.midMap.set(mid.config.name, mid);
+            } else {
+              this.midMap.set(imp.default.config.name, imp.default);
+            }
+          })
+          .catch((error) => util.roxyLog("fatal", "some command error", error));
+      } catch (error) {
+        return util.roxyLog("fatal", "some command error", error);
+      }
+    }
+    util.roxyLog("info", `loaded commands: ${this.cmdMap.size}`);
+    return util.roxyLog("info", `loaded middlewares: ${this.midMap.size}`);
   };
   static loadCmd = async () => {
     await this.init();
-    cmdEvent.emit("cmdLoaded", null);
+    mainEvent.emit("cmdLoaded", null);
+    mainEvent.emit("midLoaded", null);
   };
   static reloadCmd = async () => {
     await this.init();
-    cmdEvent.emit("cmdLoaded", null);
-    return this.cmdMap.size;
+    mainEvent.emit("cmdLoaded", null);
+    mainEvent.emit("midLoaded", null);
+    return this.cmdMap.size, this.midMap.size;
   };
 }
 export class MsgHandler {
   public cmdMap: Map<string, ICmd> = new Map();
+  public midMap: Map<string, IMid> = new Map();
   public aliasMap: Map<string, ICmd> = new Map();
-  public cooldown: Map<string, any> = new Map();
 
   constructor(protected sock: ISock) {}
 
@@ -58,8 +80,9 @@ export class MsgHandler {
   public reloadCmd = () => Cmd.reloadCmd();
 
   protected loadCmd(): void {
-    cmdEvent.on("cmdLoaded", () => {
+    mainEvent.on("cmdLoaded", () => {
       this.cmdMap.clear();
+      this.midMap.clear();
       this.aliasMap.clear();
       Cmd.cmdMap.forEach((cmd, key) => {
         try {
@@ -72,6 +95,17 @@ export class MsgHandler {
             );
         } catch (error) {
           return util.roxyLog("fatal", "some command error", error);
+        }
+      });
+    });
+    mainEvent.on("midLoaded", () => {
+      Cmd.midMap.forEach((mid, key) => {
+        try {
+          mid.sock = this.sock;
+          mid.msgHandler = this;
+          this.midMap.set(key, mid);
+        } catch (error) {
+          return util.roxyLog("fatal", "some middleware error", error);
         }
       });
     });
@@ -93,94 +127,62 @@ export class MsgHandler {
     const temp_pref = multi_pref.test(body)
       ? body?.split("").shift() || ""
       : "!";
-    const { type, isGroup, sender, from } = msg;
+    const { type, isGroup, from } = msg;
     body =
-      type === "conversation" && body?.startsWith(temp_pref)
+      type === "conversation" && body?.startsWith("!", 0)
         ? body
         : (type === "imageMessage" || type === "videoMessage") &&
           body &&
-          body?.startsWith(temp_pref)
+          body?.startsWith("!", 0)
         ? body
-        : type === "extendedTextMessage" && body?.startsWith(temp_pref)
+        : type === "extendedTextMessage" && body?.startsWith("!", 0)
         ? body
-        : type === "buttonsResponseMessage" && body?.startsWith(temp_pref)
+        : type === "buttonsResponseMessage" && body?.startsWith("!", 0)
         ? body
-        : type === "listResponseMessage" && body?.startsWith(temp_pref)
+        : type === "listResponseMessage" && body?.startsWith("!", 0)
         ? body
-        : type === "templateButtonReplyMessage" && body?.startsWith(temp_pref)
+        : type === "templateButtonReplyMessage" && body?.startsWith("!", 0)
         ? body
         : "";
-    const arg = body.substring(body.indexOf(" ") + 1);
+    // const arg = body.slice(0, 1);
     const args = body.trim().split(/ +/).slice(1);
     const isCmd = body.startsWith(temp_pref);
     const gcMeta = isGroup ? await this.sock.groupMetadata(from) : null;
     const gcName = isGroup ? gcMeta?.subject : null;
 
-    // Log
-    // printLog(isCmd, sender, gcName, isGroup);
+    const cmd = body?.startsWith("!", 0)
+      ? // @ts-expect-error
+        body.slice(1).trim().split(/ +/).shift().toLowerCase()
+      : "";
 
-    // @ts-expect-error
-    const cmd = body
-      .slice(temp_pref?.length)
-      .trim()
-      .split(/ +/)
-      .shift()
-      .toLowerCase();
-
-    // if (!this.cooldown.has(from)) {
-    //   this.cooldown.set(from, Date.now() + 5 * 1000);
-    // }
-
+    util.logExec(isCmd, msg.sender || "", cmd, gcName || "", isGroup || false);
     const command = this.cmdMap.get(cmd) || this.aliasMap.get(cmd);
 
     if (!command)
-      return void this.sock.sendMessage(
-        from,
-        {
-          text: "No such command, Baka! Have you never seen someone use the command *!help*.",
-        },
-        { quoted: msg }
+      return void msg.reply(
+        "No such command, Baka! Have you never seen someone use the command *!help*."
       );
 
-    // const now = Date.now();
-    // const timestamps = this.cooldown.get(from);
-    // const cdAmount = (timestamps || 5) * 1000;
-    // if (timestamps.has(from)) {
-    //   const expiration = timestamps.get(from) + cdAmount;
-
-    //   if (now < expiration) {
-    //     if (isGroup) {
-    //       const timeLeft = (expiration - now) / 1000;
-    //       // printSpam(isGroup, sender, gcName);
-    //       return void this.sock.sendMessage(
-    //         from,
-    //         {
-    //           text: `This group is on cooldown, please wait another _${timeLeft.toFixed(
-    //             1
-    //           )} second(s)_`,
-    //         },
-    //         { quoted: msg }
-    //       );
-    //     } else if (!isGroup) {
-    //       const timeLeft = (expiration - now) / 1000;
-    //       // printSpam(isGroup, sender);
-    //       return void this.sock.sendMessage(
-    //         from,
-    //         {
-    //           text: `You are on cooldown, please wait another _${timeLeft.toFixed(
-    //             1
-    //           )} second(s)_`,
-    //         },
-    //         { quoted: msg }
-    //       );
-    //     }
-    //   }
-    // }
-    // timestamps.set(from, now);
-    // setTimeout(() => timestamps.delete(from), cdAmount);
-
     try {
-      await command.run(msg, args);
+      if (this.midMap.size > 0) {
+        this.midMap.forEach(async (mid) => {
+          if (mid.config.mode === "before") {
+            if (((await mid.run(msg, args)) as any) === true) {
+              let i = 0;
+              while (i < (mid.config.times || 1)) {
+                await command.run(msg, args);
+                i++;
+              }
+            }
+            return void null;
+          } else {
+            await command.run(msg, args);
+            return await mid.run(msg, args);
+          }
+        });
+      } else {
+        await command.run(msg, args);
+      }
     } catch (e) {
       console.error(e);
     }
@@ -304,7 +306,7 @@ export class MsgHandler {
             // @ts-expect-error
             msg.quoted.download = (pathFile) =>
               // @ts-expect-error
-              downloadMedia(msg.quoted.message, pathFile);
+              util.downloadMedia(msg.quoted.message, pathFile);
             // @ts-expect-error
             delete msg.quoted.quotedMessage;
           }
@@ -316,7 +318,7 @@ export class MsgHandler {
           this.sock.sendMessage(msg.from, { text }, { quoted: msg });
         msg.download = (pathFile) =>
           // @ts-expect-error
-          downloadMedia(msg.message, pathFile);
+          util.downloadMedia(msg.message, pathFile);
       }
       return msg;
     }

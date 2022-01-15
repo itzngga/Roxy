@@ -1,6 +1,5 @@
-import { ICmd } from "../types/cmd";
 import { MsgHandler } from "../handler";
-import { ISimplifiedMessage, ISock } from "../types/handler";
+import { ISimplifiedMessage, ISock, ICmd } from "../types";
 
 export default class implements ICmd {
   sock: ISock;
