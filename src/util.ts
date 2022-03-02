@@ -1,4 +1,5 @@
 /* eslint-disable @typescript-eslint/ban-ts-comment */
+import { Duplex, Readable, Writable } from "stream";
 import chalk from "chalk";
 import { readdirSync, statSync } from "fs";
 import { join } from "path";
@@ -6,7 +7,7 @@ import { proto, downloadContentFromMessage } from "@adiwajshing/baileys-md";
 import { promises as fs } from "fs";
 import pino from "pino";
 import util from "util";
-
+import crypto from "crypto";
 export default class {
   static isModuleExist = (name: string): boolean => {
     try {
@@ -165,4 +166,47 @@ export default class {
       );
     }
   };
+
+  static randomString(bytes?: number): string {
+    return crypto.randomBytes(bytes ? bytes : 15).toString("hex");
+  }
+
+  static buffer2Stream(buffer: Buffer): Duplex {
+    const stream = new Duplex();
+    stream.push(buffer);
+    stream.push(null);
+    return stream;
+    // const readable = new Readable({ read: () => {} });
+    // readable.push(buffer);
+    // readable.push(null);
+    // return readable;
+  }
+
+  static toBuffer = async (stream: Readable) => {
+    const chunks = [];
+    for await (const chunk of stream) {
+      chunks.push(chunk);
+    }
+    return Buffer.concat(chunks);
+  };
+
+  static gmToBuffer(data: any) {
+    return new Promise((resolve, reject) => {
+      data.stream((err: any, stdout: any, stderr: any) => {
+        if (err) {
+          return reject(err);
+        }
+        const chunks: any = [];
+        stdout.on("data", (chunk: any) => {
+          chunks.push(chunk);
+        });
+        stdout.once("end", () => {
+          resolve(Buffer.concat(chunks));
+        });
+        stderr.once("data", (data: string) => {
+          reject(String(data));
+        });
+      });
+    });
+  }
 }

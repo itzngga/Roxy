@@ -8,7 +8,6 @@ const multi_pref = new RegExp(
   "^[" + "!#$%&?/;:,.<>~-+=".replace(/[|\\{}()[\]^$+*?.\-^]/g, "\\$&") + "]"
 );
 const mainEvent = new EventEmitter();
-const prefix = ["?", "#", "!", "#"];
 export class Cmd {
   static cmdMap: Map<string, ICmd> = new Map();
   static midMap: Map<string, IMid> = new Map();
@@ -122,28 +121,11 @@ export class MsgHandler {
       !msg.type
     )
       return;
-
-    let { body } = msg;
+    const { body } = msg;
     const temp_pref = multi_pref.test(body)
       ? body?.split("").shift() || ""
       : "!";
     const { type, isGroup, from } = msg;
-    body =
-      type === "conversation" && body?.startsWith("!", 0)
-        ? body
-        : (type === "imageMessage" || type === "videoMessage") &&
-          body &&
-          body?.startsWith("!", 0)
-        ? body
-        : type === "extendedTextMessage" && body?.startsWith("!", 0)
-        ? body
-        : type === "buttonsResponseMessage" && body?.startsWith("!", 0)
-        ? body
-        : type === "listResponseMessage" && body?.startsWith("!", 0)
-        ? body
-        : type === "templateButtonReplyMessage" && body?.startsWith("!", 0)
-        ? body
-        : "";
     // const arg = body.slice(0, 1);
     const args = body.trim().split(/ +/).slice(1);
     const isCmd = body.startsWith(temp_pref);
@@ -213,11 +195,12 @@ export class MsgHandler {
             : (Object.keys(msg.message)[0] as MsgType);
         msg.body =
           msg.message.conversation ||
-          msg.message[msg.type as MsgType.text] ||
           msg.message[msg.type as MsgType.video | MsgType.image]?.caption ||
           (msg.type === "listResponseMessage" &&
             msg.message[msg.type as MsgType.listResponse]?.singleSelectReply
               ?.selectedRowId) ||
+          (msg.type === "extendedTextMessage" &&
+            msg.message[msg.type as MsgType.extendedText]?.text) ||
           (msg.type === "buttonsResponseMessage" &&
             msg.message[
               msg.type as MsgType.buttonsResponse
@@ -302,9 +285,13 @@ export class MsgHandler {
             // @ts-expect-error
             msg.quoted.delete = () =>
               // @ts-expect-error
-              this.sock.sendMessage(msg.from, { delete: msg.quoted.key });
+              void this.sock.sendMessage(msg.from, { delete: msg.quoted.key });
             // @ts-expect-error
-            msg.quoted.download = (pathFile) =>
+            msg.quoted.download = () =>
+              // @ts-expect-error
+              util.downloadMedia(msg.quoted.message);
+            // @ts-expect-error
+            msg.quoted.downloadPath = (pathFile) =>
               // @ts-expect-error
               util.downloadMedia(msg.quoted.message, pathFile);
             // @ts-expect-error
@@ -315,8 +302,11 @@ export class MsgHandler {
           msg.quoted = null;
         }
         msg.reply = (text) =>
-          this.sock.sendMessage(msg.from, { text }, { quoted: msg });
-        msg.download = (pathFile) =>
+          void this.sock.sendMessage(msg.from, { text }, { quoted: msg });
+        msg.download = () =>
+          // @ts-expect-error
+          util.downloadMedia(msg.message);
+        msg.downloadPath = (pathFile) =>
           // @ts-expect-error
           util.downloadMedia(msg.message, pathFile);
       }

@@ -3,4 +3,5 @@ dist
 .env
 package-lock.json
 json/db.json
-session-md.json    
+session-md.json
+temp/*

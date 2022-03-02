@@ -36,8 +36,11 @@
         "roxy"
     ],
     "devDependencies": {
+        "@types/concat-stream": "^1.6.1",
         "@types/fluent-ffmpeg": "^2.1.20",
+        "@types/inherits": "^0.0.30",
         "@types/node": "^16.11.12",
+        "@types/readable-stream": "^2.3.13",
         "@types/validator": "^13.7.0",
         "@typescript-eslint/eslint-plugin": "^5.4.0",
         "@typescript-eslint/parser": "^5.4.0",
@@ -47,9 +50,13 @@
     },
     "dependencies": {
         "@adiwajshing/baileys-md": "github:adiwajshing/baileys#multi-device",
+        "@ffmpeg-installer/ffmpeg": "^1.1.0",
         "chalk": "^4.1.2",
+        "cheerio": "^1.0.0-rc.10",
+        "concat-stream": "^2.0.0",
         "dotenv": "^10.0.0",
         "fluent-ffmpeg": "^2.1.2",
+        "form-data": "^4.0.0",
         "mysql2": "^2.3.3",
         "pino": "^7.6.2",
         "reflect-metadata": "^0.1.13",

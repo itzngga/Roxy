@@ -10,7 +10,11 @@
     "prettier/prettier": [
       "error",
       {
-        "endOfLine": "auto"
+        "endOfLine": "auto",
+        "printWidth": 100,
+        "semi": false,
+        "singleQuote": true,
+        "trailingComma": "all"
       }
     ],
     "block-scoped-var": "error",

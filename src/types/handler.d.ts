@@ -49,8 +49,10 @@ export interface ISimplifiedMessage extends proto.IWebMessageInfo {
       id: string;
     };
     delete: () => void;
-    download: (pathFile: string) => Promise<string | Buffer>;
+    download: () => Promise<string | Buffer>;
+    downloadPath: (pathFile: string) => Promise<string | Buffer>;
   };
   reply: (text: string) => void;
-  download: (pathFile: string) => Promise<string | Buffer>;
+  download: () => Promise<string | Buffer>;
+  downloadPath: (pathFile: string) => Promise<string | Buffer>;
 }
