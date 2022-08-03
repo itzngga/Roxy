@@ -24,7 +24,7 @@ func NewCryptography() *Cryptography {
 	if XTCrypto != nil {
 		return XTCrypto
 	}
-	salted, err := blowfish.NewCipher([]byte(viper.GetString("XT_SECRET")))
+	salted, err := blowfish.NewCipher([]byte(viper.GetString("SECRET_KEY")))
 	if err != nil {
 		panic(err.Error())
 	}

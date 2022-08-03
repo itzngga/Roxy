@@ -50,7 +50,7 @@ func (b *Base) Events() {
 			b.startTime = time.Now()
 		case *events.Message:
 			if !b.startTime.IsZero() && time.Now().After(b.startTime) {
-				handler.RunCommand(b.client, event)
+				go handler.RunCommand(b.client, event)
 				return
 			}
 			return

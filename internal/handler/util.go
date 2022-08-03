@@ -83,6 +83,15 @@ func WithReply(m *events.Message) *waProto.ContextInfo {
 	}
 }
 
+func SendInvalidCommand(m *events.Message) *waProto.Message {
+	return &waProto.Message{
+		ExtendedTextMessage: &waProto.ExtendedTextMessage{
+			Text:        proto.String("Invalid command received"),
+			ContextInfo: WithReply(m),
+		},
+	}
+}
+
 func RemoveElementByIndex[T any](slice []T, index int) []T {
 	sliceLen := len(slice)
 	sliceLastIndex := sliceLen - 1
@@ -102,6 +111,7 @@ func SendReplyMessage(c *whatsmeow.Client, m *events.Message, text string) error
 	_, err := c.SendMessage(m.Info.Chat, "", msg)
 	return err
 }
+
 func ParseQuotedMessage(m *waProto.Message) *waProto.Message {
 	if m.GetExtendedTextMessage().GetContextInfo() != nil {
 		return m.GetExtendedTextMessage().GetContextInfo().GetQuotedMessage()

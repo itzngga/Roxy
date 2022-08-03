@@ -2,35 +2,36 @@ package handler
 
 import (
 	"fmt"
+	waProto "go.mau.fi/whatsmeow/binary/proto"
 	"sync"
 	"time"
 
-	"github.com/jellydator/ttlcache/v2"
+	"github.com/itzngga/goRoxy/internal/dictpool"
 	"go.mau.fi/whatsmeow"
-	waProto "go.mau.fi/whatsmeow/binary/proto"
 	"go.mau.fi/whatsmeow/types/events"
 )
 
-var DefaultMuxer = &defaultMuxer
-var defaultMuxer Muxer
+var DefaultMuxer *Muxer
 
 type Muxer struct {
 	mutex          *sync.RWMutex
 	CommandSlice   []*Command
-	MuxCache       ttlcache.SimpleCache
-	CooldownIndex  []int
+	DictPool       *dictpool.Dict
 	HelpString     string
 	CommandSucceed int
 }
 
 func (m *Muxer) FindCommand(cmd string) (*Command, bool) {
-	i, _ := m.MuxCache.Get(cmd)
+	i := m.DictPool.Get(cmd)
 	if i != nil && m.CommandSlice[i.(int)] != nil {
 		return m.CommandSlice[i.(int)], true
 	} else {
+		m.mutex.RLock()
+		defer m.mutex.RUnlock()
+
 		for i, val := range m.CommandSlice {
 			if pcmd := val.GetName(cmd); pcmd == cmd {
-				m.MuxCache.Set(pcmd, i)
+				m.DictPool.Set(pcmd, i)
 				return val, true
 			}
 		}
@@ -43,12 +44,12 @@ func (m *Muxer) AddCommand(cmd *Command) {
 	defer m.mutex.RUnlock()
 
 	cmd.Validate()
-	indexCache, _ := m.MuxCache.Get(cmd.Name)
-	if indexCache != nil && m.CommandSlice[indexCache.(int)] != nil {
+	i := m.DictPool.Get(cmd.Name)
+	if i != nil && m.CommandSlice[i.(int)] != nil {
 		panic(fmt.Sprintf("Invalid duplicate %s command", cmd.Name))
 	}
 
-	m.MuxCache.Set(cmd.Name, len(m.CommandSlice))
+	m.DictPool.Set(cmd.Name, len(m.CommandSlice))
 	m.CommandSlice = append(m.CommandSlice, cmd)
 }
 
@@ -57,7 +58,7 @@ func (m *Muxer) RunCommand(c *whatsmeow.Client, evt *events.Message) {
 	cmd, isCmd := ParseCmd(parsed)
 	command, isAvailable := m.FindCommand(cmd)
 	if isCmd && isAvailable {
-		cdId, _ := m.MuxCache.Get(c.Store.ID.User + evt.Info.Sender.User)
+		cdId := m.DictPool.Get(c.Store.ID.User + evt.Info.Sender.User)
 		if cdId != nil {
 			SendReplyMessage(c, evt, "You are on Cooldown!")
 			return
@@ -77,15 +78,15 @@ func (m *Muxer) RunCommand(c *whatsmeow.Client, evt *events.Message) {
 			c.SendMessage(evt.Info.Chat, "", msg)
 		}
 
-		go func() {
-			m.mutex.RLock()
-			defer m.mutex.RUnlock()
+		m.mutex.RLock()
 
-			m.CommandSucceed++
-			m.MuxCache.Set(c.Store.ID.User+evt.Info.Sender.User, true)
-			time.Sleep(5 * time.Second)
-			m.MuxCache.Remove(c.Store.ID.User + evt.Info.Sender.User)
-		}()
+		command.CommandSucceed = command.CommandSucceed + 1
+		m.DictPool.Set(c.Store.ID.User+evt.Info.Sender.User, true)
+		defer m.mutex.RUnlock()
+
+		time.Sleep(5 * time.Second)
+		m.DictPool.Del(c.Store.ID.User + evt.Info.Sender.User)
+
 		return
 	}
 }
@@ -94,9 +95,11 @@ func (m *Muxer) UpdateHelp() {
 	if m.HelpString == "" {
 		m.HelpString = fmt.Sprintf(`---------------%s`, "\nTestBot\n\n")
 	}
-	var Uncategorize []*Command
-	var Utilities []*Command
-	var Misc []*Command
+	var (
+		Uncategorizeds []*Command
+		Utilities      []*Command
+		Misc           []*Command
+	)
 	for _, val := range m.CommandSlice {
 		if !val.HideFromHelp {
 			if val.Category == UtilitiesCategory {
@@ -104,12 +107,13 @@ func (m *Muxer) UpdateHelp() {
 			} else if val.Category == MiscCategory {
 				Misc = append(Misc, val)
 			} else {
-				Uncategorize = append(Uncategorize, val)
+				Uncategorizeds = append(Uncategorizeds, val)
 			}
 		}
 	}
 	m.HelpString += "#Utilities\n" + UtilitiesCategory.Description + "\n"
 	for _, util := range Utilities {
+
 		m.HelpString += fmt.Sprintf(`%s. %s%s`, "➣ ", util.Name+"\n", util.Description+"\n")
 	}
 	m.HelpString += "\n\n#Misc\n" + MiscCategory.Description + "\n"
@@ -117,7 +121,7 @@ func (m *Muxer) UpdateHelp() {
 		m.HelpString += fmt.Sprintf(`%s. %s%s`, "➣ ", misc.Name+"\n", misc.Description+"\n")
 	}
 	m.HelpString += "\n\n#Uncategorized\n" + Uncategorized.Description + "\n"
-	for _, unca := range Uncategorize {
+	for _, unca := range Uncategorizeds {
 		m.HelpString += fmt.Sprintf(`%s. %s%s`, "➣ ", unca.Name+"\n", unca.Description+"\n")
 	}
 }
@@ -130,19 +134,23 @@ func (m Muxer) GetHelpPage() string {
 	return m.HelpString
 }
 
-func NewDefaultMuxer() {
-	defaultMuxer = Muxer{
-		mutex:         &sync.RWMutex{},
-		MuxCache:      ttlcache.NewCache(),
-		CooldownIndex: []int{},
-		CommandSlice:  []*Command{},
+func NewMuxer() *Muxer {
+	muxer := &Muxer{
+		mutex:        &sync.RWMutex{},
+		DictPool:     dictpool.AcquireDict(),
+		CommandSlice: make([]*Command, 0),
 	}
-	AddCommand(&Command{
+	muxer.AddCommand(&Command{
 		Name:        "help",
 		Description: "Returns Bot Help",
 		Category:    UtilitiesCategory,
 		RunFunc: func(c *whatsmeow.Client, m *events.Message) *waProto.Message {
-			return SendReplyText(m, defaultMuxer.GetHelpPage())
+			return SendReplyText(m, muxer.GetHelpPage())
 		},
 	})
+	return muxer
+}
+
+func NewDefaultMuxer() {
+	DefaultMuxer = NewMuxer()
 }

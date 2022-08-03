@@ -8,37 +8,17 @@ import (
 	"go.mau.fi/whatsmeow"
 	waProto "go.mau.fi/whatsmeow/binary/proto"
 	"go.mau.fi/whatsmeow/types/events"
-	"google.golang.org/protobuf/proto"
 )
 
 type MiddlewareFunc func(c *whatsmeow.Client, m *events.Message) bool
 type RunFunc func(c *whatsmeow.Client, m *events.Message) *waProto.Message
-
-type Category struct {
-	Name        string
-	Description string
-}
-
-var (
-	UtilitiesCategory = &Category{
-		Name:        "Utilities",
-		Description: "Bot Utilities",
-	}
-	MiscCategory = &Category{
-		Name:        "Misc",
-		Description: "Bot Misc",
-	}
-	Uncategorized = &Category{
-		Name:        "Uncategorized",
-		Description: "Bot Uncategorized",
-	}
-)
 
 type Command struct {
 	Name            string
 	Aliases         []string
 	Description     string
 	LongDescription string
+	CommandSucceed  uint
 
 	Cooldown time.Duration
 	Category *Category
@@ -49,14 +29,6 @@ type Command struct {
 	RunFunc      RunFunc
 }
 
-func SendInvalidCommand(m *events.Message) *waProto.Message {
-	return &waProto.Message{
-		ExtendedTextMessage: &waProto.ExtendedTextMessage{
-			Text:        proto.String("Invalid command received"),
-			ContextInfo: WithReply(m),
-		},
-	}
-}
 func (c *Command) GetName(name string) string {
 	var theName string
 	if c.Name == name {
@@ -89,5 +61,5 @@ func AddCommand(cmd *Command) {
 }
 
 func RunCommand(c *whatsmeow.Client, evt *events.Message) {
-	go DefaultMuxer.RunCommand(c, evt)
+	DefaultMuxer.RunCommand(c, evt)
 }

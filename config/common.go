@@ -2,8 +2,8 @@ package config
 
 import (
 	"fmt"
+	"os"
 
-	"github.com/spf13/viper"
 	waLog "go.mau.fi/whatsmeow/util/log"
 )
 
@@ -17,10 +17,10 @@ func NewWaLog() waLog.Logger {
 func CreatePostgresDsn() string {
 	return fmt.Sprintf(
 		"host=%s user=%s password=%s dbname=%s port=%s sslmode=disable TimeZone=Asia/Jakarta",
-		viper.GetString("XT_DB_HOST"),
-		viper.GetString("XT_DB_USER"),
-		viper.GetString("XT_DB_PASSWORD"),
-		viper.GetString("XT_DB_NAME"),
-		viper.GetString("XT_DB_PORT"),
+		os.Getenv("DB_HOST"),
+		os.Getenv("DB_USER"),
+		os.Getenv("DB_PASSWORD"),
+		os.Getenv("DB_NAME"),
+		os.Getenv("DB_PORT"),
 	)
 }
