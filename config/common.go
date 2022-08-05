@@ -24,3 +24,7 @@ func CreatePostgresDsn() string {
 		os.Getenv("DB_PORT"),
 	)
 }
+
+func CreateSqliteDsn() string {
+	return fmt.Sprintf("file:%s?_foreign_keys=on", os.Getenv("SQLITE_FILE"))
+}

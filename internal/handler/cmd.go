@@ -2,23 +2,22 @@ package handler
 
 import (
 	"fmt"
+	waProto "go.mau.fi/whatsmeow/binary/proto"
 	"sort"
 	"time"
 
 	"go.mau.fi/whatsmeow"
-	waProto "go.mau.fi/whatsmeow/binary/proto"
 	"go.mau.fi/whatsmeow/types/events"
 )
 
-type MiddlewareFunc func(c *whatsmeow.Client, m *events.Message) bool
-type RunFunc func(c *whatsmeow.Client, m *events.Message) *waProto.Message
+type MiddlewareFunc func(c *whatsmeow.Client, m *events.Message, cmd *Command) bool
+type RunFunc func(c *whatsmeow.Client, m *events.Message, cmd *Command) *waProto.Message
 
 type Command struct {
 	Name            string
 	Aliases         []string
 	Description     string
 	LongDescription string
-	CommandSucceed  uint
 
 	Cooldown time.Duration
 	Category *Category
@@ -27,6 +26,8 @@ type Command struct {
 	GroupOnly    bool
 	Middleware   MiddlewareFunc
 	RunFunc      RunFunc
+
+	Locals *map[string]interface{}
 }
 
 func (c *Command) GetName(name string) string {
@@ -56,10 +57,10 @@ func (c *Command) Validate() {
 	sort.Strings(c.Aliases)
 }
 
-func AddCommand(cmd *Command) {
-	DefaultMuxer.AddCommand(cmd)
+func (c *Command) GetLocals(key string) interface{} {
+	return (*c.Locals)[key]
 }
 
-func RunCommand(c *whatsmeow.Client, evt *events.Message) {
-	DefaultMuxer.RunCommand(c, evt)
+func (c *Command) SetLocals(key string, value interface{}) {
+	(*c.Locals)[key] = value
 }

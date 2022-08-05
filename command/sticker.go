@@ -5,6 +5,7 @@ import (
 	"context"
 	"fmt"
 	"github.com/itzngga/goRoxy/internal/handler"
+	"github.com/itzngga/goRoxy/util"
 	"go.mau.fi/whatsmeow"
 	waProto "go.mau.fi/whatsmeow/binary/proto"
 	"go.mau.fi/whatsmeow/types/events"
@@ -16,17 +17,17 @@ import (
 	"os/exec"
 )
 
-func StickerCommand(c *whatsmeow.Client, m *events.Message) *waProto.Message {
+func StickerCommand(c *whatsmeow.Client, m *events.Message, cmd *handler.Command) *waProto.Message {
 	if m.Message.GetImageMessage() != nil {
 		return StickerImage(c, m, m.Message.GetImageMessage())
-	} else if handler.ParseQuotedMessage(m.Message).GetImageMessage() != nil {
-		return StickerImage(c, m, handler.ParseQuotedMessage(m.Message).GetImageMessage())
+	} else if util.ParseQuotedMessage(m.Message).GetImageMessage() != nil {
+		return StickerImage(c, m, util.ParseQuotedMessage(m.Message).GetImageMessage())
 	} else if m.Message.GetVideoMessage() != nil {
 		return StickerVideo(c, m, m.Message.GetVideoMessage())
-	} else if handler.ParseQuotedMessage(m.Message).GetVideoMessage() != nil {
-		return StickerVideo(c, m, handler.ParseQuotedMessage(m.Message).GetVideoMessage())
+	} else if util.ParseQuotedMessage(m.Message).GetVideoMessage() != nil {
+		return StickerVideo(c, m, util.ParseQuotedMessage(m.Message).GetVideoMessage())
 	}
-	return handler.SendReplyText(m, "Invalid")
+	return util.SendReplyText(m, "Invalid")
 }
 func StickerVideo(c *whatsmeow.Client, m *events.Message, video *waProto.VideoMessage) *waProto.Message {
 	data, err := c.Download(video)
@@ -83,7 +84,7 @@ func StickerVideo(c *whatsmeow.Client, m *events.Message, video *waProto.VideoMe
 			FileSha256:    uploaded.FileSHA256,
 			FileLength:    proto.Uint64(uint64(len(data))),
 			IsAnimated:    proto.Bool(true),
-			ContextInfo:   handler.WithReply(m),
+			ContextInfo:   util.WithReply(m),
 		},
 	}
 }
@@ -145,7 +146,7 @@ func StickerImage(c *whatsmeow.Client, m *events.Message, img *waProto.ImageMess
 			FileEncSha256: uploaded.FileEncSHA256,
 			FileSha256:    uploaded.FileSHA256,
 			FileLength:    proto.Uint64(uint64(len(data))),
-			ContextInfo:   handler.WithReply(m),
+			ContextInfo:   util.WithReply(m),
 		},
 	}
 

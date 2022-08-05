@@ -1,4 +1,4 @@
-package handler
+package util
 
 import (
 	"github.com/itzngga/goRoxy/helper"
@@ -6,100 +6,7 @@ import (
 	waProto "go.mau.fi/whatsmeow/binary/proto"
 	"go.mau.fi/whatsmeow/types/events"
 	"google.golang.org/protobuf/proto"
-	"regexp"
-	"strings"
 )
-
-var cmdRegex = regexp.MustCompile(`!|#|\?|.|@|&|\*|-|=|\+`)
-
-func ParseCmd(str string) (string, bool) {
-	if str == "" {
-		return "", false
-	}
-	word := strings.Fields(str)
-	if len(word) == 0 && word[0] == "" {
-		return "", false
-	}
-	if cmdRegex.MatchString(word[0][0:1]) {
-		return word[0][1:], true
-	}
-	return "", false
-}
-
-func ParseMessageText(m *events.Message) string {
-	var pesan *waProto.Message
-	if m.IsViewOnce {
-		pesan = m.Message.GetViewOnceMessage().GetMessage()
-	} else if m.IsEphemeral {
-		pesan = m.Message.GetEphemeralMessage().GetMessage()
-	} else {
-		pesan = m.Message
-	}
-	if pesan.GetConversation() != "" {
-		return pesan.GetConversation()
-	} else if pesan.GetVideoMessage().GetCaption() != "" {
-		return pesan.GetVideoMessage().GetCaption()
-	} else if pesan.GetImageMessage().GetCaption() != "" {
-		return pesan.GetImageMessage().GetCaption()
-	} else if pesan.GetExtendedTextMessage().GetText() != "" {
-		return pesan.GetExtendedTextMessage().GetText()
-	} else if pesan.GetTemplateButtonReplyMessage().GetSelectedId() != "" {
-		cmd, err := helper.XTCrypto.MakeDecrypt(pesan.GetTemplateButtonReplyMessage().GetSelectedId())
-		if err != nil {
-			return ""
-		}
-		return cmd
-	} else if pesan.GetButtonsResponseMessage().GetSelectedButtonId() != "" {
-		cmd, err := helper.XTCrypto.MakeDecrypt(pesan.GetButtonsResponseMessage().GetSelectedButtonId())
-		if err != nil {
-			return ""
-		}
-		return cmd
-	} else if pesan.GetListResponseMessage().GetSingleSelectReply().GetSelectedRowId() != "" {
-		cmd, err := helper.XTCrypto.MakeDecrypt(pesan.GetListResponseMessage().GetSingleSelectReply().GetSelectedRowId())
-		if err != nil {
-			return ""
-		}
-		return cmd
-	} else {
-		return ""
-	}
-}
-
-func SendReplyText(m *events.Message, text string) *waProto.Message {
-	return &waProto.Message{
-		ExtendedTextMessage: &waProto.ExtendedTextMessage{
-			Text:        &text,
-			ContextInfo: WithReply(m),
-		},
-	}
-}
-
-func WithReply(m *events.Message) *waProto.ContextInfo {
-	return &waProto.ContextInfo{
-		StanzaId:      &m.Info.ID,
-		Participant:   proto.String(m.Info.MessageSource.Sender.String()),
-		QuotedMessage: m.Message,
-	}
-}
-
-func SendInvalidCommand(m *events.Message) *waProto.Message {
-	return &waProto.Message{
-		ExtendedTextMessage: &waProto.ExtendedTextMessage{
-			Text:        proto.String("Invalid command received"),
-			ContextInfo: WithReply(m),
-		},
-	}
-}
-
-func RemoveElementByIndex[T any](slice []T, index int) []T {
-	sliceLen := len(slice)
-	sliceLastIndex := sliceLen - 1
-	if index != sliceLastIndex {
-		slice[index] = slice[sliceLastIndex]
-	}
-	return slice[:sliceLastIndex]
-}
 
 func SendReplyMessage(c *whatsmeow.Client, m *events.Message, text string) error {
 	msg := &waProto.Message{
@@ -111,7 +18,6 @@ func SendReplyMessage(c *whatsmeow.Client, m *events.Message, text string) error
 	_, err := c.SendMessage(m.Info.Chat, "", msg)
 	return err
 }
-
 func ParseQuotedMessage(m *waProto.Message) *waProto.Message {
 	if m.GetExtendedTextMessage().GetContextInfo() != nil {
 		return m.GetExtendedTextMessage().GetContextInfo().GetQuotedMessage()
@@ -159,4 +65,50 @@ func ParseQuotedBy(m *waProto.Message, str string) *waProto.Message {
 	default:
 		return ParseQuotedMessage(m)
 	}
+}
+
+func SendReplyText(m *events.Message, text string) *waProto.Message {
+	return &waProto.Message{
+		ExtendedTextMessage: &waProto.ExtendedTextMessage{
+			Text:        &text,
+			ContextInfo: WithReply(m),
+		},
+	}
+}
+
+func WithReply(m *events.Message) *waProto.ContextInfo {
+	return &waProto.ContextInfo{
+		StanzaId:      &m.Info.ID,
+		Participant:   proto.String(m.Info.MessageSource.Sender.String()),
+		QuotedMessage: m.Message,
+	}
+}
+
+func SendInvalidCommand(m *events.Message) *waProto.Message {
+	return &waProto.Message{
+		ExtendedTextMessage: &waProto.ExtendedTextMessage{
+			Text:        proto.String("Invalid command received"),
+			ContextInfo: WithReply(m),
+		},
+	}
+}
+
+func CreateButtonMessage(content, footer string, buttons ...*waProto.Button) *waProto.Message {
+	return &waProto.Message{
+		ButtonsMessage: &waProto.ButtonsMessage{
+			HeaderType:  waProto.ButtonsMessage_EMPTY.Enum(),
+			ContentText: proto.String(content),
+			FooterText:  proto.String(footer),
+			Buttons:     buttons,
+		},
+	}
+}
+
+func GenerateButton(id, cmd, text string) *waProto.Button {
+	return &waProto.Button{
+		ButtonId: proto.String(helper.CreateButtonID(id, cmd)),
+		ButtonText: &waProto.ButtonText{
+			DisplayText: proto.String(text),
+		},
+		Type: waProto.Button_RESPONSE.Enum()}
 }

@@ -6,19 +6,27 @@ import (
 )
 
 func (b Base) InitializeCommands() {
-	handler.AddCommand(&handler.Command{
+	b.Muxer.AddCommand(&handler.Command{
 		Name:        "tes",
 		Aliases:     []string{"hi"},
 		Description: "A Fucking Test",
 		Category:    handler.MiscCategory,
-		RunFunc:     command.TestSpeedCommand,
+		RunFunc:     command.HiCommand,
 	})
-	handler.AddCommand(
+	b.Muxer.AddCommand(
 		&handler.Command{
 			Name:        "sticker",
 			Aliases:     []string{"stkr", "stiker"},
 			Category:    handler.UtilitiesCategory,
 			Description: "Create sticker from image or video",
 			RunFunc:     command.StickerCommand,
+		})
+	b.Muxer.AddCommand(
+		&handler.Command{
+			Name:        "button",
+			Aliases:     []string{"btn", "buttons"},
+			Category:    handler.UtilitiesCategory,
+			Description: "Create a button",
+			RunFunc:     command.TestButtonCommand,
 		})
 }
