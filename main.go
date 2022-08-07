@@ -4,6 +4,7 @@ Copyright © 2022 itzngga rangganak094@gmail.com. All rights reserved
 package main
 
 import (
+	"github.com/itzngga/goRoxy/command"
 	"github.com/itzngga/goRoxy/config"
 	"github.com/itzngga/goRoxy/internal"
 	"github.com/itzngga/goRoxy/internal/handler"
@@ -21,7 +22,8 @@ func init() {
 	}
 
 	handler.GlobalLocals = &map[string]interface{}{}
-
+	command.Commands = make([]*handler.Command, 0)
+	command.GenerateAllCommands()
 }
 
 func main() {

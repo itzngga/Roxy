@@ -50,6 +50,9 @@ func ParseMessageText(uid string, m *events.Message) string {
 	} else if pesan.GetListResponseMessage().GetSingleSelectReply().GetSelectedRowId() != "" {
 		cmd := helper.ParseButtonID(uid, pesan.GetListResponseMessage().GetSingleSelectReply().GetSelectedRowId())
 		return cmd
+	} else if pesan.GetTemplateButtonReplyMessage().GetSelectedId() != "" {
+		cmd := helper.ParseButtonID(uid, pesan.GetTemplateButtonReplyMessage().GetSelectedId())
+		return cmd
 	} else {
 		return ""
 	}

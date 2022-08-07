@@ -8,9 +8,19 @@ import (
 	"go.mau.fi/whatsmeow/types/events"
 )
 
-func TestButtonCommand(c *whatsmeow.Client, m *events.Message, cmd *handler.Command) *waProto.Message {
+func ButtonCommand() {
+	AddCommand(
+		&handler.Command{
+			Name:        "button",
+			Category:    handler.UtilitiesCategory,
+			Description: "Create button command",
+			RunFunc:     ButtonRunFunc,
+		})
+}
+
+func ButtonRunFunc(c *whatsmeow.Client, m *events.Message, cmd *handler.Command) *waProto.Message {
 	id := cmd.GetLocals("uid").(string)
-	button := util.CreateButtonMessage("Button", "@button",
+	button := util.CreateTextButton("Button", "@button",
 		util.GenerateButton(id, "!help", "!help"),
 		util.GenerateButton(id, "!hi", "!hi"),
 		util.GenerateButton(id, "!sticker", "!sticker"))

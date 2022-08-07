@@ -17,7 +17,18 @@ import (
 	"os/exec"
 )
 
-func StickerCommand(c *whatsmeow.Client, m *events.Message, cmd *handler.Command) *waProto.Message {
+func StickerCommand() {
+	AddCommand(
+		&handler.Command{
+			Name:        "sticker",
+			Aliases:     []string{"stkr", "stiker"},
+			Category:    handler.UtilitiesCategory,
+			Description: "Create sticker from image or video",
+			RunFunc:     StickerRunFunc,
+		})
+}
+
+func StickerRunFunc(c *whatsmeow.Client, m *events.Message, cmd *handler.Command) *waProto.Message {
 	if m.Message.GetImageMessage() != nil {
 		return StickerImage(c, m, m.Message.GetImageMessage())
 	} else if util.ParseQuotedMessage(m.Message).GetImageMessage() != nil {

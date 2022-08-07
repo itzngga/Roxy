@@ -10,7 +10,17 @@ import (
 	"time"
 )
 
-func HiCommand(c *whatsmeow.Client, m *events.Message, cmd *handler.Command) *waProto.Message {
+func HiCommand() {
+	AddCommand(&handler.Command{
+		Name:        "tes",
+		Aliases:     []string{"hi"},
+		Description: "A Fucking Test",
+		Category:    handler.MiscCategory,
+		RunFunc:     HiRunFunc,
+	})
+}
+
+func HiRunFunc(c *whatsmeow.Client, m *events.Message, cmd *handler.Command) *waProto.Message {
 	t := time.Now()
 	util.SendReplyMessage(c, m, "testing a...")
 	return util.SendReplyText(m, fmt.Sprintf("Duration: %f seconds", time.Now().Sub(t).Seconds()))

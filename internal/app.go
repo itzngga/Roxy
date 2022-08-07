@@ -3,6 +3,7 @@ package internal
 import (
 	"context"
 	"fmt"
+	"github.com/itzngga/goRoxy/command"
 	"github.com/itzngga/goRoxy/config"
 	"os"
 	"os/signal"
@@ -57,7 +58,10 @@ func (b *Base) Events(evt interface{}) {
 func (b *Base) Init() {
 	store.DeviceProps.RequireFullSync = proto.Bool(true)
 	b.Muxer = handler.NewMuxer()
-	b.InitializeCommands()
+
+	for _, cmd := range command.Commands {
+		b.Muxer.AddCommand(cmd)
+	}
 
 	b.client = whatsmeow.NewClient(b.Device, config.NewWaLog())
 	if b.client.Store.ID == nil {

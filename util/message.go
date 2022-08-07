@@ -1,7 +1,6 @@
 package util
 
 import (
-	"github.com/itzngga/goRoxy/helper"
 	"go.mau.fi/whatsmeow"
 	waProto "go.mau.fi/whatsmeow/binary/proto"
 	"go.mau.fi/whatsmeow/types/events"
@@ -91,24 +90,4 @@ func SendInvalidCommand(m *events.Message) *waProto.Message {
 			ContextInfo: WithReply(m),
 		},
 	}
-}
-
-func CreateButtonMessage(content, footer string, buttons ...*waProto.Button) *waProto.Message {
-	return &waProto.Message{
-		ButtonsMessage: &waProto.ButtonsMessage{
-			HeaderType:  waProto.ButtonsMessage_EMPTY.Enum(),
-			ContentText: proto.String(content),
-			FooterText:  proto.String(footer),
-			Buttons:     buttons,
-		},
-	}
-}
-
-func GenerateButton(id, cmd, text string) *waProto.Button {
-	return &waProto.Button{
-		ButtonId: proto.String(helper.CreateButtonID(id, cmd)),
-		ButtonText: &waProto.ButtonText{
-			DisplayText: proto.String(text),
-		},
-		Type: waProto.Button_RESPONSE.Enum()}
 }
