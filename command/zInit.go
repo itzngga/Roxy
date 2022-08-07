@@ -9,6 +9,7 @@ func GenerateAllCommands() {
 	StickerCommand()
 	ButtonCommand()
 	HydratedCommand()
+	ImageButtonCommand()
 }
 
 func AddCommand(command *handler.Command) {

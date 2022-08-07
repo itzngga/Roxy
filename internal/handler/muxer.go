@@ -87,7 +87,10 @@ func (m *Muxer) RunCommand(c *whatsmeow.Client, evt *events.Message) {
 		}
 		msg := command.RunFunc(c, evt, command)
 		if msg != nil {
-			c.SendMessage(evt.Info.Chat, "", msg)
+			_, err := c.SendMessage(evt.Info.Chat, "", msg)
+			if err != nil {
+				fmt.Println(err)
+			}
 		}
 
 		go m.CooldownFunction(c, evt)
