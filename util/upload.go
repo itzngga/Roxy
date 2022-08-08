@@ -153,7 +153,7 @@ func UploadStickerMessageFromPath(c *whatsmeow.Client, path string) (*waProto.St
 	}, nil
 }
 
-func UploadStickerMessageFromBytes(c *whatsmeow.Client, bytes []byte, caption string) (*waProto.StickerMessage, error) {
+func UploadStickerMessageFromBytes(c *whatsmeow.Client, bytes []byte) (*waProto.StickerMessage, error) {
 	resp, err := c.Upload(context.Background(), bytes, whatsmeow.MediaImage)
 	if err != nil {
 		return nil, err
