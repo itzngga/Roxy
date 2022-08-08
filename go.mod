@@ -9,7 +9,7 @@ require (
 	github.com/jellydator/ttlcache/v2 v2.11.1
 	github.com/joho/godotenv v1.4.0
 	github.com/lib/pq v1.10.6
-	github.com/mattn/go-sqlite3 v1.14.14
+	github.com/mattn/go-sqlite3 v2.0.3+incompatible
 	github.com/mdp/qrterminal/v3 v3.0.0
 	github.com/valyala/fasthttp v1.38.0
 	go.mau.fi/whatsmeow v0.0.0-20220604174810-f28d984f1b9a
