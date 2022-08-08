@@ -47,7 +47,7 @@ func (b *Base) Events(evt interface{}) {
 	switch event := evt.(type) {
 	case *events.Connected:
 		b.startTime = time.Now()
-		fmt.Printf("Connected!")
+		fmt.Println("[INFO] Connected!")
 	case *events.Message:
 		if !b.startTime.IsZero() && event.Info.Timestamp.After(b.startTime) {
 			go b.Muxer.RunCommand(b.client, event)

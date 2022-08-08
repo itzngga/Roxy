@@ -8,6 +8,6 @@ import (
 )
 
 func LogMiddleware(c *whatsmeow.Client, m *events.Message, cmd *handler.Command) bool {
-	fmt.Println("\n[CMD] Command : " + cmd.Name)
+	fmt.Println("[CMD] Command : " + cmd.Name)
 	return true
 }
