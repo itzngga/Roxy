@@ -13,7 +13,7 @@ func SqlStoreContainer() *sqlstore.Container {
 		}
 		return container
 	} else {
-		container, err := sqlstore.New("sqlite3", CreateSqliteDsn(), NewWaDBLog())
+		container, err := sqlstore.New("sqlite", CreateSqliteDsn(), NewWaDBLog())
 		if err != nil {
 			panic(err)
 		}
