@@ -8,6 +8,7 @@ import (
 	"github.com/itzngga/goRoxy/config"
 	"github.com/itzngga/goRoxy/internal"
 	"github.com/itzngga/goRoxy/internal/handler"
+	"github.com/itzngga/goRoxy/middleware"
 	"github.com/joho/godotenv"
 	_ "github.com/lib/pq"
 	_ "github.com/mattn/go-sqlite3"
@@ -23,7 +24,9 @@ func init() {
 
 	handler.GlobalLocals = &map[string]interface{}{}
 	command.Commands = make([]*handler.Command, 0)
+	handler.GlobalMiddleware = make([]handler.MiddlewareFunc, 0)
 	command.GenerateAllCommands()
+	middleware.GenerateAllMiddlewares()
 }
 
 func main() {

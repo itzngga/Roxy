@@ -10,6 +10,7 @@ func GenerateAllCommands() {
 	ButtonCommand()
 	HydratedCommand()
 	ImageButtonCommand()
+	UrlImageButtonCommand()
 }
 
 func AddCommand(command *handler.Command) {

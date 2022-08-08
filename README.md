@@ -30,7 +30,7 @@ setup by copy the .env.example to .env
 # Add a Command
 create a simple command with:
 
-### hello_world.go
+### command/hello_world.go
 ```go
 package command
 
@@ -56,7 +56,7 @@ func HelloRunFunc(c *whatsmeow.Client, m *events.Message, cmd *handler.Command) 
 	return util.SendReplyText(m, "Hello World!")
 }
 ```
-### zInit.go
+### command/zInit.go
 ```go
 package command
 
@@ -70,6 +70,77 @@ func GenerateAllCommands() {
 
 func AddCommand(command *handler.Command) {
 	Commands = append(Commands, command)
+}
+```
+
+# Middlewares
+middleware is function before RunFunc is executed
+
+### Command middleware
+is only this command middleware
+```go
+package command
+
+import (
+	"fmt"
+	"github.com/itzngga/goRoxy/internal/handler"
+	"github.com/itzngga/goRoxy/util"
+	"go.mau.fi/whatsmeow"
+	waProto "go.mau.fi/whatsmeow/binary/proto"
+	"go.mau.fi/whatsmeow/types/events"
+)
+
+func HelloCommand() {
+	AddCommand(&handler.Command{
+		Name:        "hello",
+		Aliases:     []string{"hai", "helo"},
+		Description: "Command for Hello World!",
+		Category:    handler.MiscCategory,
+		RunFunc:     HelloRunFunc,
+		Middleware:  HelloMiddleware,
+	})
+}
+
+func HelloRunFunc(c *whatsmeow.Client, m *events.Message, cmd *handler.Command) *waProto.Message {
+	return util.SendReplyText(m, "Hello World!")
+}
+func HelloMiddleware(c *whatsmeow.Client, m *events.Message, cmd *handler.Command) bool {
+	fmt.Println("Hi middleware!")
+	return true
+}
+```
+### Global middleware
+all command run this middleware
+
+### middleware/log.go
+```go
+package middleware
+
+import (
+	"fmt"
+	"github.com/itzngga/goRoxy/internal/handler"
+	"go.mau.fi/whatsmeow"
+	"go.mau.fi/whatsmeow/types/events"
+)
+
+func LogMiddleware(c *whatsmeow.Client, m *events.Message, cmd *handler.Command) bool {
+	fmt.Println("\n[CMD] Command : " + cmd.Name)
+	return true
+}
+```
+
+### middleware/zInit.go
+```go
+package middleware
+
+import "github.com/itzngga/goRoxy/internal/handler"
+
+func GenerateAllMiddlewares() {
+	AddMiddleware(LogMiddleware) // <-- append new middleware here
+}
+
+func AddMiddleware(mid handler.MiddlewareFunc) {
+	handler.GlobalMiddleware = append(handler.GlobalMiddleware, mid)
 }
 ```
 # Helper/Util

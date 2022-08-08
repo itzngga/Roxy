@@ -16,6 +16,7 @@ import (
 )
 
 var GlobalLocals *map[string]interface{}
+var GlobalMiddleware []MiddlewareFunc
 
 type Muxer struct {
 	mutex           *sync.RWMutex
@@ -74,6 +75,13 @@ func (m *Muxer) RunCommand(c *whatsmeow.Client, evt *events.Message) {
 		if cdId != nil {
 			util.SendReplyMessage(c, evt, "You are on Cooldown!")
 			return
+		}
+		for _, middlewareFunc := range GlobalMiddleware {
+			if middlewareFunc != nil {
+				if m := middlewareFunc(c, evt, command); !m {
+					return
+				}
+			}
 		}
 		if command.Middleware != nil {
 			if m := command.Middleware(c, evt, command); !m {

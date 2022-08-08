@@ -6,16 +6,28 @@ import (
 	"google.golang.org/protobuf/proto"
 )
 
-func CreateHydratedTemplateButton(content, footer string, buttons ...*waProto.HydratedTemplateButton) *waProto.Message {
+func FixInvisibleTemplate(template *waProto.TemplateMessage) *waProto.Message {
 	return &waProto.Message{
-		TemplateMessage: &waProto.TemplateMessage{
-			HydratedTemplate: &waProto.HydratedFourRowTemplate{
-				HydratedContentText: proto.String(content),
-				HydratedFooterText:  proto.String(footer),
-				HydratedButtons:     buttons,
+		ViewOnceMessage: &waProto.FutureProofMessage{
+			Message: &waProto.Message{
+				MessageContextInfo: &waProto.MessageContextInfo{
+					DeviceListMetadataVersion: proto.Int32(2),
+					DeviceListMetadata:        nil,
+				},
+				TemplateMessage: template,
 			},
 		},
 	}
+}
+
+func CreateHydratedTemplateButton(content, footer string, buttons ...*waProto.HydratedTemplateButton) *waProto.Message {
+	return FixInvisibleTemplate(&waProto.TemplateMessage{
+		HydratedTemplate: &waProto.HydratedFourRowTemplate{
+			HydratedContentText: proto.String(content),
+			HydratedFooterText:  proto.String(footer),
+			HydratedButtons:     buttons,
+		},
+	})
 }
 
 func GenerateHydratedUrlButton(text, url string) *waProto.HydratedTemplateButton {
