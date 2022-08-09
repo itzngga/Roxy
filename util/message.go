@@ -1,13 +1,14 @@
 package util
 
 import (
+	"fmt"
 	"go.mau.fi/whatsmeow"
 	waProto "go.mau.fi/whatsmeow/binary/proto"
 	"go.mau.fi/whatsmeow/types/events"
 	"google.golang.org/protobuf/proto"
 )
 
-func SendReplyMessage(c *whatsmeow.Client, m *events.Message, text string) error {
+func SendReplyMessage(c *whatsmeow.Client, m *events.Message, text string) {
 	msg := &waProto.Message{
 		ExtendedTextMessage: &waProto.ExtendedTextMessage{
 			Text:        &text,
@@ -15,7 +16,9 @@ func SendReplyMessage(c *whatsmeow.Client, m *events.Message, text string) error
 		},
 	}
 	_, err := c.SendMessage(m.Info.Chat, "", msg)
-	return err
+	if err != nil {
+		fmt.Printf("Error sending message: %v\n", err)
+	}
 }
 func ParseQuotedMessage(m *waProto.Message) *waProto.Message {
 	if m.GetExtendedTextMessage().GetContextInfo() != nil {

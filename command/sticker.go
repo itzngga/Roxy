@@ -28,18 +28,19 @@ func StickerCommand() {
 		})
 }
 
-func StickerRunFunc(c *whatsmeow.Client, m *events.Message, cmd *handler.Command) *waProto.Message {
-	if m.Message.GetImageMessage() != nil {
-		return StickerImage(c, m, m.Message.GetImageMessage())
-	} else if util.ParseQuotedMessage(m.Message).GetImageMessage() != nil {
-		return StickerImage(c, m, util.ParseQuotedMessage(m.Message).GetImageMessage())
-	} else if m.Message.GetVideoMessage() != nil {
-		return StickerVideo(c, m, m.Message.GetVideoMessage())
-	} else if util.ParseQuotedMessage(m.Message).GetVideoMessage() != nil {
-		return StickerVideo(c, m, util.ParseQuotedMessage(m.Message).GetVideoMessage())
+func StickerRunFunc(c *whatsmeow.Client, args handler.RunFuncArgs) *waProto.Message {
+	if args.Evm.Message.GetImageMessage() != nil {
+		return StickerImage(c, args.Evm, args.Evm.Message.GetImageMessage())
+	} else if util.ParseQuotedMessage(args.Evm.Message).GetImageMessage() != nil {
+		return StickerImage(c, args.Evm, util.ParseQuotedMessage(args.Evm.Message).GetImageMessage())
+	} else if args.Evm.Message.GetVideoMessage() != nil {
+		return StickerVideo(c, args.Evm, args.Evm.Message.GetVideoMessage())
+	} else if util.ParseQuotedMessage(args.Evm.Message).GetVideoMessage() != nil {
+		return StickerVideo(c, args.Evm, util.ParseQuotedMessage(args.Evm.Message).GetVideoMessage())
 	}
-	return util.SendReplyText(m, "Invalid")
+	return util.SendReplyText(args.Evm, "Invalid")
 }
+
 func StickerVideo(c *whatsmeow.Client, m *events.Message, video *waProto.VideoMessage) *waProto.Message {
 	data, err := c.Download(video)
 	if err != nil {

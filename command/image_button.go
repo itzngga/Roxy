@@ -6,7 +6,6 @@ import (
 	"github.com/itzngga/goRoxy/util"
 	"go.mau.fi/whatsmeow"
 	waProto "go.mau.fi/whatsmeow/binary/proto"
-	"go.mau.fi/whatsmeow/types/events"
 )
 
 func ImageButtonCommand() {
@@ -18,8 +17,8 @@ func ImageButtonCommand() {
 	})
 }
 
-func ImageButtonRunFunc(c *whatsmeow.Client, m *events.Message, cmd *handler.Command) *waProto.Message {
-	id := cmd.GetLocals("uid").(string)
+func ImageButtonRunFunc(c *whatsmeow.Client, args handler.RunFuncArgs) *waProto.Message {
+	id := args.Cmd.GetLocals("uid").(string)
 
 	image, err := util.UploadImageMessageFromPath(c, "temp/example.png", "Testing")
 	if err != nil {

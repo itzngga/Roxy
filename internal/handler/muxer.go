@@ -8,23 +8,20 @@ import (
 	"go.mau.fi/whatsmeow"
 	waProto "go.mau.fi/whatsmeow/binary/proto"
 	"go.mau.fi/whatsmeow/types/events"
+	"strings"
 
-	"os"
-	"strconv"
 	"sync"
-	"time"
 )
 
 var GlobalLocals *map[string]interface{}
 var GlobalMiddleware []MiddlewareFunc
 
 type Muxer struct {
-	mutex           *sync.RWMutex
-	CommandSlice    []*Command
-	MuxCache        ttlcache.SimpleCache
-	Locals          *map[string]interface{}
-	CooldownTimeout time.Duration
-	HelpString      string
+	mutex        *sync.RWMutex
+	CommandSlice []*Command
+	MuxCache     ttlcache.SimpleCache
+	Locals       *map[string]interface{}
+	HelpString   string
 }
 
 func (m *Muxer) FindCommand(cmd string) (*Command, bool) {
@@ -71,20 +68,21 @@ func (m *Muxer) RunCommand(c *whatsmeow.Client, evt *events.Message) {
 	cmd, isCmd := util.ParseCmd(parsed)
 	command, isAvailable := m.FindCommand(cmd)
 	if isCmd && isAvailable {
-		cdId, _ := m.MuxCache.Get(c.Store.ID.User + evt.Info.Sender.User)
-		if cdId != nil {
-			util.SendReplyMessage(c, evt, "You are on Cooldown!")
-			return
+		args := RunFuncArgs{
+			Evm:  evt,
+			Cmd:  command,
+			Msg:  parsed,
+			Args: strings.Split(parsed, " "),
 		}
 		for _, middlewareFunc := range GlobalMiddleware {
 			if middlewareFunc != nil {
-				if m := middlewareFunc(c, evt, command); !m {
+				if m := middlewareFunc(c, args); !m {
 					return
 				}
 			}
 		}
 		if command.Middleware != nil {
-			if m := command.Middleware(c, evt, command); !m {
+			if m := command.Middleware(c, args); !m {
 				return
 			}
 		}
@@ -93,20 +91,15 @@ func (m *Muxer) RunCommand(c *whatsmeow.Client, evt *events.Message) {
 				return
 			}
 		}
-		msg := command.RunFunc(c, evt, command)
+		msg := command.RunFunc(c, args)
+
 		if msg != nil {
 			_, err := c.SendMessage(evt.Info.Chat, "", msg)
 			if err != nil {
 				fmt.Println(err)
 			}
 		}
-
-		go m.CooldownFunction(c, evt)
-		return
 	}
-}
-func (m *Muxer) CooldownFunction(c *whatsmeow.Client, evt *events.Message) {
-	m.MuxCache.SetWithTTL(c.Store.ID.User+evt.Info.Sender.User, true, m.CooldownTimeout)
 }
 
 func (m *Muxer) UpdateHelp() {
@@ -155,21 +148,19 @@ func (m *Muxer) GenerateRequiredLocals() {
 }
 
 func NewMuxer() *Muxer {
-	cd, _ := strconv.Atoi(os.Getenv("DEFAULT_COOLDOWN_SEC"))
 	muxer := &Muxer{
-		mutex:           &sync.RWMutex{},
-		MuxCache:        ttlcache.NewCache(),
-		Locals:          &map[string]interface{}{},
-		CooldownTimeout: time.Duration(cd) * time.Second,
-		CommandSlice:    make([]*Command, 0),
+		mutex:        &sync.RWMutex{},
+		MuxCache:     ttlcache.NewCache(),
+		Locals:       &map[string]interface{}{},
+		CommandSlice: make([]*Command, 0),
 	}
 	muxer.GenerateRequiredLocals()
 	muxer.AddCommand(&Command{
 		Name:        "help",
 		Description: "Returns Bot Help",
 		Category:    UtilitiesCategory,
-		RunFunc: func(c *whatsmeow.Client, m *events.Message, cmd *Command) *waProto.Message {
-			return util.SendReplyText(m, muxer.GetHelpPage())
+		RunFunc: func(c *whatsmeow.Client, args RunFuncArgs) *waProto.Message {
+			return util.SendReplyText(args.Evm, muxer.GetHelpPage())
 		},
 	})
 	return muxer

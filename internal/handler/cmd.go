@@ -10,8 +10,15 @@ import (
 	"go.mau.fi/whatsmeow/types/events"
 )
 
-type MiddlewareFunc func(c *whatsmeow.Client, m *events.Message, cmd *Command) bool
-type RunFunc func(c *whatsmeow.Client, m *events.Message, cmd *Command) *waProto.Message
+type MiddlewareFunc func(c *whatsmeow.Client, args RunFuncArgs) bool
+type RunFunc func(c *whatsmeow.Client, args RunFuncArgs) *waProto.Message
+
+type RunFuncArgs struct {
+	Evm  *events.Message
+	Cmd  *Command
+	Msg  string
+	Args []string
+}
 
 type Command struct {
 	Name            string

@@ -6,7 +6,6 @@ import (
 	"github.com/itzngga/goRoxy/util"
 	"go.mau.fi/whatsmeow"
 	waProto "go.mau.fi/whatsmeow/binary/proto"
-	"go.mau.fi/whatsmeow/types/events"
 	"time"
 )
 
@@ -20,8 +19,8 @@ func HiCommand() {
 	})
 }
 
-func HiRunFunc(c *whatsmeow.Client, m *events.Message, cmd *handler.Command) *waProto.Message {
+func HiRunFunc(c *whatsmeow.Client, args handler.RunFuncArgs) *waProto.Message {
 	t := time.Now()
-	util.SendReplyMessage(c, m, "testing a...")
-	return util.SendReplyText(m, fmt.Sprintf("Duration: %f seconds", time.Now().Sub(t).Seconds()))
+	util.SendReplyMessage(c, args.Evm, "testing a...")
+	return util.SendReplyText(args.Evm, fmt.Sprintf("Duration: %f seconds", time.Now().Sub(t).Seconds()))
 }
