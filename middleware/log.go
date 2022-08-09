@@ -4,10 +4,9 @@ import (
 	"fmt"
 	"github.com/itzngga/goRoxy/internal/handler"
 	"go.mau.fi/whatsmeow"
-	"go.mau.fi/whatsmeow/types/events"
 )
 
-func LogMiddleware(c *whatsmeow.Client, m *events.Message, cmd *handler.Command) bool {
-	fmt.Println("[CMD] Command : " + cmd.Name)
+func LogMiddleware(c *whatsmeow.Client, args handler.RunFuncArgs) bool {
+	fmt.Println("[CMD] Command : " + args.Cmd.Name)
 	return true
 }

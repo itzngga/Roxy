@@ -52,8 +52,8 @@ func HelloCommand() {
 	})
 }
 
-func HelloRunFunc(c *whatsmeow.Client, m *events.Message, cmd *handler.Command) *waProto.Message {
-	return util.SendReplyText(m, "Hello World!")
+func HelloRunFunc(c *whatsmeow.Client, args handler.RunFuncArgs) *waProto.Message {
+	return util.SendReplyText(args.Evm, "Hello World!")
 }
 ```
 ### command/zInit.go
@@ -101,10 +101,10 @@ func HelloCommand() {
 	})
 }
 
-func HelloRunFunc(c *whatsmeow.Client, m *events.Message, cmd *handler.Command) *waProto.Message {
-	return util.SendReplyText(m, "Hello World!")
+func HelloRunFunc(c *whatsmeow.Client, args handler.RunFuncArgs) *waProto.Message {
+	return util.SendReplyText(args.Evm, "Hello World!")
 }
-func HelloMiddleware(c *whatsmeow.Client, m *events.Message, cmd *handler.Command) bool {
+func HelloMiddleware(c *whatsmeow.Client, args handler.RunFuncArgs) bool {
 	fmt.Println("Hi middleware!")
 	return true
 }
@@ -123,8 +123,8 @@ import (
 	"go.mau.fi/whatsmeow/types/events"
 )
 
-func LogMiddleware(c *whatsmeow.Client, m *events.Message, cmd *handler.Command) bool {
-	fmt.Println("\n[CMD] Command : " + cmd.Name)
+func LogMiddleware(c *whatsmeow.Client, args handler.RunFuncArgs) bool {
+	fmt.Println("\n[CMD] Command : " + args.Cmd.Name)
 	return true
 }
 ```
