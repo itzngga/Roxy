@@ -10,7 +10,7 @@ require (
 	github.com/joho/godotenv v1.4.0
 	github.com/lib/pq v1.10.6
 	github.com/mdp/qrterminal/v3 v3.0.0
-	github.com/valyala/fasthttp v1.38.0
+	github.com/valyala/fasthttp v1.39.0
 	go.mau.fi/whatsmeow v0.0.0-20220604174810-f28d984f1b9a
 	go.uber.org/zap v1.22.0
 	google.golang.org/protobuf v1.28.1
