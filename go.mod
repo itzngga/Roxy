@@ -12,7 +12,7 @@ require (
 	github.com/mdp/qrterminal/v3 v3.0.0
 	github.com/valyala/fasthttp v1.39.0
 	go.mau.fi/whatsmeow v0.0.0-20220604174810-f28d984f1b9a
-	go.uber.org/zap v1.22.0
+	go.uber.org/zap v1.23.0
 	google.golang.org/protobuf v1.28.1
 	modernc.org/sqlite v1.18.1
 )
@@ -28,7 +28,6 @@ require (
 	github.com/mattn/go-sqlite3 v2.0.3+incompatible // indirect
 	github.com/pkg/errors v0.9.1 // indirect
 	github.com/remyoudompheng/bigfft v0.0.0-20200410134404-eec4a21b6bb0 // indirect
-	github.com/stretchr/testify v1.7.1 // indirect
 	github.com/valyala/bytebufferpool v1.0.0 // indirect
 	go.mau.fi/libsignal v0.0.0-20220425070825-c40c839ee6a0 // indirect
 	go.uber.org/atomic v1.7.0 // indirect
