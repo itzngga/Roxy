@@ -1,6 +1,6 @@
 module github.com/itzngga/goRoxy
 
-go 1.18
+go 1.19
 
 require (
 	github.com/gabriel-vasile/mimetype v1.4.1
@@ -11,6 +11,7 @@ require (
 	github.com/lib/pq v1.10.6
 	github.com/mdp/qrterminal/v3 v3.0.0
 	github.com/valyala/fasthttp v1.39.0
+	github.com/zhangyunhao116/skipmap v0.9.1
 	go.mau.fi/whatsmeow v0.0.0-20220604174810-f28d984f1b9a
 	go.uber.org/zap v1.23.0
 	google.golang.org/protobuf v1.28.1
@@ -29,6 +30,7 @@ require (
 	github.com/pkg/errors v0.9.1 // indirect
 	github.com/remyoudompheng/bigfft v0.0.0-20200410134404-eec4a21b6bb0 // indirect
 	github.com/valyala/bytebufferpool v1.0.0 // indirect
+	github.com/zhangyunhao116/fastrand v0.2.1 // indirect
 	go.mau.fi/libsignal v0.0.0-20220425070825-c40c839ee6a0 // indirect
 	go.uber.org/atomic v1.7.0 // indirect
 	go.uber.org/multierr v1.6.0 // indirect
