@@ -2,6 +2,7 @@ package handler
 
 import (
 	"fmt"
+	"github.com/zhangyunhao116/skipmap"
 	waProto "go.mau.fi/whatsmeow/binary/proto"
 	"sort"
 	"time"
@@ -14,10 +15,12 @@ type MiddlewareFunc func(c *whatsmeow.Client, args RunFuncArgs) bool
 type RunFunc func(c *whatsmeow.Client, args RunFuncArgs) *waProto.Message
 
 type RunFuncArgs struct {
-	Evm  *events.Message
-	Cmd  *Command
-	Msg  string
-	Args []string
+	Evm    *events.Message
+	Cmd    *Command
+	Msg    string
+	Args   []string
+	Number string
+	Locals *skipmap.StringMap[string]
 }
 
 type Command struct {
@@ -33,8 +36,6 @@ type Command struct {
 	GroupOnly    bool
 	Middleware   MiddlewareFunc
 	RunFunc      RunFunc
-
-	Locals *map[string]interface{}
 }
 
 func (c *Command) GetName(name string) string {
@@ -62,12 +63,4 @@ func (c *Command) Validate() {
 	}
 
 	sort.Strings(c.Aliases)
-}
-
-func (c *Command) GetLocals(key string) interface{} {
-	return (*c.Locals)[key]
-}
-
-func (c *Command) SetLocals(key string, value interface{}) {
-	(*c.Locals)[key] = value
 }

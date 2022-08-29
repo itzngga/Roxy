@@ -18,7 +18,7 @@ func UrlImageButtonCommand() {
 }
 
 func UrlImageButtonRunFunc(c *whatsmeow.Client, args handler.RunFuncArgs) *waProto.Message {
-	id := args.Cmd.GetLocals("uid").(string)
+	id, _ := args.Locals.Load("uid")
 
 	image, err := util.UploadImageFromUrl(c, "https://picsum.photos/id/870/1280/720?grayscale&blur=2", "Testing")
 	if err != nil {

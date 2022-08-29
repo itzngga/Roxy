@@ -18,7 +18,7 @@ func ImageButtonCommand() {
 }
 
 func ImageButtonRunFunc(c *whatsmeow.Client, args handler.RunFuncArgs) *waProto.Message {
-	id := args.Cmd.GetLocals("uid").(string)
+	id, _ := args.Locals.Load("uid")
 
 	image, err := util.UploadImageMessageFromPath(c, "temp/example.png", "Testing")
 	if err != nil {

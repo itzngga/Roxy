@@ -18,7 +18,7 @@ func HydratedCommand() {
 }
 
 func HydratedRunFunc(c *whatsmeow.Client, args handler.RunFuncArgs) *waProto.Message {
-	id := args.Cmd.GetLocals("uid").(string)
+	id, _ := args.Locals.Load("uid")
 	button := util.CreateHydratedTemplateButton("Hello", "footer",
 		util.GenerateHydratedUrlButton("url", "https://google.com"),
 		util.GenerateHydratedCallButton("test", "+62 812 9798 0063"),

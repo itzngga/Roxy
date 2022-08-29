@@ -22,7 +22,6 @@ func init() {
 		panic(err)
 	}
 
-	handler.GlobalLocals = &map[string]interface{}{}
 	command.Commands = make([]*handler.Command, 0)
 	handler.GlobalMiddleware = make([]handler.MiddlewareFunc, 0)
 	command.GenerateAllCommands()

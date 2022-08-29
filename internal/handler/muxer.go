@@ -4,75 +4,71 @@ import (
 	"fmt"
 	"github.com/itzngga/goRoxy/helper"
 	"github.com/itzngga/goRoxy/util"
-	"github.com/jellydator/ttlcache/v2"
+	"github.com/zhangyunhao116/skipmap"
 	"go.mau.fi/whatsmeow"
-	waProto "go.mau.fi/whatsmeow/binary/proto"
+	"go.mau.fi/whatsmeow/types"
 	"go.mau.fi/whatsmeow/types/events"
+	"strconv"
 	"strings"
-
-	"sync"
 )
 
-var GlobalLocals *map[string]interface{}
 var GlobalMiddleware []MiddlewareFunc
 
 type Muxer struct {
-	mutex        *sync.RWMutex
-	CommandSlice []*Command
-	MuxCache     ttlcache.SimpleCache
-	Locals       *map[string]interface{}
-	HelpString   string
-}
-
-func (m *Muxer) FindCommand(cmd string) (*Command, bool) {
-	i, _ := m.MuxCache.Get(cmd)
-	if i != nil && len(m.CommandSlice) != 0 && m.CommandSlice[i.(int)] != nil {
-		return m.CommandSlice[i.(int)], true
-	} else {
-		for i, val := range m.CommandSlice {
-			if pcmd := val.GetName(cmd); pcmd == cmd {
-				m.MuxCache.Set(pcmd, i)
-				return val, true
-			}
-		}
-		return &Command{}, false
-	}
+	CmdMap *skipmap.StringMap[*Command]
+	Locals *skipmap.StringMap[string]
 }
 
 func (m *Muxer) AddCommand(cmd *Command) {
-	m.mutex.RLock()
-	defer m.mutex.RUnlock()
-
 	cmd.Validate()
-	cmd.Locals = m.Locals
 
-	indexCache, _ := m.MuxCache.Get(cmd.Name)
-	if indexCache != nil && m.CommandSlice[indexCache.(int)] != nil {
-		panic(fmt.Sprintf("Invalid duplicate %s cmd", cmd.Name))
+	_, ok := m.CmdMap.Load(cmd.Name)
+	if ok {
+		panic("Duplicate command: " + cmd.Name)
 	}
 
-	m.MuxCache.Set(cmd.Name, len(m.CommandSlice))
-	m.CommandSlice = append(m.CommandSlice, cmd)
+	for _, alias := range cmd.Aliases {
+		_, ok := m.CmdMap.Load(alias)
+		if ok {
+			panic("Duplicate alias in command " + cmd.Name)
+		}
+		m.CmdMap.Store(alias, cmd)
+	}
+	m.CmdMap.Store(cmd.Name, cmd)
 }
 
-func (m *Muxer) GetLocals(key string) interface{} {
-	return (*m.Locals)[key]
-}
-
-func (m *Muxer) SetLocals(key string, value interface{}) {
-	(*m.Locals)[key] = value
+func (m *Muxer) CheckGlobalState(number string) (bool, string) {
+	globalState, ok := m.Locals.Load(number)
+	if !ok {
+		return false, ""
+	}
+	m.Locals.Delete(number)
+	return true, globalState
 }
 
 func (m *Muxer) RunCommand(c *whatsmeow.Client, evt *events.Message) {
-	parsed := util.ParseMessageText(m.GetLocals("uid").(string), evt)
+	number := strconv.FormatUint(evt.Info.Sender.UserInt(), 10)
+	id, _ := m.Locals.Load("uid")
+	ok, stateCmd := m.CheckGlobalState(number)
+	parsed := util.ParseMessageText(id, evt)
+	if ok {
+		if strings.Contains(parsed, "!cancel") {
+			m.Locals.Delete(number)
+			util.SendReplyMessage(c, evt, "Dibatalkan!")
+			return
+		}
+		parsed = stateCmd + " " + parsed
+	}
 	cmd, isCmd := util.ParseCmd(parsed)
-	command, isAvailable := m.FindCommand(cmd)
+	command, isAvailable := m.CmdMap.Load(cmd)
 	if isCmd && isAvailable {
 		args := RunFuncArgs{
-			Evm:  evt,
-			Cmd:  command,
-			Msg:  parsed,
-			Args: strings.Split(parsed, " "),
+			Evm:    evt,
+			Cmd:    command,
+			Msg:    parsed,
+			Number: number,
+			Locals: m.Locals,
+			Args:   strings.Split(parsed, " "),
 		}
 		for _, middlewareFunc := range GlobalMiddleware {
 			if middlewareFunc != nil {
@@ -99,69 +95,22 @@ func (m *Muxer) RunCommand(c *whatsmeow.Client, evt *events.Message) {
 				fmt.Println(err)
 			}
 		}
+		a := []types.MessageID{}
+		a = append(a, evt.Info.ID)
+		c.MarkRead(a, evt.Info.Timestamp, evt.Info.Chat, evt.Info.Sender)
 	}
-}
-
-func (m *Muxer) UpdateHelp() {
-	if m.HelpString == "" {
-		m.HelpString = fmt.Sprintf(`---------------%s`, "\nTestBot\n\n")
-	}
-	var Uncategorize []*Command
-	var Utilities []*Command
-	var Misc []*Command
-	for _, val := range m.CommandSlice {
-		if !val.HideFromHelp {
-			if val.Category == UtilitiesCategory {
-				Utilities = append(Utilities, val)
-			} else if val.Category == MiscCategory {
-				Misc = append(Misc, val)
-			} else {
-				Uncategorize = append(Uncategorize, val)
-			}
-		}
-	}
-	m.HelpString += "#Utilities\n" + UtilitiesCategory.Description + "\n"
-	for _, util := range Utilities {
-		m.HelpString += fmt.Sprintf(`%s. %s%s`, "➣ ", util.Name+"\n", util.Description+"\n")
-	}
-	m.HelpString += "\n\n#Misc\n" + MiscCategory.Description + "\n"
-	for _, misc := range Misc {
-		m.HelpString += fmt.Sprintf(`%s. %s%s`, "➣ ", misc.Name+"\n", misc.Description+"\n")
-	}
-	m.HelpString += "\n\n#Uncategorized\n" + Uncategorized.Description + "\n"
-	for _, unca := range Uncategorize {
-		m.HelpString += fmt.Sprintf(`%s. %s%s`, "➣ ", unca.Name+"\n", unca.Description+"\n")
-	}
-}
-
-func (m *Muxer) GetHelpPage() string {
-	if m.HelpString != "" {
-		return m.HelpString
-	}
-	m.UpdateHelp()
-	return m.HelpString
 }
 
 func (m *Muxer) GenerateRequiredLocals() {
 	uid := helper.CreateUid()
-	m.SetLocals("uid", uid)
+	m.Locals.Store("uid", uid)
 }
 
 func NewMuxer() *Muxer {
 	muxer := &Muxer{
-		mutex:        &sync.RWMutex{},
-		MuxCache:     ttlcache.NewCache(),
-		Locals:       &map[string]interface{}{},
-		CommandSlice: make([]*Command, 0),
+		Locals: skipmap.NewString[string](),
+		CmdMap: skipmap.NewString[*Command](),
 	}
 	muxer.GenerateRequiredLocals()
-	muxer.AddCommand(&Command{
-		Name:        "help",
-		Description: "Returns Bot Help",
-		Category:    UtilitiesCategory,
-		RunFunc: func(c *whatsmeow.Client, args RunFuncArgs) *waProto.Message {
-			return util.SendReplyText(args.Evm, muxer.GetHelpPage())
-		},
-	})
 	return muxer
 }

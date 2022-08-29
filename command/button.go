@@ -18,7 +18,7 @@ func ButtonCommand() {
 }
 
 func ButtonRunFunc(c *whatsmeow.Client, args handler.RunFuncArgs) *waProto.Message {
-	id := args.Cmd.GetLocals("uid").(string)
+	id, _ := args.Locals.Load("uid")
 	button := util.CreateEmptyButton("Button", "@button",
 		util.GenerateButton(id, "!help", "!help"),
 		util.GenerateButton(id, "!hi", "!hi"),
