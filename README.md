@@ -13,6 +13,9 @@ Normal run mode
 Run with race conditions' detector (DEBUG)
 > go run --race *.go
 
+With pm2
+> go run build.go
+
 # Environment
 setup by copy the .env.example to .env
 
