@@ -4,8 +4,10 @@ import (
 	"fmt"
 	"go.mau.fi/whatsmeow"
 	waProto "go.mau.fi/whatsmeow/binary/proto"
+	"go.mau.fi/whatsmeow/types"
 	"go.mau.fi/whatsmeow/types/events"
 	"google.golang.org/protobuf/proto"
+	"strings"
 )
 
 func SendReplyMessage(c *whatsmeow.Client, m *events.Message, text string) {
@@ -64,6 +66,8 @@ func ParseQuotedBy(m *waProto.Message, str string) *waProto.Message {
 		return m.GetDocumentMessage().GetContextInfo().GetQuotedMessage()
 	case "audio":
 		return m.GetAudioMessage().GetContextInfo().GetQuotedMessage()
+	case "location":
+		return m.GetAudioMessage().GetContextInfo().GetQuotedMessage()
 	default:
 		return ParseQuotedMessage(m)
 	}
@@ -92,5 +96,22 @@ func SendInvalidCommand(m *events.Message) *waProto.Message {
 			Text:        proto.String("Invalid command received"),
 			ContextInfo: WithReply(m),
 		},
+	}
+}
+
+func ParseJID(arg string) (types.JID, bool) {
+	if arg[0] == '+' {
+		arg = arg[1:]
+	}
+	if !strings.ContainsRune(arg, '@') {
+		return types.NewJID(arg, types.DefaultUserServer), true
+	} else {
+		recipient, err := types.ParseJID(arg)
+		if err != nil {
+			return recipient, false
+		} else if recipient.User == "" {
+			return recipient, false
+		}
+		return recipient, true
 	}
 }

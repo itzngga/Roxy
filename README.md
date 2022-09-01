@@ -56,22 +56,8 @@ func HelloRunFunc(c *whatsmeow.Client, args handler.RunFuncArgs) *waProto.Messag
 	return util.SendReplyText(args.Evm, "Hello World!")
 }
 ```
-### command/zInit.go
-```go
-package command
-
-import "github.com/itzngga/goRoxy/internal/handler"
-
-var Commands []*handler.Command
-
-func GenerateAllCommands() {
-	HelloCommand() // <---- append new command here
-}
-
-func AddCommand(command *handler.Command) {
-	Commands = append(Commands, command)
-}
-```
+### Note
+Function needs to contains "Command" word, or it will not be generated
 
 # Middlewares
 middleware is function before RunFunc is executed
