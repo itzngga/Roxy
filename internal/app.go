@@ -43,12 +43,17 @@ func (b *Base) QRChanFunc(ch <-chan whatsmeow.QRChannelItem) {
 	}
 }
 
-func (b *Base) Events(evt interface{}) {
-	switch event := evt.(type) {
-	case *events.Connected:
+func (b *Base) ConnectedEvents(evt interface{}) {
+	_, ok := evt.(*events.Connected)
+	if ok {
 		b.startTime = time.Now()
 		fmt.Println("[INFO] Connected!")
-	case *events.Message:
+	}
+}
+
+func (b *Base) MessageEvents(evt interface{}) {
+	event, ok := evt.(*events.Message)
+	if ok {
 		if !b.startTime.IsZero() && event.Info.Timestamp.After(b.startTime) {
 			go b.Muxer.RunCommand(b.client, event)
 		}
@@ -77,7 +82,8 @@ func (b *Base) Init() {
 			b.Log.With(zap.Error(err)).Error(err.Error())
 		}
 	}
-	b.client.AddEventHandler(b.Events)
+	b.client.AddEventHandler(b.ConnectedEvents)
+	b.client.AddEventHandler(b.MessageEvents)
 
 	c := make(chan os.Signal)
 	signal.Notify(c, os.Interrupt, syscall.SIGTERM)
