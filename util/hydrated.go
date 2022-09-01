@@ -30,6 +30,71 @@ func CreateHydratedTemplateButton(content, footer string, buttons ...*waProto.Hy
 	})
 }
 
+func CreateHydratedTemplateImageButton(content, footer string, image *waProto.ImageMessage, buttons ...*waProto.HydratedTemplateButton) *waProto.Message {
+	return FixInvisibleTemplate(&waProto.TemplateMessage{
+		HydratedTemplate: &waProto.HydratedFourRowTemplate{
+			HydratedContentText: proto.String(content),
+			HydratedFooterText:  proto.String(footer),
+			HydratedButtons:     buttons,
+			Title: &waProto.HydratedFourRowTemplate_ImageMessage{
+				ImageMessage: image,
+			},
+		},
+	})
+}
+
+func CreateHydratedTemplateVideoButton(content, footer string, video *waProto.VideoMessage, buttons ...*waProto.HydratedTemplateButton) *waProto.Message {
+	return FixInvisibleTemplate(&waProto.TemplateMessage{
+		HydratedTemplate: &waProto.HydratedFourRowTemplate{
+			HydratedContentText: proto.String(content),
+			HydratedFooterText:  proto.String(footer),
+			HydratedButtons:     buttons,
+			Title: &waProto.HydratedFourRowTemplate_VideoMessage{
+				VideoMessage: video,
+			},
+		},
+	})
+}
+
+func CreateHydratedTemplateDocumentButton(content, footer string, document *waProto.DocumentMessage, buttons ...*waProto.HydratedTemplateButton) *waProto.Message {
+	return FixInvisibleTemplate(&waProto.TemplateMessage{
+		HydratedTemplate: &waProto.HydratedFourRowTemplate{
+			HydratedContentText: proto.String(content),
+			HydratedFooterText:  proto.String(footer),
+			HydratedButtons:     buttons,
+			Title: &waProto.HydratedFourRowTemplate_DocumentMessage{
+				DocumentMessage: document,
+			},
+		},
+	})
+}
+
+func CreateHydratedTemplateLocationButton(content, footer string, location *waProto.LocationMessage, buttons ...*waProto.HydratedTemplateButton) *waProto.Message {
+	return FixInvisibleTemplate(&waProto.TemplateMessage{
+		HydratedTemplate: &waProto.HydratedFourRowTemplate{
+			HydratedContentText: proto.String(content),
+			HydratedFooterText:  proto.String(footer),
+			HydratedButtons:     buttons,
+			Title: &waProto.HydratedFourRowTemplate_LocationMessage{
+				LocationMessage: location,
+			},
+		},
+	})
+}
+
+func CreateHydratedTemplateHydratedTitleButton(content, footer, title string, buttons ...*waProto.HydratedTemplateButton) *waProto.Message {
+	return FixInvisibleTemplate(&waProto.TemplateMessage{
+		HydratedTemplate: &waProto.HydratedFourRowTemplate{
+			HydratedContentText: proto.String(content),
+			HydratedFooterText:  proto.String(footer),
+			HydratedButtons:     buttons,
+			Title: &waProto.HydratedFourRowTemplate_HydratedTitleText{
+				HydratedTitleText: title,
+			},
+		},
+	})
+}
+
 func GenerateHydratedUrlButton(text, url string) *waProto.HydratedTemplateButton {
 	return &waProto.HydratedTemplateButton{
 		HydratedButton: &waProto.HydratedTemplateButton_UrlButton{

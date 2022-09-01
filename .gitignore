@@ -1,3 +1,5 @@
 .idea
 .env
 store.db
+app.log
+cmd.log

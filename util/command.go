@@ -14,7 +14,7 @@ func ParseCmd(str string) (string, bool) {
 	if str == "" {
 		return "", false
 	}
-	word := strings.Fields(str)
+	word := strings.Split(str, " ")
 	if len(word) == 0 && word[0] == "" {
 		return "", false
 	}

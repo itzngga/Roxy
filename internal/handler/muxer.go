@@ -12,7 +12,7 @@ import (
 	"strings"
 )
 
-var GlobalMiddleware []MiddlewareFunc
+var GlobalMiddleware *skipmap.StringMap[MiddlewareFunc]
 
 type Muxer struct {
 	CmdMap *skipmap.StringMap[*Command]
@@ -21,7 +21,6 @@ type Muxer struct {
 
 func (m *Muxer) AddCommand(cmd *Command) {
 	cmd.Validate()
-
 	_, ok := m.CmdMap.Load(cmd.Name)
 	if ok {
 		panic("Duplicate command: " + cmd.Name)
@@ -70,20 +69,25 @@ func (m *Muxer) RunCommand(c *whatsmeow.Client, evt *events.Message) {
 			Locals: m.Locals,
 			Args:   strings.Split(parsed, " "),
 		}
-		for _, middlewareFunc := range GlobalMiddleware {
-			if middlewareFunc != nil {
-				if m := middlewareFunc(c, args); !m {
-					return
-				}
+		GlobalMiddleware.Range(func(key string, value MiddlewareFunc) bool {
+			if !value(c, args) {
+				return false
 			}
-		}
+			return false
+		})
+
 		if command.Middleware != nil {
-			if m := command.Middleware(c, args); !m {
+			if !command.Middleware(c, args) {
 				return
 			}
 		}
 		if command.GroupOnly {
 			if !evt.Info.IsGroup {
+				return
+			}
+		}
+		if command.PrivateOnly {
+			if evt.Info.IsGroup {
 				return
 			}
 		}
