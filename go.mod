@@ -8,7 +8,7 @@ require (
 	github.com/google/uuid v1.3.0
 	github.com/jellydator/ttlcache/v2 v2.11.1
 	github.com/joho/godotenv v1.4.0
-	github.com/lib/pq v1.10.6
+	github.com/lib/pq v1.10.7
 	github.com/mdp/qrterminal/v3 v3.0.0
 	github.com/valyala/fasthttp v1.40.0
 	github.com/zhangyunhao116/skipmap v0.9.1
