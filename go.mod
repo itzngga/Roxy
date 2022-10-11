@@ -11,7 +11,7 @@ require (
 	github.com/lib/pq v1.10.7
 	github.com/mdp/qrterminal/v3 v3.0.0
 	github.com/valyala/fasthttp v1.40.0
-	github.com/zhangyunhao116/skipmap v0.9.1
+	github.com/zhangyunhao116/skipmap v0.10.0
 	go.mau.fi/whatsmeow v0.0.0-20220604174810-f28d984f1b9a
 	go.uber.org/zap v1.23.0
 	google.golang.org/protobuf v1.28.1
