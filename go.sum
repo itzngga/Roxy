@@ -61,10 +61,10 @@ github.com/valyala/fasthttp v1.40.0 h1:CRq/00MfruPGFLTQKY8b+8SfdK60TxNztjRMnH0t1
 github.com/valyala/fasthttp v1.40.0/go.mod h1:t/G+3rLek+CyY9bnIE+YlMRddxVAAGjhxndDB4i4C0I=
 github.com/valyala/tcplisten v1.0.0/go.mod h1:T0xQ8SeCZGxckz9qRXTfG43PvQ/mcWh7FwZEA7Ioqkc=
 github.com/yuin/goldmark v1.2.1/go.mod h1:3hX8gzYuyVAZsxl0MRgGTJEmQBFcNTphYh9decYSb74=
-github.com/zhangyunhao116/fastrand v0.2.1 h1:H5FygwAWuYF7IqJKrdWBbphgHffRC07okNQjT2qbGB4=
-github.com/zhangyunhao116/fastrand v0.2.1/go.mod h1:0v5KgHho0VE6HU192HnY15de/oDS8UrbBChIFjIhBtc=
-github.com/zhangyunhao116/skipmap v0.10.0 h1:1f0HSVaCpIeJd+v3eYU2bBdEHJIPD2tgKhsZJpCPPtE=
-github.com/zhangyunhao116/skipmap v0.10.0/go.mod h1:lr61q2jYDJMUFuSivumPxAJxygEkwXfSfIocXu6Qqxg=
+github.com/zhangyunhao116/fastrand v0.3.0 h1:7bwe124xcckPulX6fxtr2lFdO2KQqaefdtbk+mqO/Ig=
+github.com/zhangyunhao116/fastrand v0.3.0/go.mod h1:0v5KgHho0VE6HU192HnY15de/oDS8UrbBChIFjIhBtc=
+github.com/zhangyunhao116/skipmap v0.10.1 h1:CMH4yGZQESBM1kUNozQqQ+Ra2pKqwF3HxaTADOaIfPs=
+github.com/zhangyunhao116/skipmap v0.10.1/go.mod h1:CClnLPHl3DI+hHgrcy0OZ/QJ45AWgA3ObVcQyJop12c=
 go.mau.fi/libsignal v0.0.0-20220425070825-c40c839ee6a0 h1:3IQF2bgAyibdo77hTejwuJe4jlypj9QaE4xCQuxrThM=
 go.mau.fi/libsignal v0.0.0-20220425070825-c40c839ee6a0/go.mod h1:kBOXTvYyDG/q1Ihgvd4J6WenGPh7wtEGvPKF6vmf5ak=
 go.mau.fi/whatsmeow v0.0.0-20220604174810-f28d984f1b9a h1:kLIh5zAEvEMK8k8Qg2aU6aMDfJmrf5+XJ3t3Q3ZCV7o=
