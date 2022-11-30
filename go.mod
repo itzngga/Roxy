@@ -13,7 +13,7 @@ require (
 	github.com/valyala/fasthttp v1.40.0
 	github.com/zhangyunhao116/skipmap v0.10.0
 	go.mau.fi/whatsmeow v0.0.0-20220604174810-f28d984f1b9a
-	go.uber.org/zap v1.23.0
+	go.uber.org/zap v1.24.0
 	google.golang.org/protobuf v1.28.1
 	modernc.org/sqlite v1.19.1
 )
