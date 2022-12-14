@@ -1,7 +1,6 @@
 package util
 
 import (
-	"github.com/itzngga/goRoxy/helper"
 	waProto "go.mau.fi/whatsmeow/binary/proto"
 	"google.golang.org/protobuf/proto"
 )
@@ -20,16 +19,16 @@ func FixInvisibleButton(button *waProto.ButtonsMessage) *waProto.Message {
 	}
 }
 
-func GenerateButton(id, cmd, text string) *waProto.Button {
-	return &waProto.Button{
-		ButtonId: proto.String(helper.CreateButtonID(id, cmd)),
-		ButtonText: &waProto.ButtonText{
+func GenerateButton(id, cmd, text string) *waProto.ButtonsMessage_Button {
+	return &waProto.ButtonsMessage_Button{
+		ButtonId: proto.String(CreateButtonID(id, cmd)),
+		ButtonText: &waProto.ButtonsMessage_Button_ButtonText{
 			DisplayText: proto.String(text),
 		},
-		Type: waProto.Button_RESPONSE.Enum()}
+		Type: waProto.ButtonsMessage_Button_RESPONSE.Enum()}
 }
 
-func CreateTextButton(content, footer string, buttons ...*waProto.Button) *waProto.Message {
+func CreateTextButton(content, footer string, buttons ...*waProto.ButtonsMessage_Button) *waProto.Message {
 	return FixInvisibleButton(
 		&waProto.ButtonsMessage{
 			HeaderType:  waProto.ButtonsMessage_TEXT.Enum(),
@@ -40,7 +39,7 @@ func CreateTextButton(content, footer string, buttons ...*waProto.Button) *waPro
 	)
 }
 
-func CreateEmptyButton(content, footer string, buttons ...*waProto.Button) *waProto.Message {
+func CreateEmptyButton(content, footer string, buttons ...*waProto.ButtonsMessage_Button) *waProto.Message {
 	return FixInvisibleButton(&waProto.ButtonsMessage{
 		HeaderType:  waProto.ButtonsMessage_EMPTY.Enum(),
 		ContentText: proto.String(content),
@@ -50,7 +49,7 @@ func CreateEmptyButton(content, footer string, buttons ...*waProto.Button) *waPr
 	)
 }
 
-func CreateImageButton(content, footer string, image *waProto.ButtonsMessage_ImageMessage, buttons ...*waProto.Button) *waProto.Message {
+func CreateImageButton(content, footer string, image *waProto.ButtonsMessage_ImageMessage, buttons ...*waProto.ButtonsMessage_Button) *waProto.Message {
 	return FixInvisibleButton(&waProto.ButtonsMessage{
 		HeaderType:  waProto.ButtonsMessage_IMAGE.Enum(),
 		ContentText: proto.String(content),
@@ -61,7 +60,7 @@ func CreateImageButton(content, footer string, image *waProto.ButtonsMessage_Ima
 	)
 }
 
-func CreateVideoButton(content, footer string, video *waProto.ButtonsMessage_VideoMessage, buttons ...*waProto.Button) *waProto.Message {
+func CreateVideoButton(content, footer string, video *waProto.ButtonsMessage_VideoMessage, buttons ...*waProto.ButtonsMessage_Button) *waProto.Message {
 	return FixInvisibleButton(&waProto.ButtonsMessage{
 		HeaderType:  waProto.ButtonsMessage_VIDEO.Enum(),
 		ContentText: proto.String(content),
@@ -72,7 +71,7 @@ func CreateVideoButton(content, footer string, video *waProto.ButtonsMessage_Vid
 	)
 }
 
-func CreateLocationButton(content, footer string, location *waProto.ButtonsMessage_LocationMessage, buttons ...*waProto.Button) *waProto.Message {
+func CreateLocationButton(content, footer string, location *waProto.ButtonsMessage_LocationMessage, buttons ...*waProto.ButtonsMessage_Button) *waProto.Message {
 	return FixInvisibleButton(&waProto.ButtonsMessage{
 		HeaderType:  waProto.ButtonsMessage_LOCATION.Enum(),
 		ContentText: proto.String(content),
@@ -83,7 +82,7 @@ func CreateLocationButton(content, footer string, location *waProto.ButtonsMessa
 	)
 }
 
-func CreateDocumentButton(content, footer string, document *waProto.ButtonsMessage_DocumentMessage, buttons ...*waProto.Button) *waProto.Message {
+func CreateDocumentButton(content, footer string, document *waProto.ButtonsMessage_DocumentMessage, buttons ...*waProto.ButtonsMessage_Button) *waProto.Message {
 	return FixInvisibleButton(&waProto.ButtonsMessage{
 		HeaderType:  waProto.ButtonsMessage_DOCUMENT.Enum(),
 		ContentText: proto.String(content),

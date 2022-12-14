@@ -4,8 +4,10 @@ import (
 	"bufio"
 	"context"
 	"github.com/gabriel-vasile/mimetype"
+	"github.com/itzngga/goRoxy/util/thumbnail"
 	"go.mau.fi/whatsmeow"
 	waProto "go.mau.fi/whatsmeow/binary/proto"
+	"go.mau.fi/whatsmeow/types/events"
 	"google.golang.org/protobuf/proto"
 	"os"
 )
@@ -26,14 +28,27 @@ func UploadImageMessageFromPath(c *whatsmeow.Client, path, caption string) (*waP
 
 	mimetypeString := mimetype.Detect(imageBytes)
 
+	thumbnailByte := thumbnail.CreateVideoThumbnail(imageBytes)
+
 	resp, err := c.Upload(context.Background(), imageBytes, whatsmeow.MediaImage)
 	if err != nil {
 		return nil, err
 	}
 
+	thumbnail, err := c.Upload(context.Background(), thumbnailByte, whatsmeow.MediaImage)
+	if err != nil {
+		return nil, err
+	}
+
 	return &waProto.ImageMessage{
-		Caption:  proto.String(caption),
+		Caption: proto.String(caption),
+
 		Mimetype: proto.String(mimetypeString.String()),
+
+		ThumbnailDirectPath: &thumbnail.DirectPath,
+		ThumbnailSha256:     thumbnail.FileSHA256,
+		ThumbnailEncSha256:  thumbnail.FileEncSHA256,
+		JpegThumbnail:       thumbnailByte,
 
 		Url:           &resp.URL,
 		DirectPath:    &resp.DirectPath,
@@ -44,17 +59,31 @@ func UploadImageMessageFromPath(c *whatsmeow.Client, path, caption string) (*waP
 	}, nil
 }
 
-func UploadImageMessageFromBytes(c *whatsmeow.Client, bytes []byte, caption string) (*waProto.ImageMessage, error) {
+func UploadImageMessageFromBytes(c *whatsmeow.Client, m *events.Message, bytes []byte, caption string) (*waProto.ImageMessage, error) {
 	mimetypeString := mimetype.Detect(bytes)
+
+	thumbnailByte := thumbnail.CreateImageThumbnail(bytes)
 
 	resp, err := c.Upload(context.Background(), bytes, whatsmeow.MediaImage)
 	if err != nil {
 		return nil, err
 	}
 
+	thumbnail, err := c.Upload(context.Background(), thumbnailByte, whatsmeow.MediaImage)
+	if err != nil {
+		return nil, err
+	}
+
 	return &waProto.ImageMessage{
+		ContextInfo: WithReply(m),
+
 		Caption:  proto.String(caption),
 		Mimetype: proto.String(mimetypeString.String()),
+
+		ThumbnailDirectPath: &thumbnail.DirectPath,
+		ThumbnailSha256:     thumbnail.FileSHA256,
+		ThumbnailEncSha256:  thumbnail.FileEncSHA256,
+		JpegThumbnail:       thumbnailByte,
 
 		Url:           &resp.URL,
 		DirectPath:    &resp.DirectPath,
@@ -81,8 +110,14 @@ func UploadVideoMessageFromPath(c *whatsmeow.Client, path, caption string) (*waP
 
 	mimetypeString := mimetype.Detect(videoBytes)
 
-	resp, err := c.Upload(context.Background(), videoBytes, whatsmeow.MediaVideo)
+	thumbnailByte := thumbnail.CreateVideoThumbnail(videoBytes)
 
+	resp, err := c.Upload(context.Background(), videoBytes, whatsmeow.MediaVideo)
+	if err != nil {
+		return nil, err
+	}
+
+	thumbnail, err := c.Upload(context.Background(), thumbnailByte, whatsmeow.MediaImage)
 	if err != nil {
 		return nil, err
 	}
@@ -90,6 +125,11 @@ func UploadVideoMessageFromPath(c *whatsmeow.Client, path, caption string) (*waP
 	return &waProto.VideoMessage{
 		Caption:  proto.String(caption),
 		Mimetype: proto.String(mimetypeString.String()),
+
+		ThumbnailDirectPath: &thumbnail.DirectPath,
+		ThumbnailSha256:     thumbnail.FileSHA256,
+		ThumbnailEncSha256:  thumbnail.FileEncSHA256,
+		JpegThumbnail:       thumbnailByte,
 
 		Url:           &resp.URL,
 		DirectPath:    &resp.DirectPath,
@@ -100,17 +140,31 @@ func UploadVideoMessageFromPath(c *whatsmeow.Client, path, caption string) (*waP
 	}, nil
 }
 
-func UploadVideoMessageFromBytes(c *whatsmeow.Client, bytes []byte, caption string) (*waProto.VideoMessage, error) {
+func UploadVideoMessageFromBytes(c *whatsmeow.Client, m *events.Message, bytes []byte, caption string) (*waProto.VideoMessage, error) {
 	mimetypeString := mimetype.Detect(bytes)
+
+	thumbnailByte := thumbnail.CreateVideoThumbnail(bytes)
 
 	resp, err := c.Upload(context.Background(), bytes, whatsmeow.MediaVideo)
 	if err != nil {
 		return nil, err
 	}
 
+	thumbnail, err := c.Upload(context.Background(), thumbnailByte, whatsmeow.MediaImage)
+	if err != nil {
+		return nil, err
+	}
+
 	return &waProto.VideoMessage{
+		ContextInfo: WithReply(m),
+
 		Caption:  proto.String(caption),
 		Mimetype: proto.String(mimetypeString.String()),
+
+		ThumbnailDirectPath: &thumbnail.DirectPath,
+		ThumbnailSha256:     thumbnail.FileSHA256,
+		ThumbnailEncSha256:  thumbnail.FileEncSHA256,
+		JpegThumbnail:       thumbnailByte,
 
 		Url:           &resp.URL,
 		DirectPath:    &resp.DirectPath,
@@ -153,13 +207,15 @@ func UploadStickerMessageFromPath(c *whatsmeow.Client, path string) (*waProto.St
 	}, nil
 }
 
-func UploadStickerMessageFromBytes(c *whatsmeow.Client, bytes []byte) (*waProto.StickerMessage, error) {
+func UploadStickerMessageFromBytes(c *whatsmeow.Client, m *events.Message, bytes []byte) (*waProto.StickerMessage, error) {
 	resp, err := c.Upload(context.Background(), bytes, whatsmeow.MediaImage)
 	if err != nil {
 		return nil, err
 	}
 
 	return &waProto.StickerMessage{
+		ContextInfo: WithReply(m),
+
 		Mimetype: proto.String("image/webp"),
 
 		Url:           &resp.URL,

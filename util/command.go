@@ -1,7 +1,6 @@
 package util
 
 import (
-	"github.com/itzngga/goRoxy/helper"
 	waProto "go.mau.fi/whatsmeow/binary/proto"
 	"go.mau.fi/whatsmeow/types/events"
 	"regexp"
@@ -42,16 +41,16 @@ func ParseMessageText(uid string, m *events.Message) string {
 	} else if pesan.GetExtendedTextMessage().GetText() != "" {
 		return pesan.GetExtendedTextMessage().GetText()
 	} else if pesan.GetTemplateButtonReplyMessage().GetSelectedId() != "" {
-		cmd := helper.ParseButtonID(uid, pesan.GetTemplateButtonReplyMessage().GetSelectedId())
+		cmd := ParseButtonID(uid, pesan.GetTemplateButtonReplyMessage().GetSelectedId())
 		return cmd
 	} else if pesan.GetButtonsResponseMessage().GetSelectedButtonId() != "" {
-		cmd := helper.ParseButtonID(uid, pesan.GetButtonsResponseMessage().GetSelectedButtonId())
+		cmd := ParseButtonID(uid, pesan.GetButtonsResponseMessage().GetSelectedButtonId())
 		return cmd
 	} else if pesan.GetListResponseMessage().GetSingleSelectReply().GetSelectedRowId() != "" {
-		cmd := helper.ParseButtonID(uid, pesan.GetListResponseMessage().GetSingleSelectReply().GetSelectedRowId())
+		cmd := ParseButtonID(uid, pesan.GetListResponseMessage().GetSingleSelectReply().GetSelectedRowId())
 		return cmd
 	} else if pesan.GetTemplateButtonReplyMessage().GetSelectedId() != "" {
-		cmd := helper.ParseButtonID(uid, pesan.GetTemplateButtonReplyMessage().GetSelectedId())
+		cmd := ParseButtonID(uid, pesan.GetTemplateButtonReplyMessage().GetSelectedId())
 		return cmd
 	} else {
 		return ""

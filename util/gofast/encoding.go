@@ -1,8 +1,11 @@
 package gofast
 
 import (
+	"bytes"
 	"github.com/goccy/go-json"
 	"log"
+	"mime/multipart"
+	"net/textproto"
 
 	"github.com/valyala/fasthttp"
 )
@@ -35,6 +38,26 @@ var URLEncoder = func(req *fasthttp.Request, in interface{}) error {
 		return err
 	}
 	req.Header.SetContentType("application/x-www-form-urlencoded")
+	return nil
+}
+
+var BodyEncoder = func(req *fasthttp.Request, in interface{}) error {
+	args := fasthttp.AcquireArgs()
+	defer fasthttp.ReleaseArgs(args)
+
+	body := new(bytes.Buffer)
+	writer := multipart.NewWriter(body)
+
+	part, _ := writer.CreatePart(textproto.MIMEHeader{"Content-Type": {"application/json"}})
+
+	res, _ := json.Marshal(in)
+	part.Write(res)
+
+	writer.Close()
+
+	req.MultipartForm()
+
+	req.Header.SetContentType("multipart/form-data")
 	return nil
 }
 

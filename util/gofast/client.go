@@ -64,6 +64,7 @@ func (c *Client) do(uri string, method string, in, out interface{}, header Heade
 	req.Header.SetMethod(method)
 	for k, v := range header {
 		req.Header.Set(k, v)
+
 	}
 
 	if in != nil {

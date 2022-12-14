@@ -1,6 +1,7 @@
 package util
 
 import (
+	"context"
 	"fmt"
 	"go.mau.fi/whatsmeow"
 	waProto "go.mau.fi/whatsmeow/binary/proto"
@@ -17,11 +18,13 @@ func SendReplyMessage(c *whatsmeow.Client, m *events.Message, text string) {
 			ContextInfo: WithReply(m),
 		},
 	}
-	_, err := c.SendMessage(m.Info.Chat, "", msg)
+
+	_, err := c.SendMessage(context.Background(), m.Info.Chat, whatsmeow.GenerateMessageID(), msg)
 	if err != nil {
 		fmt.Printf("Error sending message: %v\n", err)
 	}
 }
+
 func ParseQuotedMessage(m *waProto.Message) *waProto.Message {
 	if m.GetExtendedTextMessage().GetContextInfo() != nil {
 		return m.GetExtendedTextMessage().GetContextInfo().GetQuotedMessage()
