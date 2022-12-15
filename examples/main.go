@@ -1,9 +1,7 @@
 package main
 
 import (
-	_ "github.com/itzngga/goRoxy/category"
-	_ "github.com/itzngga/goRoxy/cmd"
-	_ "github.com/itzngga/goRoxy/middleware"
+	_ "github.com/itzngga/goRoxy/examples/cmd"
 
 	"github.com/itzngga/goRoxy/core"
 	"github.com/itzngga/goRoxy/options"

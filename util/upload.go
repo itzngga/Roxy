@@ -4,11 +4,11 @@ import (
 	"bufio"
 	"context"
 	"github.com/gabriel-vasile/mimetype"
+	"github.com/itzngga/goRoxy/types"
 	"github.com/itzngga/goRoxy/util/thumbnail"
 	"go.mau.fi/whatsmeow"
 	waProto "go.mau.fi/whatsmeow/binary/proto"
 	"go.mau.fi/whatsmeow/types/events"
-	"google.golang.org/protobuf/proto"
 	"os"
 )
 
@@ -41,9 +41,9 @@ func UploadImageMessageFromPath(c *whatsmeow.Client, path, caption string) (*waP
 	}
 
 	return &waProto.ImageMessage{
-		Caption: proto.String(caption),
+		Caption: types.String(caption),
 
-		Mimetype: proto.String(mimetypeString.String()),
+		Mimetype: types.String(mimetypeString.String()),
 
 		ThumbnailDirectPath: &thumbnail.DirectPath,
 		ThumbnailSha256:     thumbnail.FileSHA256,
@@ -77,8 +77,8 @@ func UploadImageMessageFromBytes(c *whatsmeow.Client, m *events.Message, bytes [
 	return &waProto.ImageMessage{
 		ContextInfo: WithReply(m),
 
-		Caption:  proto.String(caption),
-		Mimetype: proto.String(mimetypeString.String()),
+		Caption:  types.String(caption),
+		Mimetype: types.String(mimetypeString.String()),
 
 		ThumbnailDirectPath: &thumbnail.DirectPath,
 		ThumbnailSha256:     thumbnail.FileSHA256,
@@ -123,8 +123,8 @@ func UploadVideoMessageFromPath(c *whatsmeow.Client, path, caption string) (*waP
 	}
 
 	return &waProto.VideoMessage{
-		Caption:  proto.String(caption),
-		Mimetype: proto.String(mimetypeString.String()),
+		Caption:  types.String(caption),
+		Mimetype: types.String(mimetypeString.String()),
 
 		ThumbnailDirectPath: &thumbnail.DirectPath,
 		ThumbnailSha256:     thumbnail.FileSHA256,
@@ -158,8 +158,8 @@ func UploadVideoMessageFromBytes(c *whatsmeow.Client, m *events.Message, bytes [
 	return &waProto.VideoMessage{
 		ContextInfo: WithReply(m),
 
-		Caption:  proto.String(caption),
-		Mimetype: proto.String(mimetypeString.String()),
+		Caption:  types.String(caption),
+		Mimetype: types.String(mimetypeString.String()),
 
 		ThumbnailDirectPath: &thumbnail.DirectPath,
 		ThumbnailSha256:     thumbnail.FileSHA256,
@@ -196,7 +196,7 @@ func UploadStickerMessageFromPath(c *whatsmeow.Client, path string) (*waProto.St
 	}
 
 	return &waProto.StickerMessage{
-		Mimetype: proto.String("image/webp"),
+		Mimetype: types.String("image/webp"),
 
 		Url:           &resp.URL,
 		DirectPath:    &resp.DirectPath,
@@ -216,7 +216,7 @@ func UploadStickerMessageFromBytes(c *whatsmeow.Client, m *events.Message, bytes
 	return &waProto.StickerMessage{
 		ContextInfo: WithReply(m),
 
-		Mimetype: proto.String("image/webp"),
+		Mimetype: types.String("image/webp"),
 
 		Url:           &resp.URL,
 		DirectPath:    &resp.DirectPath,
@@ -249,9 +249,9 @@ func UploadDocumentMessageFromPath(c *whatsmeow.Client, path, title string) (*wa
 	}
 
 	return &waProto.DocumentMessage{
-		Title:    proto.String(title),
-		FileName: proto.String(documentInfo.Name()),
-		Mimetype: proto.String(mimetypeString.String()),
+		Title:    types.String(title),
+		FileName: types.String(documentInfo.Name()),
+		Mimetype: types.String(mimetypeString.String()),
 
 		Url:           &resp.URL,
 		DirectPath:    &resp.DirectPath,
@@ -272,9 +272,9 @@ func UploadDocumentMessageFromBytes(c *whatsmeow.Client, bytes []byte, title, fi
 	}
 
 	return &waProto.DocumentMessage{
-		Title:    proto.String(title),
-		FileName: proto.String(filename),
-		Mimetype: proto.String(mimetypeString.String()),
+		Title:    types.String(title),
+		FileName: types.String(filename),
+		Mimetype: types.String(mimetypeString.String()),
 
 		Url:           &resp.URL,
 		DirectPath:    &resp.DirectPath,
@@ -308,7 +308,7 @@ func UploadAudioMessageFromPath(c *whatsmeow.Client, path string) (*waProto.Audi
 	}
 
 	return &waProto.AudioMessage{
-		Mimetype: proto.String(mimetypeString.String()),
+		Mimetype: types.String(mimetypeString.String()),
 
 		Url:           &resp.URL,
 		DirectPath:    &resp.DirectPath,
@@ -328,7 +328,7 @@ func UploadAudioMessageFromBytes(c *whatsmeow.Client, bytes []byte) (*waProto.Au
 	}
 
 	return &waProto.AudioMessage{
-		Mimetype: proto.String(mimetypeString.String()),
+		Mimetype: types.String(mimetypeString.String()),
 
 		Url:           &resp.URL,
 		DirectPath:    &resp.DirectPath,

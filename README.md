@@ -3,135 +3,115 @@
 a Golang version of Roxy WhatsApp Bot with Command Handler helper
 
 # Installation
+> go get github.com/itzngga/goRoxy
 
-> go mod tidy
+# Get Started
+```go
+package main
 
-# Run
-Normal run mode
-> go run *.go
+import (
+	_ "github.com/itzngga/goRoxy/examples/cmd"
 
-Run with race conditions' detector (DEBUG)
-> go run --race *.go
+	"github.com/itzngga/goRoxy/core"
+	"github.com/itzngga/goRoxy/options"
+	_ "github.com/lib/pq"
 
-With pm2
-> go run build.go
+	"os"
+	"os/signal"
+	"syscall"
+)
 
-# Environment
-setup by copy the .env.example to .env
+func main() {
+	app := core.NewGoRoxyBase(options.NewDefaultOptions())
 
+	c := make(chan os.Signal)
+	signal.Notify(c, os.Interrupt, syscall.SIGTERM)
+	<-c
+	app.Shutdown()
+}
+
+```
+# Config
+#### default
+```go
+app := core.NewGoRoxyBase(options.NewDefaultOptions())
+```
+#### custom
+```go
+type Options struct {
+    HostNumber string
+    StoreMode  string
+    LogLevel   string
+    
+    PostgresDsn string
+    SqliteFile  string
+    
+    WithCommandCooldown bool
+    WithCommandLog      bool
+    
+    HelpTitle       string
+    HelpDescription string
+    HelpFooter      string
+    
+    CommandCooldownTimeout      time.Duration
+    CommandResponseCacheTimeout time.Duration
+    SendMessageTimeout          time.Duration
+}
+```
 ### PostgresSQL
-`STORE_MODE=postgres`
+```go
+options := options.Options{
+	StoreMode: "postgres"
+	PostgresDsn: "user=goroxy password=test123 dbname=goroxy port=5432 sslmode=disable TimeZone=Asia/Jakarta"
+}
+app := core.NewGoRoxyBase(options)
+```
 
 ### Sqlite
-`STORE_MODE=sqlite`
-
-`SQLITE_FILE=store.db`
-
-### Command Cooldown Duration
-`DEFAULT_COOLDOWN_SEC=5`
+```go
+options := options.Options{
+	StoreMode: "sqlite"
+	SqliteFile: "store.db"
+}
+app := core.NewGoRoxyBase(options)
+```
 
 # Add a Command
 create a simple command with:
-
 ### command/hello_world.go
 ```go
-package command
-
-import (
-	"github.com/itzngga/goRoxy/internal/handler"
-	"github.com/itzngga/goRoxy/util"
-	"go.mau.fi/whatsmeow"
-	waProto "go.mau.fi/whatsmeow/binary/proto"
-	"go.mau.fi/whatsmeow/types/events"
-)
-
-func HelloCommand() {
-	AddCommand(&handler.Command{
-		Name:        "hello",
-		Aliases:     []string{"hai", "helo"},
-		Description: "Command for Hello World!",
-		Category:    handler.MiscCategory,
-		RunFunc:     HelloRunFunc,
-	})
-}
-
-func HelloRunFunc(c *whatsmeow.Client, args handler.RunFuncArgs) *waProto.Message {
-	return util.SendReplyText(args.Evm, "Hello World!")
-}
-```
-### Note
-Function needs to contains "Command" word, or it will not be generated
-
-# Middlewares
-middleware is function before RunFunc is executed
-
-### Command middleware
-is only this command middleware
-```go
-package command
+package cmd
 
 import (
 	"fmt"
-	"github.com/itzngga/goRoxy/internal/handler"
+	"github.com/itzngga/goRoxy/basic/categories"
+	"github.com/itzngga/goRoxy/command"
+	"github.com/itzngga/goRoxy/embed"
 	"github.com/itzngga/goRoxy/util"
 	"go.mau.fi/whatsmeow"
 	waProto "go.mau.fi/whatsmeow/binary/proto"
-	"go.mau.fi/whatsmeow/types/events"
+	"time"
 )
 
-func HelloCommand() {
-	AddCommand(&handler.Command{
-		Name:        "hello",
-		Aliases:     []string{"hai", "helo"},
-		Description: "Command for Hello World!",
-		Category:    handler.MiscCategory,
-		RunFunc:     HelloRunFunc,
-		Middleware:  HelloMiddleware,
-	})
+var speed = &command.Command{
+	Name:        "speed",
+	Aliases:     []string{"sp", "s"},
+	Description: "Testing speed",
+	Category:    categories.CommonCategory,
+	RunFunc: func(c *whatsmeow.Client, args command.RunFuncArgs) *waProto.Message {
+		t := time.Now()
+		util.SendReplyMessage(c, args.Evm, "ok, waitt...")
+		return util.SendReplyText(args.Evm, fmt.Sprintf("Duration: %f seconds", time.Now().Sub(t).Seconds()))
+	},
 }
 
-func HelloRunFunc(c *whatsmeow.Client, args handler.RunFuncArgs) *waProto.Message {
-	return util.SendReplyText(args.Evm, "Hello World!")
-}
-func HelloMiddleware(c *whatsmeow.Client, args handler.RunFuncArgs) bool {
-	fmt.Println("Hi middleware!")
-	return true
-}
-```
-### Global middleware
-all command run this middleware
-
-### middleware/log.go
-```go
-package middleware
-
-import (
-	"fmt"
-	"github.com/itzngga/goRoxy/internal/handler"
-	"go.mau.fi/whatsmeow"
-	"go.mau.fi/whatsmeow/types/events"
-)
-
-func LogMiddleware(c *whatsmeow.Client, args handler.RunFuncArgs) bool {
-	fmt.Println("\n[CMD] Command : " + args.Cmd.Name)
-	return true
+func init() {
+	embed.Commands.Add(speed)
 }
 ```
 
-### middleware/zInit.go
-```go
-package middleware
-
-import "github.com/itzngga/goRoxy/internal/handler"
-
-func GenerateAllMiddlewares() {
-	AddMiddleware(LogMiddleware) // <-- append new middleware here
-}
-
-func AddMiddleware(mid handler.MiddlewareFunc) {
-	handler.GlobalMiddleware = append(handler.GlobalMiddleware, mid)
-}
-```
+# Example
+[Example](https://github.com/itzngga/goRoxy/tree/master/examples)
 # Helper/Util
 [UTIL](https://github.com/itzngga/goRoxy/tree/master/util)
 

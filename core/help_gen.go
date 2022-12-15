@@ -21,7 +21,7 @@ func (m *Muxer) GenerateHelpButton() {
 			m.Categories.Range(func(ctKey string, category string) bool {
 				rows := make([]*waProto.ListMessage_Row, 0)
 				m.Commands.Range(func(cmdKey string, cmd *command.Command) bool {
-					if cmd.Category == category {
+					if !cmd.HideFromHelp && cmd.Category == category {
 						for _, row := range rows {
 							if *row.Description == "/"+cmd.Name {
 								return true

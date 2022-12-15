@@ -2,9 +2,9 @@ package cmd
 
 import (
 	"fmt"
-	"github.com/itzngga/goRoxy/category"
+	"github.com/itzngga/goRoxy/basic/categories"
 	"github.com/itzngga/goRoxy/command"
-	"github.com/itzngga/goRoxy/core"
+	"github.com/itzngga/goRoxy/embed"
 	"github.com/itzngga/goRoxy/util"
 	"go.mau.fi/whatsmeow"
 	waProto "go.mau.fi/whatsmeow/binary/proto"
@@ -15,7 +15,7 @@ var speed = &command.Command{
 	Name:        "speed",
 	Aliases:     []string{"sp", "s"},
 	Description: "Testing speed",
-	Category:    category.CommonCategory,
+	Category:    categories.CommonCategory,
 	RunFunc: func(c *whatsmeow.Client, args command.RunFuncArgs) *waProto.Message {
 		t := time.Now()
 		util.SendReplyMessage(c, args.Evm, "ok, waitt...")
@@ -24,5 +24,5 @@ var speed = &command.Command{
 }
 
 func init() {
-	core.Commands.Add(speed)
+	embed.Commands.Add(speed)
 }

@@ -3,7 +3,6 @@ module github.com/itzngga/goRoxy
 go 1.19
 
 require (
-	github.com/davecgh/go-spew v1.1.1
 	github.com/gabriel-vasile/mimetype v1.4.1
 	github.com/goccy/go-json v0.10.0
 	github.com/google/uuid v1.3.0
@@ -13,7 +12,6 @@ require (
 	github.com/valyala/fasthttp v1.43.0
 	github.com/zhangyunhao116/skipmap v0.10.1
 	go.mau.fi/whatsmeow v0.0.0-20221213225758-70ef67df3c68
-	google.golang.org/protobuf v1.28.1
 )
 
 require (
@@ -27,5 +25,6 @@ require (
 	go.mau.fi/libsignal v0.0.0-20221015105917-d970e7c3c9cf // indirect
 	golang.org/x/crypto v0.4.0 // indirect
 	golang.org/x/net v0.4.0 // indirect
+	google.golang.org/protobuf v1.28.1 // indirect
 	rsc.io/qr v0.2.0 // indirect
 )

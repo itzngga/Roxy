@@ -4,15 +4,15 @@ import (
 	"context"
 	"fmt"
 	"github.com/google/uuid"
+	messageMiddlewares "github.com/itzngga/goRoxy/basic/message_middleware"
 	"github.com/itzngga/goRoxy/command"
-	"github.com/itzngga/goRoxy/middleware"
+	"github.com/itzngga/goRoxy/embed"
 	"github.com/itzngga/goRoxy/options"
-	"github.com/itzngga/goRoxy/types"
 	"github.com/itzngga/goRoxy/util"
 	"github.com/zhangyunhao116/skipmap"
 	"go.mau.fi/whatsmeow"
 	waProto "go.mau.fi/whatsmeow/binary/proto"
-	types2 "go.mau.fi/whatsmeow/types"
+	waTypes "go.mau.fi/whatsmeow/types"
 	"go.mau.fi/whatsmeow/types/events"
 	waLog "go.mau.fi/whatsmeow/util/log"
 	"runtime/debug"
@@ -21,17 +21,14 @@ import (
 	"time"
 )
 
-var Commands types.Embed[*command.Command]
-var Middlewares types.Embed[command.MiddlewareFunc]
-var Categories types.Embed[string]
-
 type Muxer struct {
 	Options        *options.Options
 	Log            waLog.Logger
 	MessageTimeout time.Duration
 
 	Categories           *skipmap.StringMap[string]
-	GlobalMiddleware     *skipmap.StringMap[command.MiddlewareFunc]
+	GlobalMiddlewares    *skipmap.StringMap[command.MiddlewareFunc]
+	Middlewares          *skipmap.StringMap[command.MiddlewareFunc]
 	Commands             *skipmap.StringMap[*command.Command]
 	CommandResponseCache *skipmap.StringMap[*waProto.Message]
 	Locals               *skipmap.StringMap[string]
@@ -53,8 +50,8 @@ func (m *Muxer) Clean() {
 		m.Commands.Delete(key)
 		return true
 	})
-	m.GlobalMiddleware.Range(func(key string, middleware command.MiddlewareFunc) bool {
-		m.GlobalMiddleware.Delete(key)
+	m.Middlewares.Range(func(key string, middleware command.MiddlewareFunc) bool {
+		m.Middlewares.Delete(key)
 		return true
 	})
 	m.Locals.Range(func(key string, middleware string) bool {
@@ -67,22 +64,31 @@ func (m *Muxer) Clean() {
 }
 
 func (m *Muxer) AddAllEmbed() {
-	categories := Categories.Get()
+	categories := embed.Categories.Get()
 	for _, cat := range categories {
 		m.Categories.Store(cat, cat)
 	}
-	commands := Commands.Get()
+	commands := embed.Commands.Get()
 	for _, cmd := range commands {
 		m.AddCommand(cmd)
 	}
-	middlewares := Middlewares.Get()
+	middlewares := embed.Middlewares.Get()
 	for _, mid := range middlewares {
 		m.AddMiddleware(mid)
+
+	}
+	globalMiddleware := embed.GlobalMiddlewares.Get()
+	for _, mid := range globalMiddleware {
+		m.AddGlobalMiddleware(mid)
 	}
 }
 
+func (m *Muxer) AddGlobalMiddleware(middleware command.MiddlewareFunc) {
+	m.GlobalMiddlewares.Store(uuid.New().String(), middleware)
+}
+
 func (m *Muxer) AddMiddleware(middleware command.MiddlewareFunc) {
-	m.GlobalMiddleware.Store(uuid.New().String(), middleware)
+	m.Middlewares.Store(uuid.New().String(), middleware)
 }
 
 func (m *Muxer) AddCommand(cmd *command.Command) {
@@ -129,8 +135,30 @@ func (m *Muxer) SetCacheCommandResponse(cmd string, response *waProto.Message) {
 	}()
 }
 
+func (m *Muxer) GlobalMiddlewareProcessing(c *whatsmeow.Client, evt *events.Message, number string) bool {
+	args := command.RunFuncArgs{
+		Options: m.Options,
+		Evm:     evt,
+		Number:  number,
+		Locals:  m.Locals,
+	}
+	midAreOk := true
+	m.GlobalMiddlewares.Range(func(key string, value command.MiddlewareFunc) bool {
+		if !value(c, args) {
+			midAreOk = false
+			return false
+		}
+		return true
+	})
+
+	return midAreOk
+}
+
 func (m *Muxer) RunCommand(c *whatsmeow.Client, evt *events.Message) {
 	number := strconv.FormatUint(evt.Info.Sender.UserInt(), 10)
+	if midOk := m.GlobalMiddlewareProcessing(c, evt, number); !midOk {
+		return
+	}
 	id, _ := m.Locals.Load("uid")
 	ok, stateCmd := m.CheckGlobalState(number)
 	parsed := util.ParseMessageText(id, evt)
@@ -156,7 +184,7 @@ func (m *Muxer) RunCommand(c *whatsmeow.Client, evt *events.Message) {
 			Args:    strings.Split(parsed, " "),
 		}
 		midAreOk := true
-		m.GlobalMiddleware.Range(func(key string, value command.MiddlewareFunc) bool {
+		m.Middlewares.Range(func(key string, value command.MiddlewareFunc) bool {
 			if !value(c, args) {
 				midAreOk = false
 				return false
@@ -202,7 +230,7 @@ func (m *Muxer) RunCommand(c *whatsmeow.Client, evt *events.Message) {
 				m.SetCacheCommandResponse(cmdLoad.Name, msg)
 			}
 		}
-		jids := []types2.MessageID{
+		jids := []waTypes.MessageID{
 			evt.Info.ID,
 		}
 		c.MarkRead(jids, evt.Info.Timestamp, evt.Info.Chat, evt.Info.Sender)
@@ -211,14 +239,14 @@ func (m *Muxer) RunCommand(c *whatsmeow.Client, evt *events.Message) {
 
 func (m *Muxer) PrepareDefaultMiddleware() {
 	if m.Options.WithCommandLog {
-		m.GlobalMiddleware.Store("log", middleware.LogMiddleware)
+		m.Middlewares.Store("log", messageMiddlewares.LogMiddleware)
 	}
 	if m.Options.WithCommandCooldown {
 		if m.Options.CommandCooldownTimeout == 0 {
 			m.Options.CommandCooldownTimeout = 5
 		}
-		middleware.CooldownCache = skipmap.NewString[string]()
-		m.GlobalMiddleware.Store("cooldown", middleware.CooldownMiddleware)
+		messageMiddlewares.CooldownCache = skipmap.NewString[string]()
+		m.Middlewares.Store("cooldown", messageMiddlewares.CooldownMiddleware)
 	}
 }
 
@@ -226,7 +254,8 @@ func NewMuxer(log waLog.Logger, options *options.Options) *Muxer {
 	muxer := &Muxer{
 		Locals:               skipmap.NewString[string](),
 		Commands:             skipmap.NewString[*command.Command](),
-		GlobalMiddleware:     skipmap.NewString[command.MiddlewareFunc](),
+		GlobalMiddlewares:    skipmap.NewString[command.MiddlewareFunc](),
+		Middlewares:          skipmap.NewString[command.MiddlewareFunc](),
 		CommandResponseCache: skipmap.NewString[*waProto.Message](),
 		Categories:           skipmap.NewString[string](),
 		MessageTimeout:       options.SendMessageTimeout,
@@ -240,13 +269,4 @@ func NewMuxer(log waLog.Logger, options *options.Options) *Muxer {
 	muxer.GenerateHelpButton()
 
 	return muxer
-}
-
-func init() {
-	cmd := types.NewEmbed[*command.Command]()
-	mid := types.NewEmbed[command.MiddlewareFunc]()
-	cat := types.NewEmbed[string]()
-	Commands = &cmd
-	Middlewares = &mid
-	Categories = &cat
 }

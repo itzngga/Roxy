@@ -3,11 +3,11 @@ package util
 import (
 	"context"
 	"fmt"
+	"github.com/itzngga/goRoxy/types"
 	"go.mau.fi/whatsmeow"
 	waProto "go.mau.fi/whatsmeow/binary/proto"
-	"go.mau.fi/whatsmeow/types"
+	waTypes "go.mau.fi/whatsmeow/types"
 	"go.mau.fi/whatsmeow/types/events"
-	"google.golang.org/protobuf/proto"
 	"strings"
 )
 
@@ -55,6 +55,66 @@ func ParseQuotedMessage(m *waProto.Message) *waProto.Message {
 	}
 }
 
+func ParseQuotedRemoteJid(m *waProto.Message) *string {
+	if m.GetExtendedTextMessage().GetContextInfo() != nil {
+		return m.GetExtendedTextMessage().GetContextInfo().RemoteJid
+	} else if m.GetImageMessage().GetContextInfo() != nil {
+		return m.GetImageMessage().GetContextInfo().RemoteJid
+	} else if m.GetVideoMessage().GetContextInfo() != nil {
+		return m.GetVideoMessage().GetContextInfo().RemoteJid
+	} else if m.GetDocumentMessage().GetContextInfo() != nil {
+		return m.GetDocumentMessage().GetContextInfo().RemoteJid
+	} else if m.GetAudioMessage().GetContextInfo() != nil {
+		return m.GetAudioMessage().GetContextInfo().RemoteJid
+	} else if m.GetStickerMessage().GetContextInfo() != nil {
+		return m.GetStickerMessage().GetContextInfo().RemoteJid
+	} else if m.GetButtonsMessage().GetContextInfo() != nil {
+		return m.GetButtonsMessage().GetContextInfo().RemoteJid
+	} else if m.GetGroupInviteMessage().GetContextInfo() != nil {
+		return m.GetGroupInviteMessage().GetContextInfo().RemoteJid
+	} else if m.GetProductMessage().GetContextInfo() != nil {
+		return m.GetProductMessage().GetContextInfo().RemoteJid
+	} else if m.GetListMessage().GetContextInfo() != nil {
+		return m.GetListMessage().GetContextInfo().RemoteJid
+	} else if m.GetTemplateMessage().GetContextInfo() != nil {
+		return m.GetTemplateMessage().GetContextInfo().RemoteJid
+	} else if m.GetContactMessage().GetContextInfo() != nil {
+		return m.GetContactMessage().GetContextInfo().RemoteJid
+	} else {
+		return nil
+	}
+}
+
+func ParseQuotedMessageId(m *waProto.Message) *string {
+	if m.GetExtendedTextMessage().GetContextInfo() != nil {
+		return m.GetExtendedTextMessage().GetContextInfo().StanzaId
+	} else if m.GetImageMessage().GetContextInfo() != nil {
+		return m.GetImageMessage().GetContextInfo().StanzaId
+	} else if m.GetVideoMessage().GetContextInfo() != nil {
+		return m.GetVideoMessage().GetContextInfo().StanzaId
+	} else if m.GetDocumentMessage().GetContextInfo() != nil {
+		return m.GetDocumentMessage().GetContextInfo().StanzaId
+	} else if m.GetAudioMessage().GetContextInfo() != nil {
+		return m.GetAudioMessage().GetContextInfo().StanzaId
+	} else if m.GetStickerMessage().GetContextInfo() != nil {
+		return m.GetStickerMessage().GetContextInfo().StanzaId
+	} else if m.GetButtonsMessage().GetContextInfo() != nil {
+		return m.GetButtonsMessage().GetContextInfo().StanzaId
+	} else if m.GetGroupInviteMessage().GetContextInfo() != nil {
+		return m.GetGroupInviteMessage().GetContextInfo().StanzaId
+	} else if m.GetProductMessage().GetContextInfo() != nil {
+		return m.GetProductMessage().GetContextInfo().StanzaId
+	} else if m.GetListMessage().GetContextInfo() != nil {
+		return m.GetListMessage().GetContextInfo().StanzaId
+	} else if m.GetTemplateMessage().GetContextInfo() != nil {
+		return m.GetTemplateMessage().GetContextInfo().StanzaId
+	} else if m.GetContactMessage().GetContextInfo() != nil {
+		return m.GetContactMessage().GetContextInfo().StanzaId
+	} else {
+		return nil
+	}
+}
+
 func ParseQuotedBy(m *waProto.Message, str string) *waProto.Message {
 	switch str {
 	case "text":
@@ -88,7 +148,7 @@ func SendReplyText(m *events.Message, text string) *waProto.Message {
 func WithReply(m *events.Message) *waProto.ContextInfo {
 	return &waProto.ContextInfo{
 		StanzaId:      &m.Info.ID,
-		Participant:   proto.String(m.Info.MessageSource.Sender.String()),
+		Participant:   types.String(m.Info.MessageSource.Sender.String()),
 		QuotedMessage: m.Message,
 	}
 }
@@ -96,20 +156,20 @@ func WithReply(m *events.Message) *waProto.ContextInfo {
 func SendInvalidCommand(m *events.Message) *waProto.Message {
 	return &waProto.Message{
 		ExtendedTextMessage: &waProto.ExtendedTextMessage{
-			Text:        proto.String("Invalid command received"),
+			Text:        types.String("Invalid command received"),
 			ContextInfo: WithReply(m),
 		},
 	}
 }
 
-func ParseJID(arg string) (types.JID, bool) {
+func ParseJID(arg string) (waTypes.JID, bool) {
 	if arg[0] == '+' {
 		arg = arg[1:]
 	}
 	if !strings.ContainsRune(arg, '@') {
-		return types.NewJID(arg, types.DefaultUserServer), true
+		return waTypes.NewJID(arg, waTypes.DefaultUserServer), true
 	} else {
-		recipient, err := types.ParseJID(arg)
+		recipient, err := waTypes.ParseJID(arg)
 		if err != nil {
 			return recipient, false
 		} else if recipient.User == "" {

@@ -41,18 +41,21 @@ func CreateVideoThumbnail(data []byte) []byte {
 
 	out, err := cmd.StdoutPipe()
 	if err != nil {
-		panic(err)
+		fmt.Println(err)
+		return nil
 	}
 
 	in, err := cmd.StdinPipe()
 	writer := bufio.NewWriter(in)
 	if err != nil {
-		panic(err)
+		fmt.Println(err)
+		return nil
 	}
 
 	err = cmd.Start()
 	if err != nil {
-		panic(err)
+		fmt.Println(err)
+		return nil
 	}
 
 	go func() {
@@ -60,7 +63,8 @@ func CreateVideoThumbnail(data []byte) []byte {
 		defer in.Close()
 		_, err = writer.Write(data)
 		if err != nil {
-			panic(err)
+			fmt.Println(err)
+			return
 		}
 	}()
 
@@ -69,11 +73,13 @@ func CreateVideoThumbnail(data []byte) []byte {
 	defer out.Close()
 	outBytes, err = io.ReadAll(out)
 	if err != nil {
-		panic(err)
+		fmt.Println(err)
+		return nil
 	}
 	err = cmd.Wait()
 	if err != nil {
-		panic(err)
+		fmt.Println(err)
+		return nil
 	}
 
 	return outBytes

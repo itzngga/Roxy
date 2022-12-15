@@ -2,7 +2,7 @@ package types
 
 type Embed[T any] interface {
 	Get() []T
-	Add(cmd T)
+	Add(val T)
 }
 
 func NewEmbed[T any]() EmbedTemplate[T] {

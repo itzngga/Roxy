@@ -1,4 +1,4 @@
-package middleware
+package message_middleware
 
 import (
 	"github.com/itzngga/goRoxy/command"

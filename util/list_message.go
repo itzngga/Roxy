@@ -1,8 +1,8 @@
 package util
 
 import (
+	"github.com/itzngga/goRoxy/types"
 	waProto "go.mau.fi/whatsmeow/binary/proto"
-	"google.golang.org/protobuf/proto"
 )
 
 func FixInvisibleListMessage(listmessage *waProto.ListMessage) *waProto.Message {
@@ -10,7 +10,7 @@ func FixInvisibleListMessage(listmessage *waProto.ListMessage) *waProto.Message 
 		ViewOnceMessage: &waProto.FutureProofMessage{
 			Message: &waProto.Message{
 				MessageContextInfo: &waProto.MessageContextInfo{
-					DeviceListMetadataVersion: proto.Int32(2),
+					DeviceListMetadataVersion: types.Int32(2),
 					DeviceListMetadata:        nil,
 				},
 				ListMessage: listmessage,

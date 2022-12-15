@@ -2,7 +2,11 @@ package core
 
 import (
 	"context"
+	_ "github.com/itzngga/goRoxy/basic/categories"
+	_ "github.com/itzngga/goRoxy/basic/commands"
+	_ "github.com/itzngga/goRoxy/basic/global_middleware"
 	"github.com/itzngga/goRoxy/command"
+	_ "github.com/itzngga/goRoxy/embed"
 	"github.com/itzngga/goRoxy/options"
 	"github.com/itzngga/goRoxy/types"
 	"github.com/itzngga/goRoxy/util"
@@ -12,7 +16,6 @@ import (
 	"go.mau.fi/whatsmeow/store/sqlstore"
 	"go.mau.fi/whatsmeow/types/events"
 	waLog "go.mau.fi/whatsmeow/util/log"
-	"google.golang.org/protobuf/proto"
 	"os"
 	"time"
 )
@@ -68,15 +71,15 @@ func (app *App) MessageEvents(evt interface{}) {
 	}
 }
 func (app *App) PrepareSqlContainer() {
-	store.DeviceProps.RequireFullSync = proto.Bool(true)
+	store.DeviceProps.RequireFullSync = types.Bool(true)
 	if app.Options.StoreMode == "postgres" {
-		container, err := sqlstore.New("postgres", app.Options.PostgresDsn, waLog.Stdout("Database", "INFO", true))
+		container, err := sqlstore.New("postgres", app.Options.PostgresDsn, waLog.Stdout("Database", "ERROR", true))
 		if err != nil {
 			panic(err)
 		}
 		app.SqlStore = container
 	} else {
-		container, err := sqlstore.New("sqlite3", app.Options.SqliteFile, waLog.Stdout("Database", "INFO", true))
+		container, err := sqlstore.New("sqlite3", app.Options.SqliteFile, waLog.Stdout("Database", "ERROR", true))
 		if err != nil {
 			panic(err)
 		}
@@ -134,10 +137,6 @@ func (app *App) AddNewCommand(command command.Command) {
 
 func (app *App) AddNewMiddleware(middleware command.MiddlewareFunc) {
 	app.muxer.AddMiddleware(middleware)
-}
-
-func (app *App) SetCommandEmbed(embed types.Embed[*command.Command]) {
-	Commands = embed
 }
 
 func (app *App) Shutdown() {
