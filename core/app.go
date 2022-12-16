@@ -94,9 +94,9 @@ func (app *App) PrepareSqlContainer() {
 	}
 }
 
-func (m *App) HandlePanic(p interface{}) {
+func (app *App) HandlePanic(p interface{}) {
 	if p != nil {
-		m.Log.Errorf("panic: \n%v", p)
+		app.Log.Errorf("panic: \n%v", p)
 	}
 }
 

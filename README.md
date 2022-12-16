@@ -110,6 +110,8 @@ func init() {
 }
 ```
 
+# Documentation
+[DOC](https://github.com/itzngga/goRoxy/tree/master/DOC.md)
 # Example
 [Example](https://github.com/itzngga/goRoxy/tree/master/examples)
 # Helper/Util
