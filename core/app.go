@@ -2,6 +2,7 @@ package core
 
 import (
 	"context"
+	"github.com/alitto/pond"
 	_ "github.com/itzngga/goRoxy/basic/categories"
 	_ "github.com/itzngga/goRoxy/basic/commands"
 	_ "github.com/itzngga/goRoxy/basic/global_middleware"
@@ -25,6 +26,7 @@ type App struct {
 
 	SqlStore *sqlstore.Container
 	Log      waLog.Logger
+	Pool     *pond.WorkerPool
 
 	startTime time.Time
 	client    *whatsmeow.Client
@@ -40,6 +42,7 @@ func NewGoRoxyBase(options options.Options) *App {
 		Options: optPointer,
 		muxer:   NewMuxer(stdLog, optPointer),
 	}
+	app.Pool = pond.New(100, 1000)
 	app.PrepareClient()
 	return app
 }
@@ -65,10 +68,14 @@ func (app *App) ConnectedEvents(evt interface{}) {
 func (app *App) MessageEvents(evt interface{}) {
 	event, ok := evt.(*events.Message)
 	if ok {
-		if !app.startTime.IsZero() && event.Info.Timestamp.After(app.startTime) {
-			go app.muxer.RunCommand(app.client, event)
-		}
+		app.Pool.Submit(func() {
+			if !app.startTime.IsZero() && event.Info.Timestamp.After(app.startTime) {
+				app.muxer.RunCommand(app.client, event)
+				return
+			}
+		})
 	}
+	return
 }
 func (app *App) PrepareSqlContainer() {
 	store.DeviceProps.RequireFullSync = types.Bool(true)
@@ -84,6 +91,12 @@ func (app *App) PrepareSqlContainer() {
 			panic(err)
 		}
 		app.SqlStore = container
+	}
+}
+
+func (m *App) HandlePanic(p interface{}) {
+	if p != nil {
+		m.Log.Errorf("panic: \n%v", p)
 	}
 }
 

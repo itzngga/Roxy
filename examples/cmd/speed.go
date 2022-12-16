@@ -16,8 +16,8 @@ var speed = &command.Command{
 	//Category:    categories.CommonCategory,
 	RunFunc: func(c *whatsmeow.Client, params *command.RunFuncParams) *waProto.Message {
 		t := time.Now()
-		util.SendReplyMessage(c, params.Event, "ok, waitt...")
-		return util.SendReplyText(params.Event, fmt.Sprintf("Duration: %f seconds", time.Now().Sub(t).Seconds()))
+		util.SendReplyMessage(c, params.Event, "wait...")
+		return util.GenerateReplyMessage(params.Event, fmt.Sprintf("Duration: %f seconds", time.Now().Sub(t).Seconds()))
 	},
 }
 

@@ -3,6 +3,7 @@ module github.com/itzngga/goRoxy
 go 1.19
 
 require (
+	github.com/alitto/pond v1.8.2
 	github.com/gabriel-vasile/mimetype v1.4.1
 	github.com/goccy/go-json v0.10.0
 	github.com/google/uuid v1.3.0

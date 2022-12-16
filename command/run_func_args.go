@@ -6,6 +6,7 @@ import (
 	waProto "go.mau.fi/whatsmeow/binary/proto"
 	waTypes "go.mau.fi/whatsmeow/types"
 	"go.mau.fi/whatsmeow/types/events"
+	waLog "go.mau.fi/whatsmeow/util/log"
 	"time"
 )
 
@@ -15,6 +16,7 @@ type RunFuncParams struct {
 	Number    string
 
 	Options *options.Options
+	Log     waLog.Logger
 	Event   *events.Message
 	Info    *waTypes.MessageInfo
 	User    *waTypes.JID

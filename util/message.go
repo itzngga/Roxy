@@ -1,29 +1,12 @@
 package util
 
 import (
-	"context"
-	"fmt"
 	"github.com/itzngga/goRoxy/types"
-	"go.mau.fi/whatsmeow"
 	waProto "go.mau.fi/whatsmeow/binary/proto"
 	waTypes "go.mau.fi/whatsmeow/types"
 	"go.mau.fi/whatsmeow/types/events"
 	"strings"
 )
-
-func SendReplyMessage(c *whatsmeow.Client, m *events.Message, text string) {
-	msg := &waProto.Message{
-		ExtendedTextMessage: &waProto.ExtendedTextMessage{
-			Text:        &text,
-			ContextInfo: WithReply(m),
-		},
-	}
-
-	_, err := c.SendMessage(context.Background(), m.Info.Chat, whatsmeow.GenerateMessageID(), msg)
-	if err != nil {
-		fmt.Printf("Error sending message: %v\n", err)
-	}
-}
 
 func ParseQuotedMessage(m *waProto.Message) *waProto.Message {
 	if m.GetExtendedTextMessage().GetContextInfo() != nil {

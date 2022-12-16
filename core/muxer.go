@@ -15,30 +15,21 @@ import (
 	waTypes "go.mau.fi/whatsmeow/types"
 	"go.mau.fi/whatsmeow/types/events"
 	waLog "go.mau.fi/whatsmeow/util/log"
-	"runtime/debug"
 	"strconv"
 	"strings"
 	"time"
 )
 
 type Muxer struct {
-	Options        *options.Options
-	Log            waLog.Logger
-	MessageTimeout time.Duration
-
+	Options              *options.Options
+	Log                  waLog.Logger
+	MessageTimeout       time.Duration
 	Categories           *skipmap.StringMap[string]
 	GlobalMiddlewares    *skipmap.StringMap[command.MiddlewareFunc]
 	Middlewares          *skipmap.StringMap[command.MiddlewareFunc]
 	Commands             *skipmap.StringMap[*command.Command]
 	CommandResponseCache *skipmap.StringMap[*waProto.Message]
 	Locals               *skipmap.StringMap[string]
-}
-
-func (m *Muxer) HandlePanic() {
-	rec := recover()
-	if rec != nil {
-		m.Log.Errorf("panic: \n%v", string(debug.Stack()))
-	}
 }
 
 func (m *Muxer) Clean() {
@@ -173,8 +164,8 @@ func (m *Muxer) RunCommand(c *whatsmeow.Client, evt *events.Message) {
 	cmd, isCmd := util.ParseCmd(parsed)
 	cmdLoad, isAvailable := m.Commands.Load(cmd)
 	if isCmd && isAvailable {
-		defer m.HandlePanic()
 		params := &command.RunFuncParams{
+			Log:       m.Log,
 			Options:   m.Options,
 			Event:     evt,
 			Info:      &evt.Info,

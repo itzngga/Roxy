@@ -16,7 +16,7 @@ func CooldownMiddleware(c *whatsmeow.Client, params *command.RunFuncParams) bool
 	_, ok := CooldownCache.Load(c.Store.ID.User + "-" + params.Event.Info.Sender.User)
 	if ok {
 		//util.SendReplyMessage(c, params.Event, "You are on Cooldown!")
-		return true
+		return false
 	}
 	go func() {
 		timeout := time.NewTimer(params.Options.CommandCooldownTimeout)
