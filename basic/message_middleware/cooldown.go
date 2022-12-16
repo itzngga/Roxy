@@ -9,19 +9,19 @@ import (
 
 var CooldownCache *skipmap.StringMap[string]
 
-func CooldownMiddleware(c *whatsmeow.Client, args command.RunFuncArgs) bool {
-	if args.Options.CommandCooldownTimeout == 0 {
+func CooldownMiddleware(c *whatsmeow.Client, params *command.RunFuncParams) bool {
+	if params.Options.CommandCooldownTimeout == 0 {
 		return true
 	}
-	_, ok := CooldownCache.Load(c.Store.ID.User + "-" + args.Evm.Info.Sender.User)
+	_, ok := CooldownCache.Load(c.Store.ID.User + "-" + params.Event.Info.Sender.User)
 	if ok {
-		//util.SendReplyMessage(c, args.Evm, "You are on Cooldown!")
-		return false
+		//util.SendReplyMessage(c, params.Event, "You are on Cooldown!")
+		return true
 	}
 	go func() {
-		timeout := time.NewTimer(args.Options.CommandCooldownTimeout)
+		timeout := time.NewTimer(params.Options.CommandCooldownTimeout)
 		<-timeout.C
-		CooldownCache.Delete(c.Store.ID.User + "-" + args.Evm.Info.Sender.User)
+		CooldownCache.Delete(c.Store.ID.User + "-" + params.Event.Info.Sender.User)
 		timeout.Stop()
 	}()
 

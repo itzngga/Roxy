@@ -55,37 +55,39 @@ func ParseQuotedMessage(m *waProto.Message) *waProto.Message {
 	}
 }
 
-func ParseQuotedRemoteJid(m *waProto.Message) *string {
+func ParseQuotedRemoteJid(evm *events.Message) *string {
+	m := evm.Message
 	if m.GetExtendedTextMessage().GetContextInfo() != nil {
-		return m.GetExtendedTextMessage().GetContextInfo().RemoteJid
+		return m.GetExtendedTextMessage().GetContextInfo().Participant
 	} else if m.GetImageMessage().GetContextInfo() != nil {
-		return m.GetImageMessage().GetContextInfo().RemoteJid
+		return m.GetImageMessage().GetContextInfo().Participant
 	} else if m.GetVideoMessage().GetContextInfo() != nil {
-		return m.GetVideoMessage().GetContextInfo().RemoteJid
+		return m.GetVideoMessage().GetContextInfo().Participant
 	} else if m.GetDocumentMessage().GetContextInfo() != nil {
-		return m.GetDocumentMessage().GetContextInfo().RemoteJid
+		return m.GetDocumentMessage().GetContextInfo().Participant
 	} else if m.GetAudioMessage().GetContextInfo() != nil {
-		return m.GetAudioMessage().GetContextInfo().RemoteJid
+		return m.GetAudioMessage().GetContextInfo().Participant
 	} else if m.GetStickerMessage().GetContextInfo() != nil {
-		return m.GetStickerMessage().GetContextInfo().RemoteJid
+		return m.GetStickerMessage().GetContextInfo().Participant
 	} else if m.GetButtonsMessage().GetContextInfo() != nil {
-		return m.GetButtonsMessage().GetContextInfo().RemoteJid
+		return m.GetButtonsMessage().GetContextInfo().Participant
 	} else if m.GetGroupInviteMessage().GetContextInfo() != nil {
-		return m.GetGroupInviteMessage().GetContextInfo().RemoteJid
+		return m.GetGroupInviteMessage().GetContextInfo().Participant
 	} else if m.GetProductMessage().GetContextInfo() != nil {
-		return m.GetProductMessage().GetContextInfo().RemoteJid
+		return m.GetProductMessage().GetContextInfo().Participant
 	} else if m.GetListMessage().GetContextInfo() != nil {
-		return m.GetListMessage().GetContextInfo().RemoteJid
+		return m.GetListMessage().GetContextInfo().Participant
 	} else if m.GetTemplateMessage().GetContextInfo() != nil {
-		return m.GetTemplateMessage().GetContextInfo().RemoteJid
+		return m.GetTemplateMessage().GetContextInfo().Participant
 	} else if m.GetContactMessage().GetContextInfo() != nil {
-		return m.GetContactMessage().GetContextInfo().RemoteJid
+		return m.GetContactMessage().GetContextInfo().Participant
 	} else {
-		return nil
+		return &evm.Info.Chat.User
 	}
 }
 
-func ParseQuotedMessageId(m *waProto.Message) *string {
+func ParseQuotedMessageId(evm *events.Message) *string {
+	m := evm.Message
 	if m.GetExtendedTextMessage().GetContextInfo() != nil {
 		return m.GetExtendedTextMessage().GetContextInfo().StanzaId
 	} else if m.GetImageMessage().GetContextInfo() != nil {
@@ -111,7 +113,7 @@ func ParseQuotedMessageId(m *waProto.Message) *string {
 	} else if m.GetContactMessage().GetContextInfo() != nil {
 		return m.GetContactMessage().GetContextInfo().StanzaId
 	} else {
-		return nil
+		return &evm.Info.ID
 	}
 }
 

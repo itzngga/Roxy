@@ -12,9 +12,8 @@ func (m *Muxer) GenerateHelpButton() {
 		Name:    "help",
 		Aliases: []string{"menu"},
 		Cache:   true,
-		RunFunc: func(c *whatsmeow.Client, args command.RunFuncArgs) *waProto.Message {
-			id, _ := args.Locals.Load("uid")
-
+		RunFunc: func(c *whatsmeow.Client, params *command.RunFuncParams) *waProto.Message {
+			id, _ := params.Locals.Load("uid")
 			sections := make([]*waProto.ListMessage_Section, 0)
 			sections = append(sections, util.CreateSectionList("Umum", util.CreateSectionRow("Daftar Perintah", "/help", util.CreateButtonID(id, "/help"))))
 
@@ -34,6 +33,20 @@ func (m *Muxer) GenerateHelpButton() {
 				sections = append(sections, util.CreateSectionList(category, rows...))
 				return true
 			})
+
+			uncategorized := make([]*waProto.ListMessage_Row, 0)
+			m.Commands.Range(func(cmdKey string, cmd *command.Command) bool {
+				if cmd.Name != "help" && cmd.Category == "" && !cmd.HideFromHelp {
+					for _, ct := range uncategorized {
+						if *ct.Description == "/"+cmd.Name {
+							return true
+						}
+					}
+					uncategorized = append(uncategorized, util.CreateSectionRow(cmd.Description, "/"+cmd.Name, util.CreateButtonID(id, "/"+cmd.Name)))
+				}
+				return true
+			})
+			sections = append(sections, util.CreateSectionList("Uncategorized", uncategorized...))
 
 			return util.GenerateListMessage(m.Options.HelpTitle, m.Options.HelpDescription, "Lihat", m.Options.HelpFooter, sections...)
 		},

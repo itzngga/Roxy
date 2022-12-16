@@ -7,8 +7,8 @@ import (
 	"sort"
 )
 
-type MiddlewareFunc func(c *whatsmeow.Client, args RunFuncArgs) bool
-type RunFunc func(c *whatsmeow.Client, args RunFuncArgs) *waProto.Message
+type MiddlewareFunc func(c *whatsmeow.Client, params *RunFuncParams) bool
+type RunFunc func(c *whatsmeow.Client, params *RunFuncParams) *waProto.Message
 
 type Command struct {
 	Name        string
@@ -38,11 +38,14 @@ func (c *Command) GetName(name string) string {
 
 func (c *Command) Validate() {
 	if c.Name == "" {
-		panic("Command name cannot be empty")
+		panic("error: command name cannot be empty")
 	} else if c.Description == "" {
 		c.Description = fmt.Sprintf("This is %s command description example", c.Name)
 	} else if c.RunFunc == nil {
-		panic("RunFunc cannot be empty")
+		panic("error: RunFunc cannot be empty")
+	}
+	if c.PrivateOnly && c.GroupOnly {
+		panic("error: invalid scope group/private?")
 	}
 
 	sort.Strings(c.Aliases)

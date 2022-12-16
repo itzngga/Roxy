@@ -98,10 +98,10 @@ var speed = &command.Command{
 	Aliases:     []string{"sp", "s"},
 	Description: "Testing speed",
 	Category:    categories.CommonCategory,
-	RunFunc: func(c *whatsmeow.Client, args command.RunFuncArgs) *waProto.Message {
+	RunFunc: func(c *whatsmeow.Client, params *command.RunFuncParams) *waProto.Message {
 		t := time.Now()
-		util.SendReplyMessage(c, args.Evm, "ok, waitt...")
-		return util.SendReplyText(args.Evm, fmt.Sprintf("Duration: %f seconds", time.Now().Sub(t).Seconds()))
+		util.SendReplyMessage(c, params.Event, "ok, waitt...")
+		return util.SendReplyText(params.Event, fmt.Sprintf("Duration: %f seconds", time.Now().Sub(t).Seconds()))
 	},
 }
 

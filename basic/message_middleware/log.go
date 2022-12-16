@@ -7,7 +7,7 @@ import (
 	"time"
 )
 
-func LogMiddleware(c *whatsmeow.Client, args command.RunFuncArgs) bool {
-	fmt.Println(fmt.Sprintf("[%s] [CMD] [%s] command : %s", time.Now().Format("03:04:05"), args.Number, args.Cmd.Name))
+func LogMiddleware(c *whatsmeow.Client, params *command.RunFuncParams) bool {
+	fmt.Println(fmt.Sprintf("[%s] [CMD] [%s] command : %s", time.Now().Format("03:04:05"), params.Number, params.Cmd.Name))
 	return true
 }

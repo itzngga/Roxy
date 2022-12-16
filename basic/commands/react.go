@@ -14,25 +14,28 @@ import (
 var react = &command.Command{
 	Name:        "react",
 	Description: "Emoji ke reply",
+	PrivateOnly: true,
 	Category:    categories.CommonCategory,
-	RunFunc: func(c *whatsmeow.Client, args command.RunFuncArgs) *waProto.Message {
+	RunFunc: func(c *whatsmeow.Client, params *command.RunFuncParams) *waProto.Message {
+		fromMe := false
 		react := ""
-		if len(args.Args) != 1 {
-			react = args.Args[1]
+		if len(params.Arguments) > 1 {
+			react = params.Arguments[1]
 		}
-		msg := &waProto.Message{
+		if id := c.Store.ID.User + "@" + c.Store.ID.Server; *util.ParseQuotedRemoteJid(params.Event) == id {
+			fromMe = true
+		}
+		return &waProto.Message{
 			ReactionMessage: &waProto.ReactionMessage{
 				Key: &waProto.MessageKey{
-					RemoteJid: types.String(args.Evm.Info.Chat.String()),
-					FromMe:    types.Bool(false),
-					Id:        util.ParseQuotedMessageId(args.Evm.Message),
+					RemoteJid: types.String(params.Event.Info.Chat.String()),
+					FromMe:    &fromMe,
+					Id:        util.ParseQuotedMessageId(params.Event),
 				},
 				Text:              types.String(react),
 				SenderTimestampMs: types.Int64(time.Now().UnixMilli()),
 			},
 		}
-
-		return msg
 	},
 }
 

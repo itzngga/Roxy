@@ -136,15 +136,15 @@ func (m *Muxer) SetCacheCommandResponse(cmd string, response *waProto.Message) {
 }
 
 func (m *Muxer) GlobalMiddlewareProcessing(c *whatsmeow.Client, evt *events.Message, number string) bool {
-	args := command.RunFuncArgs{
+	param := &command.RunFuncParams{
 		Options: m.Options,
-		Evm:     evt,
+		Event:   evt,
 		Number:  number,
 		Locals:  m.Locals,
 	}
 	midAreOk := true
 	m.GlobalMiddlewares.Range(func(key string, value command.MiddlewareFunc) bool {
-		if !value(c, args) {
+		if !value(c, param) {
 			midAreOk = false
 			return false
 		}
@@ -174,18 +174,21 @@ func (m *Muxer) RunCommand(c *whatsmeow.Client, evt *events.Message) {
 	cmdLoad, isAvailable := m.Commands.Load(cmd)
 	if isCmd && isAvailable {
 		defer m.HandlePanic()
-		args := command.RunFuncArgs{
-			Options: m.Options,
-			Evm:     evt,
-			Cmd:     cmdLoad,
-			Msg:     parsed,
-			Number:  number,
-			Locals:  m.Locals,
-			Args:    strings.Split(parsed, " "),
+		params := &command.RunFuncParams{
+			Options:   m.Options,
+			Event:     evt,
+			Info:      &evt.Info,
+			User:      c.Store.ID,
+			Message:   evt.Message,
+			Cmd:       cmdLoad,
+			ParsedMsg: parsed,
+			Number:    number,
+			Locals:    m.Locals,
+			Arguments: strings.Split(parsed, " "),
 		}
 		midAreOk := true
 		m.Middlewares.Range(func(key string, value command.MiddlewareFunc) bool {
-			if !value(c, args) {
+			if !value(c, params) {
 				midAreOk = false
 				return false
 			}
@@ -195,7 +198,7 @@ func (m *Muxer) RunCommand(c *whatsmeow.Client, evt *events.Message) {
 			return
 		}
 		if cmdLoad.Middleware != nil {
-			if !cmdLoad.Middleware(c, args) {
+			if !cmdLoad.Middleware(c, params) {
 				return
 			}
 		}
@@ -213,10 +216,10 @@ func (m *Muxer) RunCommand(c *whatsmeow.Client, evt *events.Message) {
 		if cmdLoad.Cache {
 			msg = m.GetCachedCommandResponse(cmdLoad.Name)
 			if msg == nil {
-				msg = cmdLoad.RunFunc(c, args)
+				msg = cmdLoad.RunFunc(c, params)
 			}
 		} else {
-			msg = cmdLoad.RunFunc(c, args)
+			msg = cmdLoad.RunFunc(c, params)
 		}
 		if msg != nil {
 			ctx, cancel := context.WithTimeout(context.Background(), m.MessageTimeout)

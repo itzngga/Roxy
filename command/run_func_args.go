@@ -3,30 +3,37 @@ package command
 import (
 	"github.com/itzngga/goRoxy/options"
 	"github.com/zhangyunhao116/skipmap"
+	waProto "go.mau.fi/whatsmeow/binary/proto"
+	waTypes "go.mau.fi/whatsmeow/types"
 	"go.mau.fi/whatsmeow/types/events"
 	"time"
 )
 
-type RunFuncArgs struct {
+type RunFuncParams struct {
+	ParsedMsg string
+	Arguments []string
+	Number    string
+
 	Options *options.Options
-	Evm     *events.Message
+	Event   *events.Message
+	Info    *waTypes.MessageInfo
+	User    *waTypes.JID
+	Message *waProto.Message
 	Cmd     *Command
-	Msg     string
-	Args    []string
-	Number  string
-	Locals  *skipmap.StringMap[string]
+
+	Locals *skipmap.StringMap[string]
 }
 
-func (r *RunFuncArgs) GetLocals(key string) (string, bool) {
+func (r *RunFuncParams) GetLocals(key string) (string, bool) {
 	return r.Locals.Load(key)
 }
 
-func (r *RunFuncArgs) SetLocals(key string, value string) {
+func (r *RunFuncParams) SetLocals(key string, value string) {
 	r.Locals.Store(key, value)
 	return
 }
 
-func (r *RunFuncArgs) SetLocalsWithTTL(key string, value string, ttl time.Duration) {
+func (r *RunFuncParams) SetLocalsWithTTL(key string, value string, ttl time.Duration) {
 	r.Locals.Store(key, value)
 	go func() {
 		timeout := time.NewTimer(ttl)
@@ -37,7 +44,7 @@ func (r *RunFuncArgs) SetLocalsWithTTL(key string, value string, ttl time.Durati
 	return
 }
 
-func (r *RunFuncArgs) Del(key string) {
+func (r *RunFuncParams) Del(key string) {
 	r.Locals.Delete(key)
 	return
 }
