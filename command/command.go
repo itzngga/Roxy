@@ -25,17 +25,6 @@ type Command struct {
 	RunFunc      RunFunc
 }
 
-func (c *Command) GetName(name string) string {
-	var theName string
-	if c.Name == name {
-		theName = name
-	}
-	if cmd := sort.SearchStrings(c.Aliases, name); cmd != len(c.Aliases) {
-		theName = c.Aliases[cmd]
-	}
-	return theName
-}
-
 func (c *Command) Validate() {
 	if c.Name == "" {
 		panic("error: command name cannot be empty")

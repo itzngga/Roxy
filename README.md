@@ -3,7 +3,9 @@
 a Golang version of Roxy WhatsApp Bot with Command Handler helper
 
 # Installation
-> go get github.com/itzngga/goRoxy
+```bash 
+go get github.com/itzngga/goRoxy
+```
 
 # Get Started
 ```go

@@ -121,7 +121,7 @@ func (app *App) PrepareClient() {
 		}
 	}
 
-	app.client = whatsmeow.NewClient(device, waLog.Stdout("Main", "ERROR", true))
+	app.client = whatsmeow.NewClient(device, waLog.Stdout("WhatsMeow", "ERROR", true))
 	if app.client.Store.ID == nil {
 		qrChan, _ := app.client.GetQRChannel(context.Background())
 		err := app.client.Connect()

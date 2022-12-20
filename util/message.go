@@ -121,29 +121,11 @@ func ParseQuotedBy(m *waProto.Message, str string) *waProto.Message {
 	}
 }
 
-func SendReplyText(m *events.Message, text string) *waProto.Message {
-	return &waProto.Message{
-		ExtendedTextMessage: &waProto.ExtendedTextMessage{
-			Text:        &text,
-			ContextInfo: WithReply(m),
-		},
-	}
-}
-
 func WithReply(m *events.Message) *waProto.ContextInfo {
 	return &waProto.ContextInfo{
 		StanzaId:      &m.Info.ID,
 		Participant:   types.String(m.Info.MessageSource.Sender.String()),
 		QuotedMessage: m.Message,
-	}
-}
-
-func SendInvalidCommand(m *events.Message) *waProto.Message {
-	return &waProto.Message{
-		ExtendedTextMessage: &waProto.ExtendedTextMessage{
-			Text:        types.String("Invalid command received"),
-			ContextInfo: WithReply(m),
-		},
 	}
 }
 
