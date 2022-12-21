@@ -9,7 +9,6 @@ import "github.com/itzngga/goRoxy/command"
 ## Index
 
 - [type Command](<#type-command>)
-  - [func (c *Command) GetName(name string) string](<#func-command-getname>)
   - [func (c *Command) Validate()](<#func-command-validate>)
 - [type MiddlewareFunc](<#type-middlewarefunc>)
 - [type RunFunc](<#type-runfunc>)
@@ -39,13 +38,7 @@ type Command struct {
 }
 ```
 
-### func \(\*Command\) [GetName](<https://github.com/itzngga/goRoxy/blob/master/command/command.go#L28>)
-
-```go
-func (c *Command) GetName(name string) string
-```
-
-### func \(\*Command\) [Validate](<https://github.com/itzngga/goRoxy/blob/master/command/command.go#L39>)
+### func \(\*Command\) [Validate](<https://github.com/itzngga/goRoxy/blob/master/command/command.go#L28>)
 
 ```go
 func (c *Command) Validate()
@@ -569,9 +562,7 @@ import "github.com/itzngga/goRoxy/util"
 - [func ParseQuotedMessageId(evm *events.Message) *string](<#func-parsequotedmessageid>)
 - [func ParseQuotedRemoteJid(evm *events.Message) *string](<#func-parsequotedremotejid>)
 - [func RemoveElementByIndex[T []any](slice []T, index int) []T](<#func-removeelementbyindex>)
-- [func SendInvalidCommand(m *events.Message) *waProto.Message](<#func-sendinvalidcommand>)
 - [func SendReplyMessage(c *whatsmeow.Client, event *events.Message, obj any)](<#func-sendreplymessage>)
-- [func SendReplyText(m *events.Message, text string) *waProto.Message](<#func-sendreplytext>)
 - [func StringIsOnSlice(target string, slice []string) bool](<#func-stringisonslice>)
 - [func UploadAudioFromUrl(c *whatsmeow.Client, url string) (*waProto.AudioMessage, error)](<#func-uploadaudiofromurl>)
 - [func UploadAudioMessageFromBytes(c *whatsmeow.Client, bytes []byte) (*waProto.AudioMessage, error)](<#func-uploadaudiomessagefrombytes>)
@@ -735,7 +726,7 @@ func GenerateHydratedUrlButton(text, url string) *waProto.HydratedTemplateButton
 func GenerateListMessage(title, description, buttonText, footerText string, sections ...*waProto.ListMessage_Section) *waProto.Message
 ```
 
-## func [GenerateReplyMessage](<https://github.com/itzngga/goRoxy/blob/master/util/reply.go#L126>)
+## func [GenerateReplyMessage](<https://github.com/itzngga/goRoxy/blob/master/util/reply.go#L132>)
 
 ```go
 func GenerateReplyMessage(event *events.Message, obj any) *waProto.Message
@@ -759,7 +750,7 @@ func ParseButtonID(uid, id string) string
 func ParseCmd(str string) (string, bool)
 ```
 
-## func [ParseJID](<https://github.com/itzngga/goRoxy/blob/master/util/message.go#L150>)
+## func [ParseJID](<https://github.com/itzngga/goRoxy/blob/master/util/message.go#L132>)
 
 ```go
 func ParseJID(arg string) (waTypes.JID, bool)
@@ -801,22 +792,10 @@ func ParseQuotedRemoteJid(evm *events.Message) *string
 func RemoveElementByIndex[T []any](slice []T, index int) []T
 ```
 
-## func [SendInvalidCommand](<https://github.com/itzngga/goRoxy/blob/master/util/message.go#L141>)
-
-```go
-func SendInvalidCommand(m *events.Message) *waProto.Message
-```
-
 ## func [SendReplyMessage](<https://github.com/itzngga/goRoxy/blob/master/util/reply.go#L13>)
 
 ```go
 func SendReplyMessage(c *whatsmeow.Client, event *events.Message, obj any)
-```
-
-## func [SendReplyText](<https://github.com/itzngga/goRoxy/blob/master/util/message.go#L124>)
-
-```go
-func SendReplyText(m *events.Message, text string) *waProto.Message
 ```
 
 ## func [StringIsOnSlice](<https://github.com/itzngga/goRoxy/blob/master/util/common.go#L28>)
@@ -915,7 +894,7 @@ func UploadVideoMessageFromBytes(c *whatsmeow.Client, m *events.Message, bytes [
 func UploadVideoMessageFromPath(c *whatsmeow.Client, path, caption string) (*waProto.VideoMessage, error)
 ```
 
-## func [WithReply](<https://github.com/itzngga/goRoxy/blob/master/util/message.go#L133>)
+## func [WithReply](<https://github.com/itzngga/goRoxy/blob/master/util/message.go#L124>)
 
 ```go
 func WithReply(m *events.Message) *waProto.ContextInfo
@@ -946,7 +925,21 @@ import "github.com/itzngga/goRoxy/basic/commands"
 
 ## Index
 
+- [func StickerImage(c *whatsmeow.Client, event *events.Message, img *waProto.ImageMessage) *waProto.Message](<#func-stickerimage>)
+- [func StickerVideo(c *whatsmeow.Client, event *events.Message, video *waProto.VideoMessage) *waProto.Message](<#func-stickervideo>)
 
+
+## func [StickerImage](<https://github.com/itzngga/goRoxy/blob/master/basic/commands/sticker.go#L71>)
+
+```go
+func StickerImage(c *whatsmeow.Client, event *events.Message, img *waProto.ImageMessage) *waProto.Message
+```
+
+## func [StickerVideo](<https://github.com/itzngga/goRoxy/blob/master/basic/commands/sticker.go#L38>)
+
+```go
+func StickerVideo(c *whatsmeow.Client, event *events.Message, video *waProto.VideoMessage) *waProto.Message
+```
 
 # global\_middleware
 
@@ -999,28 +992,21 @@ import "github.com/itzngga/goRoxy/examples/cmd"
 
 
 
-# cmd\_gen
+# cli
 
 ```go
-import "github.com/itzngga/goRoxy/util/cmd_gen"
+import "github.com/itzngga/goRoxy/util/cli"
 ```
 
 ## Index
 
-- [func GenCmd()](<#func-gencmd>)
-- [func RestartSelf() error](<#func-restartself>)
+- [func FfmpegPipeline(data []byte, arg ...string) []byte](<#func-ffmpegpipeline>)
 
 
-## func [GenCmd](<https://github.com/itzngga/goRoxy/blob/master/util/cmd_gen/cmd_gen.go#L20>)
-
-```go
-func GenCmd()
-```
-
-## func [RestartSelf](<https://github.com/itzngga/goRoxy/blob/master/util/cmd_gen/cmd_gen.go#L102>)
+## func [FfmpegPipeline](<https://github.com/itzngga/goRoxy/blob/master/util/cli/pipeline.go#L10>)
 
 ```go
-func RestartSelf() error
+func FfmpegPipeline(data []byte, arg ...string) []byte
 ```
 
 # gofast
@@ -1241,13 +1227,13 @@ import "github.com/itzngga/goRoxy/util/thumbnail"
 - [func CreateVideoThumbnail(data []byte) []byte](<#func-createvideothumbnail>)
 
 
-## func [CreateImageThumbnail](<https://github.com/itzngga/goRoxy/blob/master/util/thumbnail/thumbnail.go#L14>)
+## func [CreateImageThumbnail](<https://github.com/itzngga/goRoxy/blob/master/util/thumbnail/thumbnail.go#L12>)
 
 ```go
 func CreateImageThumbnail(data []byte) []byte
 ```
 
-## func [CreateVideoThumbnail](<https://github.com/itzngga/goRoxy/blob/master/util/thumbnail/thumbnail.go#L30>)
+## func [CreateVideoThumbnail](<https://github.com/itzngga/goRoxy/blob/master/util/thumbnail/thumbnail.go#L28>)
 
 ```go
 func CreateVideoThumbnail(data []byte) []byte

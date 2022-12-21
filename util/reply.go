@@ -22,7 +22,13 @@ func SendReplyMessage(c *whatsmeow.Client, event *events.Message, obj any) {
 		}
 	case []byte:
 		mimetypeString := mimetype.Detect(value)
-		if strings.Contains(mimetypeString.String(), "image") {
+		if mimetypeString.Is("image/webp") {
+			sticker, _ := UploadStickerMessageFromBytes(c, event, value)
+			message = &waProto.Message{
+				StickerMessage: sticker,
+			}
+			sticker.ContextInfo = WithReply(event)
+		} else if strings.Contains(mimetypeString.String(), "image") {
 			image, _ := UploadImageMessageFromBytes(c, event, value, "")
 			message = &waProto.Message{
 				ImageMessage: image,
