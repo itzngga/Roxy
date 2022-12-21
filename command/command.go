@@ -17,6 +17,7 @@ type Command struct {
 
 	Category string
 	Cache    bool
+	BuiltIn  bool
 
 	HideFromHelp bool
 	GroupOnly    bool

@@ -15,6 +15,7 @@ var react = &command.Command{
 	Name:        "react",
 	Description: "Emoji ke reply",
 	PrivateOnly: true,
+	BuiltIn:     true,
 	Category:    categories.CommonCategory,
 	RunFunc: func(c *whatsmeow.Client, params *command.RunFuncParams) *waProto.Message {
 		fromMe := false

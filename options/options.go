@@ -15,6 +15,7 @@ type Options struct {
 
 	WithCommandCooldown bool
 	WithCommandLog      bool
+	WithBuiltIn         bool
 
 	HelpTitle       string
 	HelpDescription string
@@ -31,6 +32,7 @@ func NewDefaultOptions() Options {
 		PostgresDsn:                 "user=akutansi password=root123 dbname=akutansi port=5432 sslmode=disable TimeZone=Asia/Jakarta",
 		WithCommandCooldown:         false,
 		WithCommandLog:              true,
+		WithBuiltIn:                 true,
 		SendMessageTimeout:          time.Second * 30,
 		CommandResponseCacheTimeout: time.Minute * 15,
 

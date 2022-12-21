@@ -61,7 +61,15 @@ func (m *Muxer) AddAllEmbed() {
 	}
 	commands := embed.Commands.Get()
 	for _, cmd := range commands {
-		m.AddCommand(cmd)
+		if !m.Options.WithBuiltIn {
+			if cmd.BuiltIn {
+				continue
+			}
+			m.AddCommand(cmd)
+		} else {
+			m.AddCommand(cmd)
+		}
+
 	}
 	middlewares := embed.Middlewares.Get()
 	for _, mid := range middlewares {

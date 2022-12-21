@@ -20,6 +20,7 @@ var sticker = &command.Command{
 	Name:        "sticker",
 	Aliases:     []string{"s", "stiker"},
 	Category:    categories.CommonCategory,
+	BuiltIn:     true,
 	Description: "Create sticker from image or video",
 	RunFunc: func(c *whatsmeow.Client, params *command.RunFuncParams) *waProto.Message {
 		if params.Message.GetImageMessage() != nil {
