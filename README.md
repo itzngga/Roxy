@@ -6,6 +6,7 @@ a Golang version of Roxy WhatsApp Bot with Command Handler helper
 ```bash 
 go get github.com/itzngga/goRoxy
 ```
+- You need ffmpeg binary for generate image/video thumbnail
 
 # Get Started
 ```go
@@ -50,6 +51,8 @@ type Options struct {
     
     WithCommandCooldown bool
     WithCommandLog      bool
+    WithBuiltIn         bool
+    WithHelpCommand     bool
     
     HelpTitle       string
     HelpDescription string

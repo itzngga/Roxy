@@ -268,7 +268,9 @@ func NewMuxer(log waLog.Logger, options *options.Options) *Muxer {
 	muxer.Locals.Store("uid", util.CreateUid())
 
 	muxer.AddAllEmbed()
-	muxer.GenerateHelpButton()
+	if options.WithHelpCommand {
+		muxer.GenerateHelpButton()
+	}
 
 	return muxer
 }

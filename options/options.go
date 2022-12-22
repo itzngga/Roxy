@@ -16,6 +16,7 @@ type Options struct {
 	WithCommandCooldown bool
 	WithCommandLog      bool
 	WithBuiltIn         bool
+	WithHelpCommand     bool
 
 	HelpTitle       string
 	HelpDescription string
@@ -33,6 +34,7 @@ func NewDefaultOptions() Options {
 		WithCommandCooldown:         false,
 		WithCommandLog:              true,
 		WithBuiltIn:                 true,
+		WithHelpCommand:             true,
 		SendMessageTimeout:          time.Second * 30,
 		CommandResponseCacheTimeout: time.Minute * 15,
 
