@@ -1,7 +1,9 @@
 package util
 
 import (
+	"fmt"
 	"github.com/google/uuid"
+	waTypes "go.mau.fi/whatsmeow/types"
 	"strings"
 )
 
@@ -42,4 +44,70 @@ func RemoveElementByIndex[T []any](slice []T, index int) []T {
 		slice[index] = slice[sliceLastIndex]
 	}
 	return slice[:sliceLastIndex]
+}
+
+func ParseAllJid(jid any) (pJid waTypes.JID) {
+	switch uJid := jid.(type) {
+	case string:
+		result, ok := ParseJID(uJid)
+		if !ok {
+			fmt.Printf("error: failed to parse jid : %s\n", jid)
+			return pJid
+		}
+		pJid = result
+	case waTypes.JID:
+		pJid = uJid
+	default:
+		fmt.Printf("error: unsupported jid types : %s\n", jid)
+		return pJid
+	}
+	return pJid
+}
+
+func ParseGroupJid(jid any) (pJid waTypes.JID) {
+	switch uJid := jid.(type) {
+	case string:
+		result, ok := ParseJID(uJid)
+		if !ok {
+			fmt.Printf("error: failed to parse jid : %s\n", jid)
+			return pJid
+		} else if result.Server != waTypes.GroupServer {
+			fmt.Printf("error: given jid is not group jid : %s\n", jid)
+			return pJid
+		}
+		pJid = result
+	case waTypes.JID:
+		if uJid.Server != waTypes.GroupServer {
+			fmt.Printf("error: given jid is not group jid : %s\n", jid)
+			return pJid
+		}
+	default:
+		fmt.Printf("error: unsupported jid types : %s\n", jid)
+		return pJid
+	}
+	return pJid
+}
+
+func ParseUserJid(jid any) (pJid waTypes.JID) {
+	switch uJid := jid.(type) {
+	case string:
+		result, ok := ParseJID(uJid)
+		if !ok {
+			fmt.Printf("error: failed to parse jid : %s\n", jid)
+			return pJid
+		} else if result.Server != waTypes.DefaultUserServer {
+			fmt.Printf("error: given jid is not user jid : %s\n", jid)
+			return pJid
+		}
+		pJid = result
+	case waTypes.JID:
+		if uJid.Server != waTypes.DefaultUserServer {
+			fmt.Printf("error: given jid is not user jid : %s\n", jid)
+			return pJid
+		}
+	default:
+		fmt.Printf("error: unsupported jid types : %s\n", jid)
+		return pJid
+	}
+	return pJid
 }

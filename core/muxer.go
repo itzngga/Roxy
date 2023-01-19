@@ -224,7 +224,7 @@ func (m *Muxer) RunCommand(c *whatsmeow.Client, evt *events.Message) {
 			ctx, cancel := context.WithTimeout(context.Background(), m.MessageTimeout)
 			defer cancel()
 
-			_, err := c.SendMessage(ctx, evt.Info.Chat, "", msg)
+			_, err := c.SendMessage(ctx, evt.Info.Chat, msg)
 			if err != nil {
 				fmt.Println("[SEND MESSAGE ERR]\n", err)
 			}

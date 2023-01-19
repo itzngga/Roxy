@@ -123,7 +123,7 @@ func SendReplyMessage(c *whatsmeow.Client, event *events.Message, obj any) {
 		value.ContextInfo = WithReply(event)
 	}
 
-	_, err := c.SendMessage(context.Background(), event.Info.Chat, whatsmeow.GenerateMessageID(), message)
+	_, err := c.SendMessage(context.Background(), event.Info.Chat, message)
 	if err != nil {
 		fmt.Printf("error: sending message: %v\n", err)
 	}

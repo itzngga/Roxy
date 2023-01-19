@@ -15,6 +15,7 @@ import (
 	"go.mau.fi/whatsmeow"
 	"go.mau.fi/whatsmeow/store"
 	"go.mau.fi/whatsmeow/store/sqlstore"
+	waTypes "go.mau.fi/whatsmeow/types"
 	"go.mau.fi/whatsmeow/types/events"
 	waLog "go.mau.fi/whatsmeow/util/log"
 	"os"
@@ -52,7 +53,7 @@ func (app *App) QRChanFunc(ch <-chan whatsmeow.QRChannelItem) {
 		if evt.Event == "code" {
 			qrterminal.GenerateHalfBlock(evt.Code, qrterminal.L, os.Stdout)
 		} else {
-			app.Log.Infof("[INFO] QR channel result %a", evt.Event)
+			app.Log.Infof("QR Generated!")
 		}
 	}
 }
@@ -61,7 +62,11 @@ func (app *App) ConnectedEvents(evt interface{}) {
 	_, ok := evt.(*events.Connected)
 	if ok {
 		app.startTime = time.Now()
+		if len(app.client.Store.PushName) == 0 {
+			return
+		}
 		app.Log.Infof("Connected!")
+		_ = app.client.SendPresence(waTypes.PresenceAvailable)
 	}
 }
 

@@ -1,7 +1,10 @@
 package util
 
 import (
+	"context"
+	"fmt"
 	"github.com/itzngga/goRoxy/types"
+	"go.mau.fi/whatsmeow"
 	waProto "go.mau.fi/whatsmeow/binary/proto"
 	waTypes "go.mau.fi/whatsmeow/types"
 	"go.mau.fi/whatsmeow/types/events"
@@ -144,4 +147,12 @@ func ParseJID(arg string) (waTypes.JID, bool) {
 		}
 		return recipient, true
 	}
+}
+
+func RevokeMessage(c *whatsmeow.Client, jid waTypes.JID, messageId waTypes.MessageID) {
+	_, err := c.SendMessage(context.Background(), jid, c.BuildRevoke(jid, waTypes.EmptyJID, messageId))
+	if err != nil {
+		fmt.Printf("error: revoking message: %v\n", err)
+	}
+	return
 }
