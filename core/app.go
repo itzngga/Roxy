@@ -58,29 +58,34 @@ func (app *App) QRChanFunc(ch <-chan whatsmeow.QRChannelItem) {
 	}
 }
 
-func (app *App) ConnectedEvents(evt interface{}) {
-	_, ok := evt.(*events.Connected)
-	if ok {
+func (app *App) HandleEvents(event interface{}) {
+	switch v := event.(type) {
+	case *events.LoggedOut:
+		app.Log.Warnf("%s Client logged out", app.client.Store.ID)
+	case *events.Connected:
 		app.startTime = time.Now()
 		if len(app.client.Store.PushName) == 0 {
 			return
 		}
 		app.Log.Infof("Connected!")
 		_ = app.client.SendPresence(waTypes.PresenceAvailable)
-	}
-}
-
-func (app *App) MessageEvents(evt interface{}) {
-	event, ok := evt.(*events.Message)
-	if ok {
+	case *events.Message:
 		app.Pool.Submit(func() {
-			if !app.startTime.IsZero() && event.Info.Timestamp.After(app.startTime) {
-				app.muxer.RunCommand(app.client, event)
+			if !app.startTime.IsZero() && v.Info.Timestamp.After(app.startTime) {
+				app.muxer.RunCommand(app.client, v)
 				return
 			}
 		})
+	case *events.CallTerminate, *events.CallRelayLatency, *events.CallAccept, *events.UnknownCallEvent:
+		// ignore
+	case *events.AppState:
+		// Ignore
+	case *events.PushNameSetting:
+		err := app.client.SendPresence(waTypes.PresenceAvailable)
+		if err != nil {
+			app.Log.Warnf("Failed to send presence after push name update: %v\n", err)
+		}
 	}
-	return
 }
 func (app *App) PrepareSqlContainer() {
 	store.DeviceProps.RequireFullSync = types.Bool(true)
@@ -141,8 +146,7 @@ func (app *App) PrepareClient() {
 		}
 	}
 
-	app.client.AddEventHandler(app.ConnectedEvents)
-	app.client.AddEventHandler(app.MessageEvents)
+	app.client.AddEventHandler(app.HandleEvents)
 }
 
 func (app *App) AddNewCategory(category string) {
