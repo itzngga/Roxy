@@ -1,63 +1,68 @@
 package options
 
 import (
-	"github.com/itzngga/goRoxy/util"
+	"errors"
+	"github.com/itzngga/roxy/util"
 	"time"
 )
 
 type Options struct {
+	// HostNumber will use the first available device when null
 	HostNumber string
-	StoreMode  string
-	LogLevel   string
 
-	PostgresDsn string
-	SqliteFile  string
+	// StoreMode can be "postgres" or "sqlite"
+	StoreMode string
 
-	WithCommandCooldown bool
-	WithCommandLog      bool
-	WithBuiltIn         bool
-	WithHelpCommand     bool
+	// LogLevel: "INFO", "ERROR", "WARN", "DEBUG"
+	LogLevel string
 
-	HelpTitle       string
-	HelpDescription string
-	HelpFooter      string
+	// This PostgresDsn Must add when StoreMode equal to "postgres"
+	PostgresDsn PostgresDSN
 
-	CommandCooldownTimeout      time.Duration
+	// This SqliteFile Generate "ROXY.DB" when it null
+	SqliteFile string
+
+	WithCommandLog              bool
 	CommandResponseCacheTimeout time.Duration
 	SendMessageTimeout          time.Duration
 }
 
 func NewDefaultOptions() Options {
 	return Options{
-		StoreMode:                   "postgres",
-		PostgresDsn:                 "user=akutansi password=root123 dbname=akutansi port=5432 sslmode=disable TimeZone=Asia/Jakarta",
-		WithCommandCooldown:         false,
+		//HostNumber:                  "081297980063",
+		StoreMode:                   "sqlite",
+		SqliteFile:                  "ROXY.DB",
 		WithCommandLog:              true,
-		WithBuiltIn:                 true,
-		WithHelpCommand:             true,
 		SendMessageTimeout:          time.Second * 30,
 		CommandResponseCacheTimeout: time.Minute * 15,
-
-		HelpTitle:       "*GoRoxy BOT v1.2*",
-		HelpDescription: "BOT ini dibuat dengan tujuan pembelajaran.\n\nHarap pilih salah satu",
-		HelpFooter:      "@itzngga",
 	}
 }
 
-func (o *Options) Validate() {
+func (o *Options) Validate() error {
 	if !util.StringIsOnSlice(o.StoreMode, []string{"postgres", "sqlite"}) {
-		panic("error: invalid store mode")
+		return errors.New("error: invalid store mode")
 	}
 	if o.HostNumber != "" {
 		_, ok := util.ParseJID(o.HostNumber)
 		if !ok {
-			panic("error: invalid host number")
+			return errors.New("error: invalid host number")
 		}
 	}
 	if o.LogLevel == "" {
 		o.LogLevel = "INFO"
 	}
 	if !util.StringIsOnSlice(o.LogLevel, []string{"INFO", "ERROR", "WARN", "DEBUG"}) {
-		panic("error: invalid log level")
+		return errors.New("error: invalid log level")
 	}
+
+	var nilPgDsn PostgresDSN
+	if o.StoreMode == "postgres" && o.PostgresDsn == nilPgDsn {
+		return errors.New("error: postgresql dsn cannot be null")
+	}
+
+	if o.StoreMode == "sqlite" && o.SqliteFile == "" {
+		o.SqliteFile = "GoRoxy.DB"
+	}
+
+	return nil
 }

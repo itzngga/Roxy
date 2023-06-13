@@ -1,10 +1,10 @@
 # goRoxy
 
-a Golang version of Roxy WhatsApp Bot with Command Handler helper
+Command Handler Abstraction for [whatsmeow](https://github.com/tulir/whatsmeow)
 
 # Installation
 ```bash 
-go get github.com/itzngga/goRoxy
+go get github.com/itzngga/roxy
 ```
 - You need ffmpeg binary for generate image/video thumbnail
 
@@ -13,11 +13,12 @@ go get github.com/itzngga/goRoxy
 package main
 
 import (
-	_ "github.com/itzngga/goRoxy/examples/cmd"
+	_ "github.com/itzngga/roxy/examples/cmd"
+	"log"
 
-	"github.com/itzngga/goRoxy/core"
-	"github.com/itzngga/goRoxy/options"
-	_ "github.com/lib/pq"
+	"github.com/itzngga/roxy/core"
+	"github.com/itzngga/roxy/options"
+	_ "github.com/mattn/go-sqlite3"
 
 	"os"
 	"os/signal"
@@ -25,13 +26,17 @@ import (
 )
 
 func main() {
-	app := core.NewGoRoxyBase(options.NewDefaultOptions())
+	app, err := core.NewGoRoxyBase(options.NewDefaultOptions())
+	if err != nil {
+		log.Fatal(err)
+	}
 
 	c := make(chan os.Signal)
 	signal.Notify(c, os.Interrupt, syscall.SIGTERM)
 	<-c
 	app.Shutdown()
 }
+
 
 ```
 # Config
@@ -42,32 +47,31 @@ app := core.NewGoRoxyBase(options.NewDefaultOptions())
 #### custom
 ```go
 type Options struct {
-    HostNumber string
-    StoreMode  string
-    LogLevel   string
-    
-    PostgresDsn string
-    SqliteFile  string
-    
-    WithCommandCooldown bool
-    WithCommandLog      bool
-    WithBuiltIn         bool
-    WithHelpCommand     bool
-    
-    HelpTitle       string
-    HelpDescription string
-    HelpFooter      string
-    
-    CommandCooldownTimeout      time.Duration
-    CommandResponseCacheTimeout time.Duration
-    SendMessageTimeout          time.Duration
+	// HostNumber will use the first available device when null
+	HostNumber string
+
+	// StoreMode can be "postgres" or "sqlite"
+	StoreMode string
+
+	// LogLevel: "INFO", "ERROR", "WARN", "DEBUG"
+	LogLevel string
+
+	// This PostgresDsn Must add when StoreMode equal to "postgres"
+	PostgresDsn PostgresDSN
+
+	// This SqliteFile Generate "ROXY.DB" when it null
+	SqliteFile string
+
+	WithCommandLog              bool
+	CommandResponseCacheTimeout time.Duration
+	SendMessageTimeout          time.Duration
 }
 ```
 ### PostgresSQL
 ```go
 options := options.Options{
 	StoreMode: "postgres"
-	PostgresDsn: "user=goroxy password=test123 dbname=goroxy port=5432 sslmode=disable TimeZone=Asia/Jakarta"
+	PostgresDsn: options.NewPostgresDSN("username", "password", "dbname", "port", "disable", "Asia/Jakarta")
 }
 app := core.NewGoRoxyBase(options)
 ```
@@ -89,41 +93,37 @@ package cmd
 
 import (
 	"fmt"
-	"github.com/itzngga/goRoxy/basic/categories"
-	"github.com/itzngga/goRoxy/command"
-	"github.com/itzngga/goRoxy/embed"
-	"github.com/itzngga/goRoxy/util"
-	"go.mau.fi/whatsmeow"
+	"github.com/itzngga/roxy/command"
+	"github.com/itzngga/roxy/embed"
 	waProto "go.mau.fi/whatsmeow/binary/proto"
 	"time"
 )
 
 var speed = &command.Command{
 	Name:        "speed",
-	Aliases:     []string{"sp", "s"},
 	Description: "Testing speed",
-	Category:    categories.CommonCategory,
-	RunFunc: func(c *whatsmeow.Client, params *command.RunFuncParams) *waProto.Message {
+	RunFunc: func(ctx *command.RunFuncContext) *waProto.Message {
 		t := time.Now()
-		util.SendReplyMessage(c, params.Event, "ok, waitt...")
-		return util.SendReplyText(params.Event, fmt.Sprintf("Duration: %f seconds", time.Now().Sub(t).Seconds()))
+		ctx.SendReplyMessage("wait...")
+		return ctx.GenerateReplyMessage(fmt.Sprintf("Duration: %f seconds", time.Now().Sub(t).Seconds()))
 	},
 }
 
 func init() {
 	embed.Commands.Add(speed)
 }
+
 ```
 
 # Documentation
-[DOC](https://github.com/itzngga/goRoxy/tree/master/DOC.md)
+[DOC](https://github.com/itzngga/roxy/tree/master/DOC.md)
 # Example
-[Example](https://github.com/itzngga/goRoxy/tree/master/examples)
+[Example](https://github.com/itzngga/roxy/tree/master/examples)
 # Helper/Util
-[UTIL](https://github.com/itzngga/goRoxy/tree/master/util)
+[UTIL](https://github.com/itzngga/roxy/tree/master/util)
 
 # License
-[GNU](https://github.com/ItzNgga/goRoxy/blob/master/LICENSE)
+[GNU](https://github.com/itzngga/roxy/blob/master/LICENSE)
 
 # Bugs
 Please submit an issue when Race Condition detected or anything

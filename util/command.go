@@ -40,18 +40,20 @@ func ParseMessageText(uid string, m *events.Message) string {
 		return pesan.GetImageMessage().GetCaption()
 	} else if pesan.GetExtendedTextMessage().GetText() != "" {
 		return pesan.GetExtendedTextMessage().GetText()
-	} else if pesan.GetTemplateButtonReplyMessage().GetSelectedId() != "" {
-		cmd := ParseButtonID(uid, pesan.GetTemplateButtonReplyMessage().GetSelectedId())
-		return cmd
-	} else if pesan.GetButtonsResponseMessage().GetSelectedButtonId() != "" {
-		cmd := ParseButtonID(uid, pesan.GetButtonsResponseMessage().GetSelectedButtonId())
-		return cmd
-	} else if pesan.GetListResponseMessage().GetSingleSelectReply().GetSelectedRowId() != "" {
-		cmd := ParseButtonID(uid, pesan.GetListResponseMessage().GetSingleSelectReply().GetSelectedRowId())
-		return cmd
-	} else if pesan.GetTemplateButtonReplyMessage().GetSelectedId() != "" {
-		cmd := ParseButtonID(uid, pesan.GetTemplateButtonReplyMessage().GetSelectedId())
-		return cmd
+
+		// Button,Template,List Was Deprecated
+		//} else if pesan.GetTemplateButtonReplyMessage().GetSelectedId() != "" {
+		//	cmd := ParseButtonID(uid, pesan.GetTemplateButtonReplyMessage().GetSelectedId())
+		//	return cmd
+		//} else if pesan.GetButtonsResponseMessage().GetSelectedButtonId() != "" {
+		//	cmd := ParseButtonID(uid, pesan.GetButtonsResponseMessage().GetSelectedButtonId())
+		//	return cmd
+		//} else if pesan.GetListResponseMessage().GetSingleSelectReply().GetSelectedRowId() != "" {
+		//	cmd := ParseButtonID(uid, pesan.GetListResponseMessage().GetSingleSelectReply().GetSelectedRowId())
+		//	return cmd
+		//} else if pesan.GetTemplateButtonReplyMessage().GetSelectedId() != "" {
+		//	cmd := ParseButtonID(uid, pesan.GetTemplateButtonReplyMessage().GetSelectedId())
+		//	return cmd
 	} else {
 		return ""
 	}

@@ -12,17 +12,6 @@ func CreateUid() string {
 	return id[:len(id)*1/4]
 }
 
-func CreateButtonID(uid, cmd string) string {
-	return uid + "-" + cmd
-}
-
-func ParseButtonID(uid, id string) string {
-	if strings.HasPrefix(id, uid+"-") {
-		return id[len(uid)+1:]
-	}
-	return ""
-}
-
 func ParseArgs(str string) []string {
 	return strings.Split(str, "")
 }

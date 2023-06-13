@@ -2,17 +2,17 @@ package core
 
 import (
 	"context"
+	"errors"
+	"fmt"
 	"github.com/alitto/pond"
-	_ "github.com/itzngga/goRoxy/basic/categories"
-	_ "github.com/itzngga/goRoxy/basic/commands"
-	_ "github.com/itzngga/goRoxy/basic/global_middleware"
-	"github.com/itzngga/goRoxy/command"
-	_ "github.com/itzngga/goRoxy/embed"
-	"github.com/itzngga/goRoxy/options"
-	"github.com/itzngga/goRoxy/types"
-	"github.com/itzngga/goRoxy/util"
+	"github.com/itzngga/roxy/command"
+	"github.com/itzngga/roxy/options"
+	"github.com/itzngga/roxy/types"
+	"github.com/itzngga/roxy/util"
 	"github.com/mdp/qrterminal/v3"
 	"go.mau.fi/whatsmeow"
+	waBinary "go.mau.fi/whatsmeow/binary"
+	waProto "go.mau.fi/whatsmeow/binary/proto"
 	"go.mau.fi/whatsmeow/store"
 	"go.mau.fi/whatsmeow/store/sqlstore"
 	waTypes "go.mau.fi/whatsmeow/types"
@@ -25,17 +25,20 @@ import (
 type App struct {
 	Options *options.Options
 
-	SqlStore *sqlstore.Container
-	Log      waLog.Logger
-	Pool     *pond.WorkerPool
+	Log  waLog.Logger
+	Pool *pond.WorkerPool
 
 	startTime time.Time
 	client    *whatsmeow.Client
 	muxer     *Muxer
 }
 
-func NewGoRoxyBase(options options.Options) *App {
-	options.Validate()
+func NewGoRoxyBase(options options.Options) (*App, error) {
+	err := options.Validate()
+	if err != nil {
+		return nil, err
+	}
+
 	optPointer := &options
 	stdLog := waLog.Stdout("WaBOT", options.LogLevel, true)
 	app := &App{
@@ -44,18 +47,11 @@ func NewGoRoxyBase(options options.Options) *App {
 		muxer:   NewMuxer(stdLog, optPointer),
 	}
 	app.Pool = pond.New(100, 1000)
-	app.PrepareClient()
-	return app
-}
-
-func (app *App) QRChanFunc(ch <-chan whatsmeow.QRChannelItem) {
-	for evt := range ch {
-		if evt.Event == "code" {
-			qrterminal.GenerateHalfBlock(evt.Code, qrterminal.L, os.Stdout)
-		} else {
-			app.Log.Infof("QR Generated!")
-		}
+	err = app.InitializeClient()
+	if err != nil {
+		return nil, err
 	}
+	return app, nil
 }
 
 func (app *App) HandleEvents(event interface{}) {
@@ -76,7 +72,17 @@ func (app *App) HandleEvents(event interface{}) {
 				return
 			}
 		})
-	case *events.CallTerminate, *events.CallRelayLatency, *events.CallAccept, *events.UnknownCallEvent:
+	case *events.StreamError:
+		var message string
+		if v.Code != "" {
+			message = fmt.Sprintf("Unknown stream error with code %s", v.Code)
+		} else if children := v.Raw.GetChildren(); len(children) > 0 {
+			message = fmt.Sprintf("Unknown stream error (contains %s node)", children[0].Tag)
+		} else {
+			message = "Unknown stream error"
+		}
+		app.Log.Errorf("error: %s", message)
+	case *events.CallOffer, *events.CallTerminate, *events.CallRelayLatency, *events.CallAccept, *events.UnknownCallEvent:
 		// ignore
 	case *events.AppState:
 		// Ignore
@@ -87,20 +93,22 @@ func (app *App) HandleEvents(event interface{}) {
 		}
 	}
 }
-func (app *App) PrepareSqlContainer() {
+func (app *App) InitializeContainer() (*sqlstore.Container, error) {
 	store.DeviceProps.RequireFullSync = types.Bool(true)
 	if app.Options.StoreMode == "postgres" {
-		container, err := sqlstore.New("postgres", app.Options.PostgresDsn, waLog.Stdout("Database", "ERROR", true))
+		container, err := sqlstore.New("postgres", app.Options.PostgresDsn.GenerateDSN(), waLog.Stdout("Database", "ERROR", true))
 		if err != nil {
 			panic(err)
 		}
-		app.SqlStore = container
-	} else {
+		return container, nil
+	} else if app.Options.StoreMode == "sqlite" {
 		container, err := sqlstore.New("sqlite3", app.Options.SqliteFile, waLog.Stdout("Database", "ERROR", true))
 		if err != nil {
 			panic(err)
 		}
-		app.SqlStore = container
+		return container, nil
+	} else {
+		return nil, errors.New("error: invalid store mode")
 	}
 }
 
@@ -110,43 +118,69 @@ func (app *App) HandlePanic(p interface{}) {
 	}
 }
 
-func (app *App) PrepareClient() {
-	app.PrepareSqlContainer()
+func (app *App) InitializeClient() error {
+	container, err := app.InitializeContainer()
+	if err != nil {
+		return err
+	}
 
 	var device *store.Device
-	var err error
 	if app.Options.HostNumber != "" {
 		jid, ok := util.ParseJID(app.Options.HostNumber)
 		if !ok {
 			panic("invalid given number")
 		}
-		device, err = app.SqlStore.GetDevice(jid)
+		device, err = container.GetDevice(jid.ToNonAD())
 		if err != nil {
 			app.Log.Errorf("get device error %v", err)
 		}
+		if device == nil {
+			device = container.NewDevice()
+		}
 	} else {
-		device, err = app.SqlStore.GetFirstDevice()
+		device, err = container.GetFirstDevice()
 		if err != nil {
 			app.Log.Errorf("get device error %v", err)
 		}
 	}
 
+	waBinary.IndentXML = true
+	store.SetOSInfo("GoRoxy", [3]uint32{2, 2318, 11})
+	store.DeviceProps.PlatformType = waProto.DeviceProps_CHROME.Enum()
+	store.DeviceProps.RequireFullSync = types.Bool(false)
+
 	app.client = whatsmeow.NewClient(device, waLog.Stdout("WhatsMeow", "ERROR", true))
-	if app.client.Store.ID == nil {
-		qrChan, _ := app.client.GetQRChannel(context.Background())
-		err := app.client.Connect()
-		if err != nil {
+	qrChan, _ := app.client.GetQRChannel(context.Background())
+	err = app.client.Connect()
+	if err != nil {
+		if !errors.Is(err, whatsmeow.ErrQRStoreContainsID) {
 			app.Log.Errorf("error connecting to client: %v", err)
 		}
-		go app.QRChanFunc(qrChan)
 	} else {
-		err := app.client.Connect()
-		if err != nil {
+		go func() {
+			for evt := range qrChan {
+				if evt.Event == "code" {
+					qrterminal.GenerateHalfBlock(evt.Code, qrterminal.L, os.Stdout)
+					app.Log.Infof("QR Generated!")
+				} else if evt.Event == "success" {
+					app.Log.Infof("QR Scanned!")
+				} else {
+					app.Log.Infof("QR channel result: %s", evt.Event)
+				}
+			}
+		}()
+	}
+
+	err = app.client.Connect()
+	if err != nil {
+		if !errors.Is(err, whatsmeow.ErrAlreadyConnected) {
 			app.Log.Errorf("error connecting to client: %v", err)
+			return err
 		}
 	}
 
 	app.client.AddEventHandler(app.HandleEvents)
+	return nil
 }
 
 func (app *App) AddNewCategory(category string) {

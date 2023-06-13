@@ -2,13 +2,42 @@ package command
 
 import (
 	"fmt"
-	"go.mau.fi/whatsmeow"
 	waProto "go.mau.fi/whatsmeow/binary/proto"
 	"sort"
+	"time"
 )
 
-type MiddlewareFunc func(c *whatsmeow.Client, params *RunFuncParams) bool
-type RunFunc func(c *whatsmeow.Client, params *RunFuncParams) *waProto.Message
+type MiddlewareFunc func(c *RunFuncContext) bool
+type RunFunc func(c *RunFuncContext) *waProto.Message
+type StateFunc func(c *RunFuncContext, parsed string)
+
+type StateCommand struct {
+	Name        string
+	GroupOnly   bool
+	PrivateOnly bool
+	CancelReply string
+
+	StateTimeout time.Duration
+	RunFunc      StateFunc
+}
+
+func (c *StateCommand) Validate() {
+	if c.Name == "" {
+		panic("error: command name cannot be empty")
+	}
+	if c.RunFunc == nil {
+		panic("error: RunFunc cannot be empty")
+	}
+	if c.PrivateOnly && c.GroupOnly {
+		panic("error: invalid scope group/private?")
+	}
+	if c.CancelReply == "" {
+		c.CancelReply = "User cancelled the State"
+	}
+	if c.StateTimeout == 0 {
+		c.StateTimeout = time.Minute * 15
+	}
+}
 
 type Command struct {
 	Name        string
@@ -29,9 +58,11 @@ type Command struct {
 func (c *Command) Validate() {
 	if c.Name == "" {
 		panic("error: command name cannot be empty")
-	} else if c.Description == "" {
+	}
+	if c.Description == "" {
 		c.Description = fmt.Sprintf("This is %s command description example", c.Name)
-	} else if c.RunFunc == nil {
+	}
+	if c.RunFunc == nil {
 		panic("error: RunFunc cannot be empty")
 	}
 	if c.PrivateOnly && c.GroupOnly {

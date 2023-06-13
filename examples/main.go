@@ -1,11 +1,12 @@
 package main
 
 import (
-	_ "github.com/itzngga/goRoxy/examples/cmd"
+	_ "github.com/itzngga/roxy/examples/cmd"
+	"log"
 
-	"github.com/itzngga/goRoxy/core"
-	"github.com/itzngga/goRoxy/options"
-	_ "github.com/lib/pq"
+	"github.com/itzngga/roxy/core"
+	"github.com/itzngga/roxy/options"
+	_ "github.com/mattn/go-sqlite3"
 
 	"os"
 	"os/signal"
@@ -13,7 +14,10 @@ import (
 )
 
 func main() {
-	app := core.NewGoRoxyBase(options.NewDefaultOptions())
+	app, err := core.NewGoRoxyBase(options.NewDefaultOptions())
+	if err != nil {
+		log.Fatal(err)
+	}
 
 	c := make(chan os.Signal)
 	signal.Notify(c, os.Interrupt, syscall.SIGTERM)

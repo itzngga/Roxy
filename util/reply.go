@@ -91,11 +91,11 @@ func SendReplyMessage(c *whatsmeow.Client, event *events.Message, obj any) {
 			StickerMessage: value,
 		}
 		value.ContextInfo = WithReply(event)
-	case *waProto.ButtonsMessage:
-		message = &waProto.Message{
-			ButtonsMessage: value,
-		}
-		value.ContextInfo = WithReply(event)
+	//case *waProto.ButtonsMessage:
+	//	message = &waProto.Message{
+	//		ButtonsMessage: value,
+	//	}
+	//	value.ContextInfo = WithReply(event)
 	case *waProto.GroupInviteMessage:
 		message = &waProto.Message{
 			GroupInviteMessage: value,
@@ -106,16 +106,16 @@ func SendReplyMessage(c *whatsmeow.Client, event *events.Message, obj any) {
 			ProductMessage: value,
 		}
 		value.ContextInfo = WithReply(event)
-	case *waProto.ListMessage:
-		message = &waProto.Message{
-			ListMessage: value,
-		}
-		value.ContextInfo = WithReply(event)
-	case *waProto.TemplateMessage:
-		message = &waProto.Message{
-			TemplateMessage: value,
-		}
-		value.ContextInfo = WithReply(event)
+	//case *waProto.ListMessage:
+	//	message = &waProto.Message{
+	//		ListMessage: value,
+	//	}
+	//	value.ContextInfo = WithReply(event)
+	//case *waProto.TemplateMessage:
+	//	message = &waProto.Message{
+	//		TemplateMessage: value,
+	//	}
+	//	value.ContextInfo = WithReply(event)
 	case *waProto.ContactMessage:
 		message = &waProto.Message{
 			ContactMessage: value,
@@ -177,11 +177,11 @@ func GenerateReplyMessage(event *events.Message, obj any) *waProto.Message {
 			StickerMessage: value,
 		}
 		value.ContextInfo = WithReply(event)
-	case *waProto.ButtonsMessage:
-		message = &waProto.Message{
-			ButtonsMessage: value,
-		}
-		value.ContextInfo = WithReply(event)
+	//case *waProto.ButtonsMessage:
+	//	message = &waProto.Message{
+	//		ButtonsMessage: value,
+	//	}
+	//	value.ContextInfo = WithReply(event)
 	case *waProto.GroupInviteMessage:
 		message = &waProto.Message{
 			GroupInviteMessage: value,
@@ -192,16 +192,16 @@ func GenerateReplyMessage(event *events.Message, obj any) *waProto.Message {
 			ProductMessage: value,
 		}
 		value.ContextInfo = WithReply(event)
-	case *waProto.ListMessage:
-		message = &waProto.Message{
-			ListMessage: value,
-		}
-		value.ContextInfo = WithReply(event)
-	case *waProto.TemplateMessage:
-		message = &waProto.Message{
-			TemplateMessage: value,
-		}
-		value.ContextInfo = WithReply(event)
+	//case *waProto.ListMessage:
+	//	message = &waProto.Message{
+	//		ListMessage: value,
+	//	}
+	//	value.ContextInfo = WithReply(event)
+	//case *waProto.TemplateMessage:
+	//	message = &waProto.Message{
+	//		TemplateMessage: value,
+	//	}
+	//	value.ContextInfo = WithReply(event)
 	case *waProto.ContactMessage:
 		message = &waProto.Message{
 			ContactMessage: value,

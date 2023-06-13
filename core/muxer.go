@@ -4,11 +4,10 @@ import (
 	"context"
 	"fmt"
 	"github.com/google/uuid"
-	messageMiddlewares "github.com/itzngga/goRoxy/basic/message_middleware"
-	"github.com/itzngga/goRoxy/command"
-	"github.com/itzngga/goRoxy/embed"
-	"github.com/itzngga/goRoxy/options"
-	"github.com/itzngga/goRoxy/util"
+	"github.com/itzngga/roxy/command"
+	"github.com/itzngga/roxy/embed"
+	"github.com/itzngga/roxy/options"
+	"github.com/itzngga/roxy/util"
 	"github.com/zhangyunhao116/skipmap"
 	"go.mau.fi/whatsmeow"
 	waProto "go.mau.fi/whatsmeow/binary/proto"
@@ -29,6 +28,9 @@ type Muxer struct {
 	Middlewares          *skipmap.StringMap[command.MiddlewareFunc]
 	Commands             *skipmap.StringMap[*command.Command]
 	CommandResponseCache *skipmap.StringMap[*waProto.Message]
+	UserState            *skipmap.StringMap[*command.StateCommand]
+	UserStateChan        chan []string
+	UserStateList        []*command.StateCommand
 	Locals               *skipmap.StringMap[string]
 }
 
@@ -51,7 +53,25 @@ func (m *Muxer) Clean() {
 	})
 	m.PrepareDefaultMiddleware()
 	m.Locals.Store("uid", util.CreateUid())
-	m.GenerateHelpButton()
+}
+
+func (m *Muxer) HandleUserStateChannel() {
+	go func() {
+		for message := range m.UserStateChan {
+			for _, state := range embed.StateCommand.Get() {
+				if state.Name == message[0] {
+					m.UserState.Store(message[1], state)
+					go func() {
+						timeout := time.NewTimer(state.StateTimeout)
+						<-timeout.C
+						m.UserState.Delete(message[1])
+						timeout.Stop()
+					}()
+					break
+				}
+			}
+		}
+	}()
 }
 
 func (m *Muxer) AddAllEmbed() {
@@ -61,15 +81,7 @@ func (m *Muxer) AddAllEmbed() {
 	}
 	commands := embed.Commands.Get()
 	for _, cmd := range commands {
-		if !m.Options.WithBuiltIn {
-			if cmd.BuiltIn {
-				continue
-			}
-			m.AddCommand(cmd)
-		} else {
-			m.AddCommand(cmd)
-		}
-
+		m.AddCommand(cmd)
 	}
 	middlewares := embed.Middlewares.Get()
 	for _, mid := range middlewares {
@@ -80,6 +92,8 @@ func (m *Muxer) AddAllEmbed() {
 	for _, mid := range globalMiddleware {
 		m.AddGlobalMiddleware(mid)
 	}
+
+	m.UserStateList = embed.StateCommand.Get()
 }
 
 func (m *Muxer) AddGlobalMiddleware(middleware command.MiddlewareFunc) {
@@ -107,12 +121,11 @@ func (m *Muxer) AddCommand(cmd *command.Command) {
 	m.Commands.Store(cmd.Name, cmd)
 }
 
-func (m *Muxer) CheckGlobalState(number string) (bool, string) {
-	globalState, ok := m.Locals.Load(number)
+func (m *Muxer) CheckGlobalState(number string) (bool, *command.StateCommand) {
+	globalState, ok := m.UserState.Load(number)
 	if !ok {
-		return false, ""
+		return false, nil
 	}
-	m.Locals.Delete(number)
 	return true, globalState
 }
 
@@ -135,15 +148,16 @@ func (m *Muxer) SetCacheCommandResponse(cmd string, response *waProto.Message) {
 }
 
 func (m *Muxer) GlobalMiddlewareProcessing(c *whatsmeow.Client, evt *events.Message, number string) bool {
-	param := &command.RunFuncParams{
-		Options: m.Options,
-		Event:   evt,
-		Number:  number,
-		Locals:  m.Locals,
+	param := &command.RunFuncContext{
+		Client:       c,
+		Options:      m.Options,
+		MessageEvent: evt,
+		Number:       number,
+		Locals:       m.Locals,
 	}
 	midAreOk := true
 	m.GlobalMiddlewares.Range(func(key string, value command.MiddlewareFunc) bool {
-		if !value(c, param) {
+		if !value(param) {
 			midAreOk = false
 			return false
 		}
@@ -153,41 +167,92 @@ func (m *Muxer) GlobalMiddlewareProcessing(c *whatsmeow.Client, evt *events.Mess
 	return midAreOk
 }
 
+func (m *Muxer) HandleUserState(c *whatsmeow.Client, evt *events.Message, parsedMsg string) bool {
+	number := strconv.FormatUint(evt.Info.Sender.UserInt(), 10)
+	ok, stateCmd := m.CheckGlobalState(number)
+	if ok {
+		if stateCmd.PrivateOnly {
+			if evt.Info.IsGroup {
+				return true
+			}
+		}
+
+		if stateCmd.GroupOnly {
+			if !evt.Info.IsGroup {
+				return true
+			}
+		}
+
+		var fromMe bool
+		if id := evt.Info.Sender.ToNonAD().String(); *util.ParseQuotedRemoteJid(evt) == id {
+			fromMe = true
+		}
+
+		ctx := &command.RunFuncContext{
+			Client:        c,
+			WaLog:         m.Log,
+			Options:       m.Options,
+			MessageEvent:  evt,
+			MessageInfo:   &evt.Info,
+			ClientJID:     c.Store.ID,
+			Message:       evt.Message,
+			FromMe:        fromMe,
+			ParsedMsg:     parsedMsg,
+			Number:        number,
+			UserStateChan: m.UserStateChan,
+			Locals:        m.Locals,
+		}
+
+		if strings.Contains(parsedMsg, "cancel") {
+			ctx.SendReplyMessage(stateCmd.CancelReply)
+		} else if strings.Contains(parsedMsg, "batal") {
+			ctx.SendReplyMessage(stateCmd.CancelReply)
+		}
+
+		stateCmd.RunFunc(ctx, parsedMsg)
+		return false
+	}
+	return true
+}
+
 func (m *Muxer) RunCommand(c *whatsmeow.Client, evt *events.Message) {
 	number := strconv.FormatUint(evt.Info.Sender.UserInt(), 10)
 	if midOk := m.GlobalMiddlewareProcessing(c, evt, number); !midOk {
 		return
 	}
 	id, _ := m.Locals.Load("uid")
-	ok, stateCmd := m.CheckGlobalState(number)
 	parsed := util.ParseMessageText(id, evt)
-	if ok {
-		if strings.Contains(parsed, "!cancel") {
-			m.Locals.Delete(number)
-			util.SendReplyMessage(c, evt, "Dibatalkan!")
-			return
-		}
-		parsed = stateCmd + " " + parsed
+
+	if ok := m.HandleUserState(c, evt, parsed); !ok {
+		return
 	}
+
 	cmd, isCmd := util.ParseCmd(parsed)
 	cmdLoad, isAvailable := m.Commands.Load(cmd)
 	if isCmd && isAvailable {
-		params := &command.RunFuncParams{
-			Log:       m.Log,
-			Options:   m.Options,
-			Event:     evt,
-			Info:      &evt.Info,
-			User:      c.Store.ID,
-			Message:   evt.Message,
-			Cmd:       cmdLoad,
-			ParsedMsg: parsed,
-			Number:    number,
-			Locals:    m.Locals,
-			Arguments: strings.Split(parsed, " "),
+		var fromMe bool
+		if id = evt.Info.Sender.ToNonAD().String(); *util.ParseQuotedRemoteJid(evt) == id {
+			fromMe = true
 		}
-		midAreOk := true
+		params := &command.RunFuncContext{
+			Client:         c,
+			WaLog:          m.Log,
+			Options:        m.Options,
+			MessageEvent:   evt,
+			MessageInfo:    &evt.Info,
+			ClientJID:      c.Store.ID,
+			Message:        evt.Message,
+			FromMe:         fromMe,
+			CurrentCommand: cmdLoad,
+			ParsedMsg:      parsed,
+			Number:         number,
+			Locals:         m.Locals,
+			UserStateChan:  m.UserStateChan,
+			Arguments:      strings.Split(parsed, " "),
+		}
+		var midAreOk = true
 		m.Middlewares.Range(func(key string, value command.MiddlewareFunc) bool {
-			if !value(c, params) {
+			if !value(params) {
 				midAreOk = false
 				return false
 			}
@@ -197,7 +262,7 @@ func (m *Muxer) RunCommand(c *whatsmeow.Client, evt *events.Message) {
 			return
 		}
 		if cmdLoad.Middleware != nil {
-			if !cmdLoad.Middleware(c, params) {
+			if !cmdLoad.Middleware(params) {
 				return
 			}
 		}
@@ -215,10 +280,10 @@ func (m *Muxer) RunCommand(c *whatsmeow.Client, evt *events.Message) {
 		if cmdLoad.Cache {
 			msg = m.GetCachedCommandResponse(cmdLoad.Name)
 			if msg == nil {
-				msg = cmdLoad.RunFunc(c, params)
+				msg = cmdLoad.RunFunc(params)
 			}
 		} else {
-			msg = cmdLoad.RunFunc(c, params)
+			msg = cmdLoad.RunFunc(params)
 		}
 		if msg != nil {
 			ctx, cancel := context.WithTimeout(context.Background(), m.MessageTimeout)
@@ -241,14 +306,10 @@ func (m *Muxer) RunCommand(c *whatsmeow.Client, evt *events.Message) {
 
 func (m *Muxer) PrepareDefaultMiddleware() {
 	if m.Options.WithCommandLog {
-		m.Middlewares.Store("log", messageMiddlewares.LogMiddleware)
-	}
-	if m.Options.WithCommandCooldown {
-		if m.Options.CommandCooldownTimeout == 0 {
-			m.Options.CommandCooldownTimeout = 5
-		}
-		messageMiddlewares.CooldownCache = skipmap.NewString[string]()
-		m.Middlewares.Store("cooldown", messageMiddlewares.CooldownMiddleware)
+		m.Middlewares.Store("log", func(ctx *command.RunFuncContext) bool {
+			ctx.WaLog.Infof("[CMD] [%s] command > %s", ctx.Number, ctx.CurrentCommand.Name)
+			return true
+		})
 	}
 }
 
@@ -259,18 +320,18 @@ func NewMuxer(log waLog.Logger, options *options.Options) *Muxer {
 		GlobalMiddlewares:    skipmap.NewString[command.MiddlewareFunc](),
 		Middlewares:          skipmap.NewString[command.MiddlewareFunc](),
 		CommandResponseCache: skipmap.NewString[*waProto.Message](),
+		UserState:            skipmap.NewString[*command.StateCommand](),
 		Categories:           skipmap.NewString[string](),
+		UserStateChan:        make(chan []string),
 		MessageTimeout:       options.SendMessageTimeout,
 		Options:              options,
 		Log:                  log,
 	}
 	muxer.PrepareDefaultMiddleware()
+	muxer.HandleUserStateChannel()
 	muxer.Locals.Store("uid", util.CreateUid())
 
 	muxer.AddAllEmbed()
-	if options.WithHelpCommand {
-		muxer.GenerateHelpButton()
-	}
 
 	return muxer
 }

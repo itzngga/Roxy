@@ -3,7 +3,7 @@ package util
 import (
 	"context"
 	"fmt"
-	"github.com/itzngga/goRoxy/types"
+	"github.com/itzngga/roxy/types"
 	"go.mau.fi/whatsmeow"
 	waProto "go.mau.fi/whatsmeow/binary/proto"
 	waTypes "go.mau.fi/whatsmeow/types"

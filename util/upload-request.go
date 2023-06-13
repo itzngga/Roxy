@@ -1,7 +1,6 @@
 package util
 
 import (
-	"github.com/itzngga/goRoxy/util/gofast"
 	"go.mau.fi/whatsmeow"
 	waProto "go.mau.fi/whatsmeow/binary/proto"
 	"go.mau.fi/whatsmeow/types/events"
@@ -11,11 +10,8 @@ import (
 // @ https://github.com/cloudingcity/gofast
 
 func UploadImageFromUrl(c *whatsmeow.Client, m *events.Message, url, caption string) (*waProto.ImageMessage, error) {
-	fast := gofast.New(gofast.Config{
-		ResponseDecoder: gofast.ByteDecoder,
-	})
-	var bytes []byte
-	if err := fast.Get(url, &bytes, nil); err != nil {
+	bytes, err := DoHTTPRequest("GET", url)
+	if err != nil {
 		return nil, err
 	}
 
@@ -23,11 +19,8 @@ func UploadImageFromUrl(c *whatsmeow.Client, m *events.Message, url, caption str
 }
 
 func UploadVideoFromUrl(c *whatsmeow.Client, m *events.Message, url, caption string) (*waProto.VideoMessage, error) {
-	fast := gofast.New(gofast.Config{
-		ResponseDecoder: gofast.ByteDecoder,
-	})
-	var bytes []byte
-	if err := fast.Get(url, &bytes, nil); err != nil {
+	bytes, err := DoHTTPRequest("GET", url)
+	if err != nil {
 		return nil, err
 	}
 
@@ -35,11 +28,8 @@ func UploadVideoFromUrl(c *whatsmeow.Client, m *events.Message, url, caption str
 }
 
 func UploadDocumentFromUrl(c *whatsmeow.Client, url, title, filename string) (*waProto.DocumentMessage, error) {
-	fast := gofast.New(gofast.Config{
-		ResponseDecoder: gofast.ByteDecoder,
-	})
-	var bytes []byte
-	if err := fast.Get(url, &bytes, nil); err != nil {
+	bytes, err := DoHTTPRequest("GET", url)
+	if err != nil {
 		return nil, err
 	}
 
@@ -47,11 +37,8 @@ func UploadDocumentFromUrl(c *whatsmeow.Client, url, title, filename string) (*w
 }
 
 func UploadAudioFromUrl(c *whatsmeow.Client, url string) (*waProto.AudioMessage, error) {
-	fast := gofast.New(gofast.Config{
-		ResponseDecoder: gofast.ByteDecoder,
-	})
-	var bytes []byte
-	if err := fast.Get(url, &bytes, nil); err != nil {
+	bytes, err := DoHTTPRequest("GET", url)
+	if err != nil {
 		return nil, err
 	}
 
@@ -59,11 +46,8 @@ func UploadAudioFromUrl(c *whatsmeow.Client, url string) (*waProto.AudioMessage,
 }
 
 func UploadStickerFromUrl(c *whatsmeow.Client, m *events.Message, url string) (*waProto.StickerMessage, error) {
-	fast := gofast.New(gofast.Config{
-		ResponseDecoder: gofast.ByteDecoder,
-	})
-	var bytes []byte
-	if err := fast.Get(url, &bytes, nil); err != nil {
+	bytes, err := DoHTTPRequest("GET", url)
+	if err != nil {
 		return nil, err
 	}
 
