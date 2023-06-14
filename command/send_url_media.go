@@ -1,7 +1,7 @@
 package command
 
 import (
-	"github.com/itzngga/roxy/util"
+	"github.com/itzngga/Roxy/util"
 	waProto "go.mau.fi/whatsmeow/binary/proto"
 )
 

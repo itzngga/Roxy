@@ -2,8 +2,8 @@ package cmd
 
 import (
 	"fmt"
-	"github.com/itzngga/roxy/command"
-	"github.com/itzngga/roxy/embed"
+	"github.com/itzngga/Roxy/command"
+	"github.com/itzngga/Roxy/embed"
 	waProto "go.mau.fi/whatsmeow/binary/proto"
 	"time"
 )

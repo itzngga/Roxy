@@ -2,7 +2,7 @@ package options
 
 import (
 	"errors"
-	"github.com/itzngga/roxy/util"
+	"github.com/itzngga/Roxy/util"
 	"time"
 )
 
@@ -29,7 +29,6 @@ type Options struct {
 
 func NewDefaultOptions() Options {
 	return Options{
-		//HostNumber:                  "081297980063",
 		StoreMode:                   "sqlite",
 		SqliteFile:                  "ROXY.DB",
 		WithCommandLog:              true,

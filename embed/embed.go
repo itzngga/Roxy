@@ -1,8 +1,8 @@
 package embed
 
 import (
-	"github.com/itzngga/roxy/command"
-	"github.com/itzngga/roxy/types"
+	"github.com/itzngga/Roxy/command"
+	"github.com/itzngga/Roxy/types"
 )
 
 var Commands types.Embed[*command.Command]

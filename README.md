@@ -1,10 +1,10 @@
-# goRoxy
+# Roxy
 
 Command Handler Abstraction for [whatsmeow](https://github.com/tulir/whatsmeow)
 
 # Installation
 ```bash 
-go get github.com/itzngga/roxy
+go get github.com/itzngga/Roxy
 ```
 - You need ffmpeg binary for generate image/video thumbnail
 
@@ -13,11 +13,11 @@ go get github.com/itzngga/roxy
 package main
 
 import (
-	_ "github.com/itzngga/roxy/examples/cmd"
+	_ "github.com/itzngga/Roxy/examples/cmd"
 	"log"
 
-	"github.com/itzngga/roxy/core"
-	"github.com/itzngga/roxy/options"
+	"github.com/itzngga/Roxy/core"
+	"github.com/itzngga/Roxy/options"
 	_ "github.com/mattn/go-sqlite3"
 
 	"os"
@@ -93,8 +93,8 @@ package cmd
 
 import (
 	"fmt"
-	"github.com/itzngga/roxy/command"
-	"github.com/itzngga/roxy/embed"
+	"github.com/itzngga/Roxy/command"
+	"github.com/itzngga/Roxy/embed"
 	waProto "go.mau.fi/whatsmeow/binary/proto"
 	"time"
 )
@@ -116,14 +116,14 @@ func init() {
 ```
 
 # Documentation
-[DOC](https://github.com/itzngga/roxy/tree/master/DOC.md)
+[DOC](https://github.com/itzngga/Roxy/tree/master/DOC.md)
 # Example
-[Example](https://github.com/itzngga/roxy/tree/master/examples)
+[Example](https://github.com/itzngga/Roxy/tree/master/examples)
 # Helper/Util
-[UTIL](https://github.com/itzngga/roxy/tree/master/util)
+[UTIL](https://github.com/itzngga/Roxy/tree/master/util)
 
 # License
-[GNU](https://github.com/itzngga/roxy/blob/master/LICENSE)
+[GNU](https://github.com/itzngga/Roxy/blob/master/LICENSE)
 
 # Bugs
 Please submit an issue when Race Condition detected or anything

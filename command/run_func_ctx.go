@@ -1,7 +1,7 @@
 package command
 
 import (
-	"github.com/itzngga/roxy/options"
+	"github.com/itzngga/Roxy/options"
 	"github.com/zhangyunhao116/skipmap"
 	"go.mau.fi/whatsmeow"
 	waProto "go.mau.fi/whatsmeow/binary/proto"

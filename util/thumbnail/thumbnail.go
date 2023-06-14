@@ -3,7 +3,7 @@ package thumbnail
 import (
 	"bytes"
 	"fmt"
-	"github.com/itzngga/roxy/util/cli"
+	"github.com/itzngga/Roxy/util/cli"
 	"github.com/liujiawm/graphics-go/graphics"
 	"image"
 	"image/jpeg"

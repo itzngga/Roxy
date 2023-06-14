@@ -1,4 +1,4 @@
-module github.com/itzngga/roxy
+module github.com/itzngga/Roxy
 
 go 1.19
 

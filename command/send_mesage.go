@@ -4,7 +4,7 @@ import (
 	"context"
 	"fmt"
 	"github.com/gabriel-vasile/mimetype"
-	"github.com/itzngga/roxy/util"
+	"github.com/itzngga/Roxy/util"
 	waProto "go.mau.fi/whatsmeow/binary/proto"
 	"strings"
 )

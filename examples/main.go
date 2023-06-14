@@ -1,11 +1,11 @@
 package main
 
 import (
-	_ "github.com/itzngga/roxy/examples/cmd"
+	_ "github.com/itzngga/Roxy/examples/cmd"
 	"log"
 
-	"github.com/itzngga/roxy/core"
-	"github.com/itzngga/roxy/options"
+	"github.com/itzngga/Roxy/core"
+	"github.com/itzngga/Roxy/options"
 	_ "github.com/mattn/go-sqlite3"
 
 	"os"
