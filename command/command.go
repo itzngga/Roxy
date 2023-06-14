@@ -9,7 +9,7 @@ import (
 
 type MiddlewareFunc func(c *RunFuncContext) bool
 type RunFunc func(c *RunFuncContext) *waProto.Message
-type StateFunc func(c *RunFuncContext, parsed string)
+type StateFunc func(c *StateFuncContext)
 
 type StateCommand struct {
 	Name        string

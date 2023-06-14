@@ -166,7 +166,7 @@ func (m *Muxer) GlobalMiddlewareProcessing(c *whatsmeow.Client, evt *events.Mess
 }
 
 func (m *Muxer) HandleUserState(c *whatsmeow.Client, evt *events.Message, parsedMsg string) bool {
-	number := strconv.FormatUint(evt.Info.Sender.UserInt(), 10)
+	number := evt.Info.Sender.ToNonAD().String()
 	ok, stateCmd := m.CheckGlobalState(number)
 	if ok {
 		if stateCmd.PrivateOnly {
@@ -181,33 +181,27 @@ func (m *Muxer) HandleUserState(c *whatsmeow.Client, evt *events.Message, parsed
 			}
 		}
 
-		var fromMe bool
-		if id := evt.Info.Sender.ToNonAD().String(); *util.ParseQuotedRemoteJid(evt) == id {
-			fromMe = true
-		}
-
-		ctx := &command.RunFuncContext{
-			Client:        c,
-			WaLog:         m.Log,
-			Options:       m.Options,
-			MessageEvent:  evt,
-			MessageInfo:   &evt.Info,
-			ClientJID:     c.Store.ID,
-			Message:       evt.Message,
-			FromMe:        fromMe,
-			ParsedMsg:     parsedMsg,
-			Number:        number,
-			UserStateChan: m.UserStateChan,
-			Locals:        m.Locals,
+		params := &command.StateFuncContext{
+			Client:       c,
+			WaLog:        m.Log,
+			Options:      m.Options,
+			MessageEvent: evt,
+			MessageInfo:  &evt.Info,
+			ClientJID:    c.Store.ID,
+			Message:      evt.Message,
+			CurrentState: stateCmd,
+			ParsedMsg:    parsedMsg,
+			Number:       number,
+			Locals:       stateCmd.Locals,
 		}
 
 		if strings.Contains(parsedMsg, "cancel") {
-			ctx.SendReplyMessage(stateCmd.CancelReply)
+			params.SendReplyMessage(stateCmd.CancelReply)
 		} else if strings.Contains(parsedMsg, "batal") {
-			ctx.SendReplyMessage(stateCmd.CancelReply)
+			params.SendReplyMessage(stateCmd.CancelReply)
 		}
 
-		stateCmd.RunFunc(ctx, parsedMsg)
+		stateCmd.RunFunc(params)
 		return false
 	}
 	return true
