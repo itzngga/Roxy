@@ -4,42 +4,10 @@ import (
 	"fmt"
 	waProto "go.mau.fi/whatsmeow/binary/proto"
 	"sort"
-	"time"
 )
 
 type MiddlewareFunc func(c *RunFuncContext) bool
 type RunFunc func(c *RunFuncContext) *waProto.Message
-type StateFunc func(c *StateFuncContext)
-
-type StateCommand struct {
-	Name        string
-	GroupOnly   bool
-	PrivateOnly bool
-	CancelReply string
-
-	Locals       map[string]interface{}
-	StateTimeout time.Duration
-	RunFunc      StateFunc
-}
-
-func (c *StateCommand) Validate() {
-	if c.Name == "" {
-		panic("error: command name cannot be empty")
-	}
-	if c.RunFunc == nil {
-		panic("error: RunFunc cannot be empty")
-	}
-	if c.PrivateOnly && c.GroupOnly {
-		panic("error: invalid scope group/private?")
-	}
-	if c.CancelReply == "" {
-		c.CancelReply = "User cancelled the State"
-	}
-	if c.StateTimeout == 0 {
-		c.StateTimeout = time.Minute * 15
-	}
-}
-
 type Command struct {
 	Name        string
 	Aliases     []string
@@ -47,13 +15,27 @@ type Command struct {
 
 	Category string
 	Cache    bool
-	BuiltIn  bool
 
 	HideFromHelp bool
 	GroupOnly    bool
 	PrivateOnly  bool
-	Middleware   MiddlewareFunc
-	RunFunc      RunFunc
+
+	Middleware MiddlewareFunc
+	RunFunc    RunFunc
+}
+
+type Questions struct {
+	Index    int
+	Question string
+	Capture  bool
+	Answer   any
+}
+
+type QuestionState struct {
+	RunFuncCtx     *RunFuncContext
+	ActiveQuestion string
+	Questions      []*Questions
+	ResultChan     chan bool
 }
 
 func (c *Command) Validate() {

@@ -115,6 +115,8 @@ func (runFunc *RunFuncContext) SendReplyMessage(obj any) {
 	//		TemplateMessage: value,
 	//	}
 	//	value.ContextInfo = util.WithReply(runFunc.MessageEvent)
+	case *waProto.Message:
+		message = value
 	case *waProto.ContactMessage:
 		message = &waProto.Message{
 			ContactMessage: value,
@@ -204,6 +206,8 @@ func (runFunc *RunFuncContext) GenerateReplyMessage(obj any) *waProto.Message {
 	//		TemplateMessage: value,
 	//	}
 	//	value.ContextInfo = util.WithReply(runFunc.MessageEvent)
+	case *waProto.Message:
+		message = value
 	case *waProto.ContactMessage:
 		message = &waProto.Message{
 			ContactMessage: value,
@@ -302,6 +306,8 @@ func (runFunc *RunFuncContext) SendMessage(obj any) {
 	//	message = &waProto.Message{
 	//		TemplateMessage: value,
 	//	}
+	case *waProto.Message:
+		message = value
 	case *waProto.ContactMessage:
 		message = &waProto.Message{
 			ContactMessage: value,

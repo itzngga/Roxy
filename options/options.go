@@ -18,7 +18,7 @@ type Options struct {
 	LogLevel string
 
 	// This PostgresDsn Must add when StoreMode equal to "postgres"
-	PostgresDsn PostgresDSN
+	PostgresDsn *PostgresDSN
 
 	// This SqliteFile Generate "ROXY.DB" when it null
 	SqliteFile string
@@ -31,8 +31,77 @@ type Options struct {
 	SendMessageTimeout          time.Duration
 }
 
-func NewDefaultOptions() Options {
-	return Options{
+func New(options ...func(*Options)) (*Options, error) {
+	option := &Options{}
+
+	for _, op := range options {
+		op(option)
+	}
+
+	err := option.Validate()
+	if err != nil {
+		return option, err
+	}
+
+	return option, nil
+}
+
+func WithHostNumber(hostNumber string) func(*Options) {
+	return func(options *Options) {
+		options.HostNumber = hostNumber
+	}
+}
+
+func WithStoreMode(storeMode string) func(*Options) {
+	return func(options *Options) {
+		options.StoreMode = storeMode
+	}
+}
+
+func WithLogLevel(logLevel string) func(*Options) {
+	return func(options *Options) {
+		options.LogLevel = logLevel
+	}
+}
+
+func WithPostgresDSN(pgDsn *PostgresDSN) func(*Options) {
+	return func(options *Options) {
+		options.PostgresDsn = pgDsn
+	}
+}
+
+func WithSqliteFile(sqliteFile string) func(*Options) {
+	return func(options *Options) {
+		options.SqliteFile = sqliteFile
+	}
+}
+
+func WithSqlDB(sqlDB *sql.DB) func(*Options) {
+	return func(options *Options) {
+		options.WithSqlDB = sqlDB
+	}
+}
+
+func WithCommandLog(cmdLog bool) func(*Options) {
+	return func(options *Options) {
+		options.WithCommandLog = cmdLog
+	}
+}
+
+func WithCmdCacheTimeout(respCacheTimeout time.Duration) func(*Options) {
+	return func(options *Options) {
+		options.CommandResponseCacheTimeout = respCacheTimeout
+	}
+}
+
+func WithSendMsgTimeout(sendMsgTimeout time.Duration) func(*Options) {
+	return func(options *Options) {
+		options.SendMessageTimeout = sendMsgTimeout
+	}
+}
+
+func NewDefaultOptions() *Options {
+	return &Options{
 		StoreMode:                   "sqlite",
 		SqliteFile:                  "ROXY.DB",
 		WithCommandLog:              true,
@@ -58,8 +127,7 @@ func (o *Options) Validate() error {
 		return errors.New("error: invalid log level")
 	}
 
-	var nilPgDsn PostgresDSN
-	if o.WithSqlDB == nil && o.StoreMode == "postgres" && o.PostgresDsn == nilPgDsn {
+	if o.WithSqlDB == nil && o.StoreMode == "postgres" && o.PostgresDsn == nil {
 		return errors.New("error: postgresql dsn cannot be null")
 	}
 
@@ -67,7 +135,7 @@ func (o *Options) Validate() error {
 		o.SqliteFile = "GoRoxy.DB"
 	}
 
-	if o.WithSqlDB == nil && o.SqliteFile == "" && o.PostgresDsn == nilPgDsn {
+	if o.WithSqlDB == nil && o.SqliteFile == "" && o.PostgresDsn == nil {
 		return errors.New("error: please specify sql.db or sqlite file or pg dsn")
 	}
 

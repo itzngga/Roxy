@@ -7,8 +7,8 @@ import (
 	"os/exec"
 )
 
-func FfmpegPipeline(data []byte, arg ...string) []byte {
-	cmd := exec.Command("ffmpeg", arg...)
+func ExecPipeline(command string, data []byte, arg ...string) []byte {
+	cmd := exec.Command(command, arg...)
 
 	out, err := cmd.StdoutPipe()
 	if err != nil {

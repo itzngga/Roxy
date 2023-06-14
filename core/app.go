@@ -33,21 +33,15 @@ type App struct {
 	muxer     *Muxer
 }
 
-func NewGoRoxyBase(options options.Options) (*App, error) {
-	err := options.Validate()
-	if err != nil {
-		return nil, err
-	}
-
-	optPointer := &options
+func NewGoRoxyBase(options *options.Options) (*App, error) {
 	stdLog := waLog.Stdout("WaBOT", options.LogLevel, true)
 	app := &App{
 		Log:     stdLog,
-		Options: optPointer,
-		muxer:   NewMuxer(stdLog, optPointer),
+		Options: options,
+		muxer:   NewMuxer(stdLog, options),
 	}
 	app.Pool = pond.New(100, 1000)
-	err = app.InitializeClient()
+	err := app.InitializeClient()
 	if err != nil {
 		return nil, err
 	}

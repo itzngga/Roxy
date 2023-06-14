@@ -50,14 +50,10 @@ func (dsn *PostgresDSN) GenerateDSN() string {
 	return fmt.Sprintf("user=%s password=%s dbname=%s port=%s sslmode=%s TimeZone=%s", dsn.Username, dsn.Password, dsn.Database, dsn.Port, dsn.SslMode, dsn.TimeZone)
 }
 
-func NewPostgresDSN(username string, password string, database string, port string, sslMode string, timeZone string) (PostgresDSN, error) {
-	pDsn := PostgresDSN{
-		Username: username,
-		Password: password,
-		Database: database,
-		Port:     port,
-		SslMode:  sslMode,
-		TimeZone: timeZone,
+func NewPostgresDSN(options ...func(dsn *PostgresDSN)) (*PostgresDSN, error) {
+	pDsn := &PostgresDSN{}
+	for _, option := range options {
+		option(pDsn)
 	}
 
 	err := pDsn.Validate()
@@ -66,4 +62,40 @@ func NewPostgresDSN(username string, password string, database string, port stri
 	}
 
 	return pDsn, nil
+}
+
+func WithUsername(userName string) func(*PostgresDSN) {
+	return func(options *PostgresDSN) {
+		options.Username = userName
+	}
+}
+
+func WithPassword(password string) func(*PostgresDSN) {
+	return func(options *PostgresDSN) {
+		options.Password = password
+	}
+}
+
+func WithDatabase(database string) func(*PostgresDSN) {
+	return func(options *PostgresDSN) {
+		options.Database = database
+	}
+}
+
+func WithPort(port string) func(*PostgresDSN) {
+	return func(options *PostgresDSN) {
+		options.Port = port
+	}
+}
+
+func WithSslMode(sslMode string) func(*PostgresDSN) {
+	return func(options *PostgresDSN) {
+		options.SslMode = sslMode
+	}
+}
+
+func WithTimeZone(timeZone string) func(*PostgresDSN) {
+	return func(options *PostgresDSN) {
+		options.TimeZone = timeZone
+	}
 }

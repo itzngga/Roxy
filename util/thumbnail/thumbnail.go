@@ -26,7 +26,7 @@ func CreateImageThumbnail(data []byte) []byte {
 }
 
 func CreateVideoThumbnail(data []byte) []byte {
-	dataResult := cli.FfmpegPipeline(data,
+	dataResult := cli.ExecPipeline("ffmpeg", data,
 		"-y", "-hide_banner", "-loglevel", "panic",
 		"-i", "pipe:0",
 		"-map_metadata", "-1",

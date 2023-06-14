@@ -27,8 +27,8 @@ type RunFuncContext struct {
 	CurrentCommand *Command
 	WaLog          waLog.Logger
 
-	Locals        *skipmap.StringMap[string]
-	UserStateChan chan []interface{}
+	Locals       *skipmap.StringMap[string]
+	QuestionChan chan *QuestionState
 }
 
 func (runFunc *RunFuncContext) GetClient() *whatsmeow.Client {

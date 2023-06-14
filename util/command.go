@@ -23,7 +23,7 @@ func ParseCmd(str string) (prefix string, cmd string, ok bool) {
 	return "", "", false
 }
 
-func ParseMessageText(uid string, m *events.Message) string {
+func ParseMessageText(m *events.Message) string {
 	var pesan *waProto.Message
 	if m.IsViewOnce {
 		pesan = m.Message.GetViewOnceMessage().GetMessage()

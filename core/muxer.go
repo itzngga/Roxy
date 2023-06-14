@@ -14,7 +14,6 @@ import (
 	waTypes "go.mau.fi/whatsmeow/types"
 	"go.mau.fi/whatsmeow/types/events"
 	waLog "go.mau.fi/whatsmeow/util/log"
-	"strconv"
 	"strings"
 	"time"
 )
@@ -28,8 +27,8 @@ type Muxer struct {
 	Middlewares          *skipmap.StringMap[command.MiddlewareFunc]
 	Commands             *skipmap.StringMap[*command.Command]
 	CommandResponseCache *skipmap.StringMap[*waProto.Message]
-	UserState            *skipmap.StringMap[*command.StateCommand]
-	UserStateChan        chan []interface{}
+	QuestionState        *skipmap.StringMap[*command.QuestionState]
+	QuestionChan         chan *command.QuestionState
 	Locals               *skipmap.StringMap[string]
 }
 
@@ -54,19 +53,14 @@ func (m *Muxer) Clean() {
 	m.Locals.Store("uid", util.CreateUid())
 }
 
-func (m *Muxer) HandleUserStateChannel() {
+func (m *Muxer) HandleQuestionStateChan() {
 	go func() {
-		for message := range m.UserStateChan {
-			for _, state := range embed.StateCommand.Get() {
-				if state.Name == message[0] {
-					state.Locals = message[2].(map[string]interface{})
-					m.UserState.Store(message[1].(string), state)
-					go func() {
-						timeout := time.NewTimer(state.StateTimeout)
-						<-timeout.C
-						m.UserState.Delete(message[1].(string))
-						timeout.Stop()
-					}()
+		for message := range m.QuestionChan {
+			for _, question := range message.Questions {
+				if question.GetAnswer() == "" {
+					message.ActiveQuestion = question.Question
+					m.QuestionState.Store(message.RunFuncCtx.Number, message)
+					message.RunFuncCtx.SendReplyMessage(question.Question)
 					break
 				}
 			}
@@ -119,14 +113,6 @@ func (m *Muxer) AddCommand(cmd *command.Command) {
 	m.Commands.Store(cmd.Name, cmd)
 }
 
-func (m *Muxer) CheckGlobalState(number string) (bool, *command.StateCommand) {
-	globalState, ok := m.UserState.Load(number)
-	if !ok {
-		return false, nil
-	}
-	return true, globalState
-}
-
 func (m *Muxer) GetCachedCommandResponse(cmd string) *waProto.Message {
 	cache, ok := m.CommandResponseCache.Load(cmd)
 	if ok {
@@ -165,57 +151,56 @@ func (m *Muxer) GlobalMiddlewareProcessing(c *whatsmeow.Client, evt *events.Mess
 	return midAreOk
 }
 
-func (m *Muxer) HandleUserState(c *whatsmeow.Client, evt *events.Message, parsedMsg string) bool {
+func (m *Muxer) HandleQuestionState(c *whatsmeow.Client, evt *events.Message, parsedMsg string) bool {
 	number := evt.Info.Sender.ToNonAD().String()
-	ok, stateCmd := m.CheckGlobalState(number)
+	questionState, ok := m.QuestionState.Load(number)
 	if ok {
-		if stateCmd.PrivateOnly {
-			if evt.Info.IsGroup {
-				return true
+		if strings.Contains(parsedMsg, "cancel") || strings.Contains(parsedMsg, "batal") {
+			m.QuestionState.Delete(number)
+			return false
+		} else {
+			for i, question := range questionState.Questions {
+				if question.Question == questionState.ActiveQuestion && question.GetAnswer() == "" {
+					if questionState.Questions[i].Capture {
+						questionState.Questions[i].SetAnswer(evt.Message)
+					} else {
+						questionState.Questions[i].SetAnswer(parsedMsg)
+					}
+					continue
+				} else if question.Question != questionState.ActiveQuestion && question.GetAnswer() == "" {
+					questionState.ActiveQuestion = question.Question
+					go func() {
+						jids := []waTypes.MessageID{
+							evt.Info.ID,
+						}
+						c.MarkRead(jids, evt.Info.Timestamp, evt.Info.Chat, evt.Info.Sender)
+					}()
+					questionState.RunFuncCtx.SendReplyMessage(question.Question)
+					return false
+				} else if question.Question == questionState.ActiveQuestion && question.GetAnswer() != "" {
+					continue
+				}
 			}
-		}
 
-		if stateCmd.GroupOnly {
-			if !evt.Info.IsGroup {
-				return true
-			}
+			m.QuestionState.Delete(number)
+			questionState.ResultChan <- true
+			return true
 		}
-
-		params := &command.StateFuncContext{
-			Client:       c,
-			WaLog:        m.Log,
-			Options:      m.Options,
-			MessageEvent: evt,
-			MessageInfo:  &evt.Info,
-			ClientJID:    c.Store.ID,
-			Message:      evt.Message,
-			CurrentState: stateCmd,
-			ParsedMsg:    parsedMsg,
-			Number:       number,
-			Locals:       stateCmd.Locals,
-		}
-
-		if strings.Contains(parsedMsg, "cancel") {
-			params.SendReplyMessage(stateCmd.CancelReply)
-		} else if strings.Contains(parsedMsg, "batal") {
-			params.SendReplyMessage(stateCmd.CancelReply)
-		}
-
-		stateCmd.RunFunc(params)
-		return false
 	}
 	return true
 }
 
 func (m *Muxer) RunCommand(c *whatsmeow.Client, evt *events.Message) {
-	number := strconv.FormatUint(evt.Info.Sender.UserInt(), 10)
+	number := evt.Info.Sender.ToNonAD().String()
 	if midOk := m.GlobalMiddlewareProcessing(c, evt, number); !midOk {
 		return
 	}
-	id, _ := m.Locals.Load("uid")
-	parsed := util.ParseMessageText(id, evt)
+	parsed := util.ParseMessageText(evt)
 
-	if ok := m.HandleUserState(c, evt, parsed); !ok {
+	var fromMe = number == c.Store.ID.ToNonAD().String()
+	if ok := m.HandleQuestionState(c, evt, parsed); !fromMe && ok {
+		parsed = util.ParseMessageText(evt)
+	} else if !fromMe && !ok {
 		return
 	}
 
@@ -228,11 +213,8 @@ func (m *Muxer) RunCommand(c *whatsmeow.Client, evt *events.Message) {
 			}
 			c.MarkRead(jids, evt.Info.Timestamp, evt.Info.Chat, evt.Info.Sender)
 		}()
-		var fromMe bool
-		if id = evt.Info.Sender.ToNonAD().String(); *util.ParseQuotedRemoteJid(evt) == id {
-			fromMe = true
-		}
-		var args = strings.Split(parsed, " ")
+
+		var args = strings.Split(parsed, " ")[1:]
 		params := &command.RunFuncContext{
 			Client:         c,
 			WaLog:          m.Log,
@@ -246,7 +228,7 @@ func (m *Muxer) RunCommand(c *whatsmeow.Client, evt *events.Message) {
 			ParsedMsg:      parsed,
 			Number:         number,
 			Locals:         m.Locals,
-			UserStateChan:  m.UserStateChan,
+			QuestionChan:   m.QuestionChan,
 			Prefix:         prefix,
 			Arguments:      args,
 		}
@@ -316,16 +298,15 @@ func NewMuxer(log waLog.Logger, options *options.Options) *Muxer {
 		GlobalMiddlewares:    skipmap.NewString[command.MiddlewareFunc](),
 		Middlewares:          skipmap.NewString[command.MiddlewareFunc](),
 		CommandResponseCache: skipmap.NewString[*waProto.Message](),
-		UserState:            skipmap.NewString[*command.StateCommand](),
+		QuestionState:        skipmap.NewString[*command.QuestionState](),
 		Categories:           skipmap.NewString[string](),
-		UserStateChan:        make(chan []interface{}),
+		QuestionChan:         make(chan *command.QuestionState),
 		MessageTimeout:       options.SendMessageTimeout,
 		Options:              options,
 		Log:                  log,
 	}
 	muxer.PrepareDefaultMiddleware()
-	muxer.HandleUserStateChannel()
-	muxer.Locals.Store("uid", util.CreateUid())
+	muxer.HandleQuestionStateChan()
 
 	muxer.AddAllEmbed()
 
