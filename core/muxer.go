@@ -227,7 +227,7 @@ func (m *Muxer) RunCommand(c *whatsmeow.Client, evt *events.Message) {
 		return
 	}
 
-	cmd, isCmd := util.ParseCmd(parsed)
+	prefix, cmd, isCmd := util.ParseCmd(parsed)
 	cmdLoad, isAvailable := m.Commands.Load(cmd)
 	if isCmd && isAvailable {
 		var fromMe bool
@@ -248,6 +248,7 @@ func (m *Muxer) RunCommand(c *whatsmeow.Client, evt *events.Message) {
 			Number:         number,
 			Locals:         m.Locals,
 			UserStateChan:  m.UserStateChan,
+			Prefix:         prefix,
 			Arguments:      strings.Split(parsed, " "),
 		}
 		var midAreOk = true

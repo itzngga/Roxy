@@ -9,18 +9,18 @@ import (
 
 var cmdRegex = regexp.MustCompile(`!|#|\?|.|@|&|\*|-|=|\+`)
 
-func ParseCmd(str string) (string, bool) {
+func ParseCmd(str string) (prefix string, cmd string, ok bool) {
 	if str == "" {
-		return "", false
+		return "", "", false
 	}
 	word := strings.Split(str, " ")
 	if len(word) == 0 && word[0] == "" {
-		return "", false
+		return "", "", false
 	}
 	if cmdRegex.MatchString(word[0][0:1]) {
-		return word[0][1:], true
+		return string(word[0][0]), word[0][1:], true
 	}
-	return "", false
+	return "", "", false
 }
 
 func ParseMessageText(uid string, m *events.Message) string {

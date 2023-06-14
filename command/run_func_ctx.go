@@ -16,6 +16,7 @@ type RunFuncContext struct {
 	Arguments []string
 	Number    string
 	FromMe    bool
+	Prefix    string
 
 	Client         *whatsmeow.Client
 	Options        *options.Options
