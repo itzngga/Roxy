@@ -122,7 +122,10 @@ func (runFunc *RunFuncContext) SendReplyMessage(obj any) {
 		value.ContextInfo = util.WithReply(runFunc.MessageEvent)
 	}
 
-	_, err := runFunc.Client.SendMessage(context.Background(), runFunc.MessageEvent.Info.Chat, message)
+	ctx, cancel := context.WithTimeout(context.Background(), runFunc.Options.SendMessageTimeout)
+	defer cancel()
+
+	_, err := runFunc.Client.SendMessage(ctx, runFunc.MessageEvent.Info.Chat, message)
 	if err != nil {
 		fmt.Printf("error: sending message: %v\n", err)
 	}
@@ -305,7 +308,10 @@ func (runFunc *RunFuncContext) SendMessage(obj any) {
 		}
 	}
 
-	_, err := runFunc.Client.SendMessage(context.Background(), runFunc.MessageEvent.Info.Chat, message)
+	ctx, cancel := context.WithTimeout(context.Background(), runFunc.Options.SendMessageTimeout)
+	defer cancel()
+
+	_, err := runFunc.Client.SendMessage(ctx, runFunc.MessageEvent.Info.Chat, message)
 	if err != nil {
 		fmt.Printf("error: sending message: %v\n", err)
 		return

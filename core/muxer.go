@@ -227,6 +227,12 @@ func (m *Muxer) RunCommand(c *whatsmeow.Client, evt *events.Message) {
 	prefix, cmd, isCmd := util.ParseCmd(parsed)
 	cmdLoad, isAvailable := m.Commands.Load(cmd)
 	if isCmd && isAvailable {
+		go func() {
+			jids := []waTypes.MessageID{
+				evt.Info.ID,
+			}
+			c.MarkRead(jids, evt.Info.Timestamp, evt.Info.Chat, evt.Info.Sender)
+		}()
 		var fromMe bool
 		if id = evt.Info.Sender.ToNonAD().String(); *util.ParseQuotedRemoteJid(evt) == id {
 			fromMe = true
@@ -285,7 +291,7 @@ func (m *Muxer) RunCommand(c *whatsmeow.Client, evt *events.Message) {
 			msg = cmdLoad.RunFunc(params)
 		}
 		if msg != nil {
-			ctx, cancel := context.WithTimeout(context.Background(), m.MessageTimeout)
+			ctx, cancel := context.WithTimeout(context.Background(), m.Options.SendMessageTimeout)
 			defer cancel()
 
 			_, err := c.SendMessage(ctx, evt.Info.Chat, msg)
@@ -296,10 +302,6 @@ func (m *Muxer) RunCommand(c *whatsmeow.Client, evt *events.Message) {
 				m.SetCacheCommandResponse(parsed, msg)
 			}
 		}
-		jids := []waTypes.MessageID{
-			evt.Info.ID,
-		}
-		c.MarkRead(jids, evt.Info.Timestamp, evt.Info.Chat, evt.Info.Sender)
 	}
 }
 

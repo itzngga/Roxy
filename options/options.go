@@ -67,7 +67,7 @@ func (o *Options) Validate() error {
 		o.SqliteFile = "GoRoxy.DB"
 	}
 
-	if o.WithSqlDB != nil && o.SqliteFile == "" && o.PostgresDsn == nilPgDsn {
+	if o.WithSqlDB == nil && o.SqliteFile == "" && o.PostgresDsn == nilPgDsn {
 		return errors.New("error: please specify sql.db or sqlite file or pg dsn")
 	}
 
