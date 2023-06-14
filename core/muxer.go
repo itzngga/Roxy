@@ -234,6 +234,7 @@ func (m *Muxer) RunCommand(c *whatsmeow.Client, evt *events.Message) {
 		if id = evt.Info.Sender.ToNonAD().String(); *util.ParseQuotedRemoteJid(evt) == id {
 			fromMe = true
 		}
+		var args = strings.Split(parsed, " ")
 		params := &command.RunFuncContext{
 			Client:         c,
 			WaLog:          m.Log,
@@ -249,7 +250,7 @@ func (m *Muxer) RunCommand(c *whatsmeow.Client, evt *events.Message) {
 			Locals:         m.Locals,
 			UserStateChan:  m.UserStateChan,
 			Prefix:         prefix,
-			Arguments:      strings.Split(parsed, " "),
+			Arguments:      args,
 		}
 		var midAreOk = true
 		m.Middlewares.Range(func(key string, value command.MiddlewareFunc) bool {
@@ -279,7 +280,7 @@ func (m *Muxer) RunCommand(c *whatsmeow.Client, evt *events.Message) {
 		}
 		var msg *waProto.Message
 		if cmdLoad.Cache {
-			msg = m.GetCachedCommandResponse(cmdLoad.Name)
+			msg = m.GetCachedCommandResponse(parsed)
 			if msg == nil {
 				msg = cmdLoad.RunFunc(params)
 			}
@@ -295,7 +296,7 @@ func (m *Muxer) RunCommand(c *whatsmeow.Client, evt *events.Message) {
 				fmt.Println("[SEND MESSAGE ERR]\n", err)
 			}
 			if cmdLoad.Cache {
-				m.SetCacheCommandResponse(cmdLoad.Name, msg)
+				m.SetCacheCommandResponse(parsed, msg)
 			}
 		}
 		jids := []waTypes.MessageID{
