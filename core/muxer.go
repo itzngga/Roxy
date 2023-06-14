@@ -30,7 +30,6 @@ type Muxer struct {
 	CommandResponseCache *skipmap.StringMap[*waProto.Message]
 	UserState            *skipmap.StringMap[*command.StateCommand]
 	UserStateChan        chan []string
-	UserStateList        []*command.StateCommand
 	Locals               *skipmap.StringMap[string]
 }
 
@@ -92,8 +91,6 @@ func (m *Muxer) AddAllEmbed() {
 	for _, mid := range globalMiddleware {
 		m.AddGlobalMiddleware(mid)
 	}
-
-	m.UserStateList = embed.StateCommand.Get()
 }
 
 func (m *Muxer) AddGlobalMiddleware(middleware command.MiddlewareFunc) {

@@ -1,6 +1,7 @@
 package options
 
 import (
+	"database/sql"
 	"errors"
 	"github.com/itzngga/Roxy/util"
 	"time"
@@ -21,6 +22,9 @@ type Options struct {
 
 	// This SqliteFile Generate "ROXY.DB" when it null
 	SqliteFile string
+
+	// WithSqlDB wrap with sql.DB interface
+	WithSqlDB *sql.DB
 
 	WithCommandLog              bool
 	CommandResponseCacheTimeout time.Duration
@@ -55,12 +59,16 @@ func (o *Options) Validate() error {
 	}
 
 	var nilPgDsn PostgresDSN
-	if o.StoreMode == "postgres" && o.PostgresDsn == nilPgDsn {
+	if o.WithSqlDB == nil && o.StoreMode == "postgres" && o.PostgresDsn == nilPgDsn {
 		return errors.New("error: postgresql dsn cannot be null")
 	}
 
-	if o.StoreMode == "sqlite" && o.SqliteFile == "" {
+	if o.WithSqlDB == nil && o.StoreMode == "sqlite" && o.SqliteFile == "" {
 		o.SqliteFile = "GoRoxy.DB"
+	}
+
+	if o.WithSqlDB != nil && o.SqliteFile == "" && o.PostgresDsn == nilPgDsn {
+		return errors.New("error: please specify sql.db or sqlite file or pg dsn")
 	}
 
 	return nil

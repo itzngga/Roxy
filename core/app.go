@@ -94,8 +94,15 @@ func (app *App) HandleEvents(event interface{}) {
 	}
 }
 func (app *App) InitializeContainer() (*sqlstore.Container, error) {
-	store.DeviceProps.RequireFullSync = types.Bool(true)
-	if app.Options.StoreMode == "postgres" {
+	store.DeviceProps.RequireFullSync = types.Bool(false)
+	if app.Options.WithSqlDB != nil {
+		container := sqlstore.NewWithDB(app.Options.WithSqlDB, app.Options.StoreMode, waLog.Stdout("Database", "ERROR", true))
+		err := container.Upgrade()
+		if err != nil {
+			panic(err)
+		}
+		return container, nil
+	} else if app.Options.StoreMode == "postgres" {
 		container, err := sqlstore.New("postgres", app.Options.PostgresDsn.GenerateDSN(), waLog.Stdout("Database", "ERROR", true))
 		if err != nil {
 			panic(err)

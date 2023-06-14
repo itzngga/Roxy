@@ -29,12 +29,27 @@ import "github.com/itzngga/Roxy/command"
   - [func (runFunc *RunFuncContext) SetLocals(key string, value string)](<#func-runfunccontext-setlocals>)
   - [func (runFunc *RunFuncContext) SetLocalsWithTTL(key string, value string, ttl time.Duration)](<#func-runfunccontext-setlocalswithttl>)
   - [func (runFunc *RunFuncContext) SetUserState(stateName string)](<#func-runfunccontext-setuserstate>)
+  - [func (runFunc *RunFuncContext) UploadAudioFromUrl(url string) (*waProto.AudioMessage, error)](<#func-runfunccontext-uploadaudiofromurl>)
+  - [func (runFunc *RunFuncContext) UploadAudioMessageFromBytes(bytes []byte) (*waProto.AudioMessage, error)](<#func-runfunccontext-uploadaudiomessagefrombytes>)
+  - [func (runFunc *RunFuncContext) UploadAudioMessageFromPath(path string) (*waProto.AudioMessage, error)](<#func-runfunccontext-uploadaudiomessagefrompath>)
+  - [func (runFunc *RunFuncContext) UploadDocumentFromUrl(url, title, filename string) (*waProto.DocumentMessage, error)](<#func-runfunccontext-uploaddocumentfromurl>)
+  - [func (runFunc *RunFuncContext) UploadDocumentMessageFromBytes(bytes []byte, title, filename string) (*waProto.DocumentMessage, error)](<#func-runfunccontext-uploaddocumentmessagefrombytes>)
+  - [func (runFunc *RunFuncContext) UploadDocumentMessageFromPath(path, title string) (*waProto.DocumentMessage, error)](<#func-runfunccontext-uploaddocumentmessagefrompath>)
+  - [func (runFunc *RunFuncContext) UploadImageFromUrl(url, caption string) (*waProto.ImageMessage, error)](<#func-runfunccontext-uploadimagefromurl>)
+  - [func (runFunc *RunFuncContext) UploadImageMessageFromBytes(bytes []byte, caption string) (*waProto.ImageMessage, error)](<#func-runfunccontext-uploadimagemessagefrombytes>)
+  - [func (runFunc *RunFuncContext) UploadImageMessageFromPath(path, caption string) (*waProto.ImageMessage, error)](<#func-runfunccontext-uploadimagemessagefrompath>)
+  - [func (runFunc *RunFuncContext) UploadStickerFromUrl(url string) (*waProto.StickerMessage, error)](<#func-runfunccontext-uploadstickerfromurl>)
+  - [func (runFunc *RunFuncContext) UploadStickerMessageFromBytes(bytes []byte) (*waProto.StickerMessage, error)](<#func-runfunccontext-uploadstickermessagefrombytes>)
+  - [func (runFunc *RunFuncContext) UploadStickerMessageFromPath(path string) (*waProto.StickerMessage, error)](<#func-runfunccontext-uploadstickermessagefrompath>)
+  - [func (runFunc *RunFuncContext) UploadVideoFromUrl(url, caption string) (*waProto.VideoMessage, error)](<#func-runfunccontext-uploadvideofromurl>)
+  - [func (runFunc *RunFuncContext) UploadVideoMessageFromBytes(bytes []byte, caption string) (*waProto.VideoMessage, error)](<#func-runfunccontext-uploadvideomessagefrombytes>)
+  - [func (runFunc *RunFuncContext) UploadVideoMessageFromPath(path, caption string) (*waProto.VideoMessage, error)](<#func-runfunccontext-uploadvideomessagefrompath>)
 - [type StateCommand](<#type-statecommand>)
   - [func (c *StateCommand) Validate()](<#func-statecommand-validate>)
 - [type StateFunc](<#type-statefunc>)
 
 
-## type [Command](<https://github.com/itzngga/Roxy/blob/master/command/command.go#L42-L56>)
+## type [Command](<https://github.com/itzngga/roxy/blob/master/command/command.go#L42-L56>)
 
 ```go
 type Command struct {
@@ -54,25 +69,25 @@ type Command struct {
 }
 ```
 
-### func \(\*Command\) [Validate](<https://github.com/itzngga/Roxy/blob/master/command/command.go#L58>)
+### func \(\*Command\) [Validate](<https://github.com/itzngga/roxy/blob/master/command/command.go#L58>)
 
 ```go
 func (c *Command) Validate()
 ```
 
-## type [MiddlewareFunc](<https://github.com/itzngga/Roxy/blob/master/command/command.go#L10>)
+## type [MiddlewareFunc](<https://github.com/itzngga/roxy/blob/master/command/command.go#L10>)
 
 ```go
 type MiddlewareFunc func(c *RunFuncContext) bool
 ```
 
-## type [RunFunc](<https://github.com/itzngga/Roxy/blob/master/command/command.go#L11>)
+## type [RunFunc](<https://github.com/itzngga/roxy/blob/master/command/command.go#L11>)
 
 ```go
 type RunFunc func(c *RunFuncContext) *waProto.Message
 ```
 
-## type [RunFuncContext](<https://github.com/itzngga/Roxy/blob/master/command/run_func_ctx.go#L14-L31>)
+## type [RunFuncContext](<https://github.com/itzngga/roxy/blob/master/command/run_func_ctx.go#L14-L32>)
 
 ```go
 type RunFuncContext struct {
@@ -80,6 +95,7 @@ type RunFuncContext struct {
     Arguments []string
     Number    string
     FromMe    bool
+    Prefix    string
 
     Client         *whatsmeow.Client
     Options        *options.Options
@@ -95,103 +111,193 @@ type RunFuncContext struct {
 }
 ```
 
-### func \(\*RunFuncContext\) [DelLocals](<https://github.com/itzngga/Roxy/blob/master/command/run_func_ctx.go#L73>)
+### func \(\*RunFuncContext\) [DelLocals](<https://github.com/itzngga/roxy/blob/master/command/run_func_ctx.go#L74>)
 
 ```go
 func (runFunc *RunFuncContext) DelLocals(key string)
 ```
 
-### func \(\*RunFuncContext\) [GenerateReplyMessage](<https://github.com/itzngga/Roxy/blob/master/command/send_mesage.go#L131>)
+### func \(\*RunFuncContext\) [GenerateReplyMessage](<https://github.com/itzngga/roxy/blob/master/command/send_mesage.go#L131>)
 
 ```go
 func (runFunc *RunFuncContext) GenerateReplyMessage(obj any) *waProto.Message
 ```
 
-### func \(\*RunFuncContext\) [GetClient](<https://github.com/itzngga/Roxy/blob/master/command/run_func_ctx.go#L33>)
+### func \(\*RunFuncContext\) [GetClient](<https://github.com/itzngga/roxy/blob/master/command/run_func_ctx.go#L34>)
 
 ```go
 func (runFunc *RunFuncContext) GetClient() *whatsmeow.Client
 ```
 
-### func \(\*RunFuncContext\) [GetClientJID](<https://github.com/itzngga/Roxy/blob/master/command/run_func_ctx.go#L49>)
+### func \(\*RunFuncContext\) [GetClientJID](<https://github.com/itzngga/roxy/blob/master/command/run_func_ctx.go#L50>)
 
 ```go
 func (runFunc *RunFuncContext) GetClientJID() *waTypes.JID
 ```
 
-### func \(\*RunFuncContext\) [GetCommand](<https://github.com/itzngga/Roxy/blob/master/command/run_func_ctx.go#L53>)
+### func \(\*RunFuncContext\) [GetCommand](<https://github.com/itzngga/roxy/blob/master/command/run_func_ctx.go#L54>)
 
 ```go
 func (runFunc *RunFuncContext) GetCommand() *Command
 ```
 
-### func \(\*RunFuncContext\) [GetLocals](<https://github.com/itzngga/Roxy/blob/master/command/run_func_ctx.go#L64>)
+### func \(\*RunFuncContext\) [GetLocals](<https://github.com/itzngga/roxy/blob/master/command/run_func_ctx.go#L65>)
 
 ```go
 func (runFunc *RunFuncContext) GetLocals(key string) (string, bool)
 ```
 
-### func \(\*RunFuncContext\) [GetMessage](<https://github.com/itzngga/Roxy/blob/master/command/run_func_ctx.go#L56>)
+### func \(\*RunFuncContext\) [GetMessage](<https://github.com/itzngga/roxy/blob/master/command/run_func_ctx.go#L57>)
 
 ```go
 func (runFunc *RunFuncContext) GetMessage() *waProto.Message
 ```
 
-### func \(\*RunFuncContext\) [GetMessageEvent](<https://github.com/itzngga/Roxy/blob/master/command/run_func_ctx.go#L41>)
+### func \(\*RunFuncContext\) [GetMessageEvent](<https://github.com/itzngga/roxy/blob/master/command/run_func_ctx.go#L42>)
 
 ```go
 func (runFunc *RunFuncContext) GetMessageEvent() *events.Message
 ```
 
-### func \(\*RunFuncContext\) [GetMessageInfo](<https://github.com/itzngga/Roxy/blob/master/command/run_func_ctx.go#L45>)
+### func \(\*RunFuncContext\) [GetMessageInfo](<https://github.com/itzngga/roxy/blob/master/command/run_func_ctx.go#L46>)
 
 ```go
 func (runFunc *RunFuncContext) GetMessageInfo() *waTypes.MessageInfo
 ```
 
-### func \(\*RunFuncContext\) [GetOptions](<https://github.com/itzngga/Roxy/blob/master/command/run_func_ctx.go#L37>)
+### func \(\*RunFuncContext\) [GetOptions](<https://github.com/itzngga/roxy/blob/master/command/run_func_ctx.go#L38>)
 
 ```go
 func (runFunc *RunFuncContext) GetOptions() *options.Options
 ```
 
-### func \(\*RunFuncContext\) [RangeLocals](<https://github.com/itzngga/Roxy/blob/master/command/run_func_ctx.go#L60>)
+### func \(\*RunFuncContext\) [RangeLocals](<https://github.com/itzngga/roxy/blob/master/command/run_func_ctx.go#L61>)
 
 ```go
 func (runFunc *RunFuncContext) RangeLocals(fun func(key string, value string) bool)
 ```
 
-### func \(\*RunFuncContext\) [SendMessage](<https://github.com/itzngga/Roxy/blob/master/command/send_mesage.go#L214>)
+### func \(\*RunFuncContext\) [SendMessage](<https://github.com/itzngga/roxy/blob/master/command/send_mesage.go#L214>)
 
 ```go
 func (runFunc *RunFuncContext) SendMessage(obj any)
 ```
 
-### func \(\*RunFuncContext\) [SendReplyMessage](<https://github.com/itzngga/Roxy/blob/master/command/send_mesage.go#L12>)
+### func \(\*RunFuncContext\) [SendReplyMessage](<https://github.com/itzngga/roxy/blob/master/command/send_mesage.go#L12>)
 
 ```go
 func (runFunc *RunFuncContext) SendReplyMessage(obj any)
 ```
 
-### func \(\*RunFuncContext\) [SetLocals](<https://github.com/itzngga/Roxy/blob/master/command/run_func_ctx.go#L68>)
+### func \(\*RunFuncContext\) [SetLocals](<https://github.com/itzngga/roxy/blob/master/command/run_func_ctx.go#L69>)
 
 ```go
 func (runFunc *RunFuncContext) SetLocals(key string, value string)
 ```
 
-### func \(\*RunFuncContext\) [SetLocalsWithTTL](<https://github.com/itzngga/Roxy/blob/master/command/run_func_ctx.go#L78>)
+### func \(\*RunFuncContext\) [SetLocalsWithTTL](<https://github.com/itzngga/roxy/blob/master/command/run_func_ctx.go#L79>)
 
 ```go
 func (runFunc *RunFuncContext) SetLocalsWithTTL(key string, value string, ttl time.Duration)
 ```
 
-### func \(\*RunFuncContext\) [SetUserState](<https://github.com/itzngga/Roxy/blob/master/command/state_command.go#L7>)
+### func \(\*RunFuncContext\) [SetUserState](<https://github.com/itzngga/roxy/blob/master/command/state_command.go#L7>)
 
 ```go
 func (runFunc *RunFuncContext) SetUserState(stateName string)
 ```
 
-## type [StateCommand](<https://github.com/itzngga/Roxy/blob/master/command/command.go#L14-L22>)
+### func \(\*RunFuncContext\) [UploadAudioFromUrl](<https://github.com/itzngga/roxy/blob/master/command/send_url_media.go#L35>)
+
+```go
+func (runFunc *RunFuncContext) UploadAudioFromUrl(url string) (*waProto.AudioMessage, error)
+```
+
+### func \(\*RunFuncContext\) [UploadAudioMessageFromBytes](<https://github.com/itzngga/roxy/blob/master/command/send_media.go#L322>)
+
+```go
+func (runFunc *RunFuncContext) UploadAudioMessageFromBytes(bytes []byte) (*waProto.AudioMessage, error)
+```
+
+### func \(\*RunFuncContext\) [UploadAudioMessageFromPath](<https://github.com/itzngga/roxy/blob/master/command/send_media.go#L288>)
+
+```go
+func (runFunc *RunFuncContext) UploadAudioMessageFromPath(path string) (*waProto.AudioMessage, error)
+```
+
+### func \(\*RunFuncContext\) [UploadDocumentFromUrl](<https://github.com/itzngga/roxy/blob/master/command/send_url_media.go#L26>)
+
+```go
+func (runFunc *RunFuncContext) UploadDocumentFromUrl(url, title, filename string) (*waProto.DocumentMessage, error)
+```
+
+### func \(\*RunFuncContext\) [UploadDocumentMessageFromBytes](<https://github.com/itzngga/roxy/blob/master/command/send_media.go#L265>)
+
+```go
+func (runFunc *RunFuncContext) UploadDocumentMessageFromBytes(bytes []byte, title, filename string) (*waProto.DocumentMessage, error)
+```
+
+### func \(\*RunFuncContext\) [UploadDocumentMessageFromPath](<https://github.com/itzngga/roxy/blob/master/command/send_media.go#L230>)
+
+```go
+func (runFunc *RunFuncContext) UploadDocumentMessageFromPath(path, title string) (*waProto.DocumentMessage, error)
+```
+
+### func \(\*RunFuncContext\) [UploadImageFromUrl](<https://github.com/itzngga/roxy/blob/master/command/send_url_media.go#L8>)
+
+```go
+func (runFunc *RunFuncContext) UploadImageFromUrl(url, caption string) (*waProto.ImageMessage, error)
+```
+
+### func \(\*RunFuncContext\) [UploadImageMessageFromBytes](<https://github.com/itzngga/roxy/blob/master/command/send_media.go#L62>)
+
+```go
+func (runFunc *RunFuncContext) UploadImageMessageFromBytes(bytes []byte, caption string) (*waProto.ImageMessage, error)
+```
+
+### func \(\*RunFuncContext\) [UploadImageMessageFromPath](<https://github.com/itzngga/roxy/blob/master/command/send_media.go#L15>)
+
+```go
+func (runFunc *RunFuncContext) UploadImageMessageFromPath(path, caption string) (*waProto.ImageMessage, error)
+```
+
+### func \(\*RunFuncContext\) [UploadStickerFromUrl](<https://github.com/itzngga/roxy/blob/master/command/send_url_media.go#L44>)
+
+```go
+func (runFunc *RunFuncContext) UploadStickerFromUrl(url string) (*waProto.StickerMessage, error)
+```
+
+### func \(\*RunFuncContext\) [UploadStickerMessageFromBytes](<https://github.com/itzngga/roxy/blob/master/command/send_media.go#L210>)
+
+```go
+func (runFunc *RunFuncContext) UploadStickerMessageFromBytes(bytes []byte) (*waProto.StickerMessage, error)
+```
+
+### func \(\*RunFuncContext\) [UploadStickerMessageFromPath](<https://github.com/itzngga/roxy/blob/master/command/send_media.go#L178>)
+
+```go
+func (runFunc *RunFuncContext) UploadStickerMessageFromPath(path string) (*waProto.StickerMessage, error)
+```
+
+### func \(\*RunFuncContext\) [UploadVideoFromUrl](<https://github.com/itzngga/roxy/blob/master/command/send_url_media.go#L17>)
+
+```go
+func (runFunc *RunFuncContext) UploadVideoFromUrl(url, caption string) (*waProto.VideoMessage, error)
+```
+
+### func \(\*RunFuncContext\) [UploadVideoMessageFromBytes](<https://github.com/itzngga/roxy/blob/master/command/send_media.go#L143>)
+
+```go
+func (runFunc *RunFuncContext) UploadVideoMessageFromBytes(bytes []byte, caption string) (*waProto.VideoMessage, error)
+```
+
+### func \(\*RunFuncContext\) [UploadVideoMessageFromPath](<https://github.com/itzngga/roxy/blob/master/command/send_media.go#L97>)
+
+```go
+func (runFunc *RunFuncContext) UploadVideoMessageFromPath(path, caption string) (*waProto.VideoMessage, error)
+```
+
+## type [StateCommand](<https://github.com/itzngga/roxy/blob/master/command/command.go#L14-L22>)
 
 ```go
 type StateCommand struct {
@@ -205,13 +311,13 @@ type StateCommand struct {
 }
 ```
 
-### func \(\*StateCommand\) [Validate](<https://github.com/itzngga/Roxy/blob/master/command/command.go#L24>)
+### func \(\*StateCommand\) [Validate](<https://github.com/itzngga/roxy/blob/master/command/command.go#L24>)
 
 ```go
 func (c *StateCommand) Validate()
 ```
 
-## type [StateFunc](<https://github.com/itzngga/Roxy/blob/master/command/command.go#L12>)
+## type [StateFunc](<https://github.com/itzngga/roxy/blob/master/command/command.go#L12>)
 
 ```go
 type StateFunc func(c *RunFuncContext, parsed string)
@@ -252,7 +358,7 @@ import "github.com/itzngga/Roxy/core"
   - [func (m *Muxer) SetCacheCommandResponse(cmd string, response *waProto.Message)](<#func-muxer-setcachecommandresponse>)
 
 
-## type [App](<https://github.com/itzngga/Roxy/blob/master/core/app.go#L25-L34>)
+## type [App](<https://github.com/itzngga/roxy/blob/master/core/app.go#L25-L34>)
 
 ```go
 type App struct {
@@ -264,61 +370,61 @@ type App struct {
 }
 ```
 
-### func [NewGoRoxyBase](<https://github.com/itzngga/Roxy/blob/master/core/app.go#L36>)
+### func [NewGoRoxyBase](<https://github.com/itzngga/roxy/blob/master/core/app.go#L36>)
 
 ```go
 func NewGoRoxyBase(options options.Options) (*App, error)
 ```
 
-### func \(\*App\) [AddNewCategory](<https://github.com/itzngga/Roxy/blob/master/core/app.go#L186>)
+### func \(\*App\) [AddNewCategory](<https://github.com/itzngga/roxy/blob/master/core/app.go#L193>)
 
 ```go
 func (app *App) AddNewCategory(category string)
 ```
 
-### func \(\*App\) [AddNewCommand](<https://github.com/itzngga/Roxy/blob/master/core/app.go#L190>)
+### func \(\*App\) [AddNewCommand](<https://github.com/itzngga/roxy/blob/master/core/app.go#L197>)
 
 ```go
 func (app *App) AddNewCommand(command command.Command)
 ```
 
-### func \(\*App\) [AddNewMiddleware](<https://github.com/itzngga/Roxy/blob/master/core/app.go#L194>)
+### func \(\*App\) [AddNewMiddleware](<https://github.com/itzngga/roxy/blob/master/core/app.go#L201>)
 
 ```go
 func (app *App) AddNewMiddleware(middleware command.MiddlewareFunc)
 ```
 
-### func \(\*App\) [HandleEvents](<https://github.com/itzngga/Roxy/blob/master/core/app.go#L57>)
+### func \(\*App\) [HandleEvents](<https://github.com/itzngga/roxy/blob/master/core/app.go#L57>)
 
 ```go
 func (app *App) HandleEvents(event interface{})
 ```
 
-### func \(\*App\) [HandlePanic](<https://github.com/itzngga/Roxy/blob/master/core/app.go#L115>)
+### func \(\*App\) [HandlePanic](<https://github.com/itzngga/roxy/blob/master/core/app.go#L122>)
 
 ```go
 func (app *App) HandlePanic(p interface{})
 ```
 
-### func \(\*App\) [InitializeClient](<https://github.com/itzngga/Roxy/blob/master/core/app.go#L121>)
+### func \(\*App\) [InitializeClient](<https://github.com/itzngga/roxy/blob/master/core/app.go#L128>)
 
 ```go
 func (app *App) InitializeClient() error
 ```
 
-### func \(\*App\) [InitializeContainer](<https://github.com/itzngga/Roxy/blob/master/core/app.go#L96>)
+### func \(\*App\) [InitializeContainer](<https://github.com/itzngga/roxy/blob/master/core/app.go#L96>)
 
 ```go
 func (app *App) InitializeContainer() (*sqlstore.Container, error)
 ```
 
-### func \(\*App\) [Shutdown](<https://github.com/itzngga/Roxy/blob/master/core/app.go#L198>)
+### func \(\*App\) [Shutdown](<https://github.com/itzngga/roxy/blob/master/core/app.go#L205>)
 
 ```go
 func (app *App) Shutdown()
 ```
 
-## type [Muxer](<https://github.com/itzngga/Roxy/blob/master/core/muxer.go#L22-L35>)
+## type [Muxer](<https://github.com/itzngga/roxy/blob/master/core/muxer.go#L22-L34>)
 
 ```go
 type Muxer struct {
@@ -332,90 +438,89 @@ type Muxer struct {
     CommandResponseCache *skipmap.StringMap[*waProto.Message]
     UserState            *skipmap.StringMap[*command.StateCommand]
     UserStateChan        chan []string
-    UserStateList        []*command.StateCommand
     Locals               *skipmap.StringMap[string]
 }
 ```
 
-### func [NewMuxer](<https://github.com/itzngga/Roxy/blob/master/core/muxer.go#L316>)
+### func [NewMuxer](<https://github.com/itzngga/roxy/blob/master/core/muxer.go#L315>)
 
 ```go
 func NewMuxer(log waLog.Logger, options *options.Options) *Muxer
 ```
 
-### func \(\*Muxer\) [AddAllEmbed](<https://github.com/itzngga/Roxy/blob/master/core/muxer.go#L77>)
+### func \(\*Muxer\) [AddAllEmbed](<https://github.com/itzngga/roxy/blob/master/core/muxer.go#L76>)
 
 ```go
 func (m *Muxer) AddAllEmbed()
 ```
 
-### func \(\*Muxer\) [AddCommand](<https://github.com/itzngga/Roxy/blob/master/core/muxer.go#L107>)
+### func \(\*Muxer\) [AddCommand](<https://github.com/itzngga/roxy/blob/master/core/muxer.go#L104>)
 
 ```go
 func (m *Muxer) AddCommand(cmd *command.Command)
 ```
 
-### func \(\*Muxer\) [AddGlobalMiddleware](<https://github.com/itzngga/Roxy/blob/master/core/muxer.go#L99>)
+### func \(\*Muxer\) [AddGlobalMiddleware](<https://github.com/itzngga/roxy/blob/master/core/muxer.go#L96>)
 
 ```go
 func (m *Muxer) AddGlobalMiddleware(middleware command.MiddlewareFunc)
 ```
 
-### func \(\*Muxer\) [AddMiddleware](<https://github.com/itzngga/Roxy/blob/master/core/muxer.go#L103>)
+### func \(\*Muxer\) [AddMiddleware](<https://github.com/itzngga/roxy/blob/master/core/muxer.go#L100>)
 
 ```go
 func (m *Muxer) AddMiddleware(middleware command.MiddlewareFunc)
 ```
 
-### func \(\*Muxer\) [CheckGlobalState](<https://github.com/itzngga/Roxy/blob/master/core/muxer.go#L124>)
+### func \(\*Muxer\) [CheckGlobalState](<https://github.com/itzngga/roxy/blob/master/core/muxer.go#L121>)
 
 ```go
 func (m *Muxer) CheckGlobalState(number string) (bool, *command.StateCommand)
 ```
 
-### func \(\*Muxer\) [Clean](<https://github.com/itzngga/Roxy/blob/master/core/muxer.go#L37>)
+### func \(\*Muxer\) [Clean](<https://github.com/itzngga/roxy/blob/master/core/muxer.go#L36>)
 
 ```go
 func (m *Muxer) Clean()
 ```
 
-### func \(\*Muxer\) [GetCachedCommandResponse](<https://github.com/itzngga/Roxy/blob/master/core/muxer.go#L132>)
+### func \(\*Muxer\) [GetCachedCommandResponse](<https://github.com/itzngga/roxy/blob/master/core/muxer.go#L129>)
 
 ```go
 func (m *Muxer) GetCachedCommandResponse(cmd string) *waProto.Message
 ```
 
-### func \(\*Muxer\) [GlobalMiddlewareProcessing](<https://github.com/itzngga/Roxy/blob/master/core/muxer.go#L150>)
+### func \(\*Muxer\) [GlobalMiddlewareProcessing](<https://github.com/itzngga/roxy/blob/master/core/muxer.go#L147>)
 
 ```go
 func (m *Muxer) GlobalMiddlewareProcessing(c *whatsmeow.Client, evt *events.Message, number string) bool
 ```
 
-### func \(\*Muxer\) [HandleUserState](<https://github.com/itzngga/Roxy/blob/master/core/muxer.go#L170>)
+### func \(\*Muxer\) [HandleUserState](<https://github.com/itzngga/roxy/blob/master/core/muxer.go#L167>)
 
 ```go
 func (m *Muxer) HandleUserState(c *whatsmeow.Client, evt *events.Message, parsedMsg string) bool
 ```
 
-### func \(\*Muxer\) [HandleUserStateChannel](<https://github.com/itzngga/Roxy/blob/master/core/muxer.go#L58>)
+### func \(\*Muxer\) [HandleUserStateChannel](<https://github.com/itzngga/roxy/blob/master/core/muxer.go#L57>)
 
 ```go
 func (m *Muxer) HandleUserStateChannel()
 ```
 
-### func \(\*Muxer\) [PrepareDefaultMiddleware](<https://github.com/itzngga/Roxy/blob/master/core/muxer.go#L307>)
+### func \(\*Muxer\) [PrepareDefaultMiddleware](<https://github.com/itzngga/roxy/blob/master/core/muxer.go#L306>)
 
 ```go
 func (m *Muxer) PrepareDefaultMiddleware()
 ```
 
-### func \(\*Muxer\) [RunCommand](<https://github.com/itzngga/Roxy/blob/master/core/muxer.go#L218>)
+### func \(\*Muxer\) [RunCommand](<https://github.com/itzngga/roxy/blob/master/core/muxer.go#L215>)
 
 ```go
 func (m *Muxer) RunCommand(c *whatsmeow.Client, evt *events.Message)
 ```
 
-### func \(\*Muxer\) [SetCacheCommandResponse](<https://github.com/itzngga/Roxy/blob/master/core/muxer.go#L140>)
+### func \(\*Muxer\) [SetCacheCommandResponse](<https://github.com/itzngga/roxy/blob/master/core/muxer.go#L137>)
 
 ```go
 func (m *Muxer) SetCacheCommandResponse(cmd string, response *waProto.Message)
@@ -481,7 +586,7 @@ import "github.com/itzngga/Roxy/options"
   - [func (dsn *PostgresDSN) Validate() error](<#func-postgresdsn-validate>)
 
 
-## type [Options](<https://github.com/itzngga/Roxy/blob/master/options/options.go#L9-L28>)
+## type [Options](<https://github.com/itzngga/roxy/blob/master/options/options.go#L10-L32>)
 
 ```go
 type Options struct {
@@ -500,25 +605,28 @@ type Options struct {
     // This SqliteFile Generate "ROXY.DB" when it null
     SqliteFile string
 
+    // WithSqlDB wrap with sql.DB interface
+    WithSqlDB *sql.DB
+
     WithCommandLog              bool
     CommandResponseCacheTimeout time.Duration
     SendMessageTimeout          time.Duration
 }
 ```
 
-### func [NewDefaultOptions](<https://github.com/itzngga/Roxy/blob/master/options/options.go#L30>)
+### func [NewDefaultOptions](<https://github.com/itzngga/roxy/blob/master/options/options.go#L34>)
 
 ```go
 func NewDefaultOptions() Options
 ```
 
-### func \(\*Options\) [Validate](<https://github.com/itzngga/Roxy/blob/master/options/options.go#L41>)
+### func \(\*Options\) [Validate](<https://github.com/itzngga/roxy/blob/master/options/options.go#L44>)
 
 ```go
 func (o *Options) Validate() error
 ```
 
-## type [PostgresDSN](<https://github.com/itzngga/Roxy/blob/master/options/postgresql.go#L9-L16>)
+## type [PostgresDSN](<https://github.com/itzngga/roxy/blob/master/options/postgresql.go#L9-L16>)
 
 ```go
 type PostgresDSN struct {
@@ -531,19 +639,19 @@ type PostgresDSN struct {
 }
 ```
 
-### func [NewPostgresDSN](<https://github.com/itzngga/Roxy/blob/master/options/postgresql.go#L53>)
+### func [NewPostgresDSN](<https://github.com/itzngga/roxy/blob/master/options/postgresql.go#L53>)
 
 ```go
 func NewPostgresDSN(username string, password string, database string, port string, sslMode string, timeZone string) (PostgresDSN, error)
 ```
 
-### func \(\*PostgresDSN\) [GenerateDSN](<https://github.com/itzngga/Roxy/blob/master/options/postgresql.go#L49>)
+### func \(\*PostgresDSN\) [GenerateDSN](<https://github.com/itzngga/roxy/blob/master/options/postgresql.go#L49>)
 
 ```go
 func (dsn *PostgresDSN) GenerateDSN() string
 ```
 
-### func \(\*PostgresDSN\) [Validate](<https://github.com/itzngga/Roxy/blob/master/options/postgresql.go#L18>)
+### func \(\*PostgresDSN\) [Validate](<https://github.com/itzngga/roxy/blob/master/options/postgresql.go#L18>)
 
 ```go
 func (dsn *PostgresDSN) Validate() error
@@ -572,7 +680,7 @@ import "github.com/itzngga/Roxy/types"
   - [func (em *EmbedTemplate[T]) Get() []T](<#func-embedtemplatet-get>)
 
 
-## func [Bool](<https://github.com/itzngga/Roxy/blob/master/types/proto.go#L8>)
+## func [Bool](<https://github.com/itzngga/roxy/blob/master/types/proto.go#L8>)
 
 ```go
 func Bool(v bool) *bool
@@ -580,7 +688,7 @@ func Bool(v bool) *bool
 
 Bool stores v in a new bool value and returns a pointer to it.
 
-## func [Float32](<https://github.com/itzngga/Roxy/blob/master/types/proto.go#L17>)
+## func [Float32](<https://github.com/itzngga/roxy/blob/master/types/proto.go#L17>)
 
 ```go
 func Float32(v float32) *float32
@@ -588,7 +696,7 @@ func Float32(v float32) *float32
 
 Float32 stores v in a new float32 value and returns a pointer to it.
 
-## func [Float64](<https://github.com/itzngga/Roxy/blob/master/types/proto.go#L20>)
+## func [Float64](<https://github.com/itzngga/roxy/blob/master/types/proto.go#L20>)
 
 ```go
 func Float64(v float64) *float64
@@ -596,7 +704,7 @@ func Float64(v float64) *float64
 
 Float64 stores v in a new float64 value and returns a pointer to it.
 
-## func [Int32](<https://github.com/itzngga/Roxy/blob/master/types/proto.go#L11>)
+## func [Int32](<https://github.com/itzngga/roxy/blob/master/types/proto.go#L11>)
 
 ```go
 func Int32(v int32) *int32
@@ -604,7 +712,7 @@ func Int32(v int32) *int32
 
 Int32 stores v in a new int32 value and returns a pointer to it.
 
-## func [Int64](<https://github.com/itzngga/Roxy/blob/master/types/proto.go#L14>)
+## func [Int64](<https://github.com/itzngga/roxy/blob/master/types/proto.go#L14>)
 
 ```go
 func Int64(v int64) *int64
@@ -612,7 +720,7 @@ func Int64(v int64) *int64
 
 Int64 stores v in a new int64 value and returns a pointer to it.
 
-## func [String](<https://github.com/itzngga/Roxy/blob/master/types/proto.go#L29>)
+## func [String](<https://github.com/itzngga/roxy/blob/master/types/proto.go#L29>)
 
 ```go
 func String(v string) *string
@@ -620,7 +728,7 @@ func String(v string) *string
 
 String stores v in a new string value and returns a pointer to it.
 
-## func [Uint32](<https://github.com/itzngga/Roxy/blob/master/types/proto.go#L23>)
+## func [Uint32](<https://github.com/itzngga/roxy/blob/master/types/proto.go#L23>)
 
 ```go
 func Uint32(v uint32) *uint32
@@ -628,7 +736,7 @@ func Uint32(v uint32) *uint32
 
 Uint32 stores v in a new uint32 value and returns a pointer to it.
 
-## func [Uint64](<https://github.com/itzngga/Roxy/blob/master/types/proto.go#L26>)
+## func [Uint64](<https://github.com/itzngga/roxy/blob/master/types/proto.go#L26>)
 
 ```go
 func Uint64(v uint64) *uint64
@@ -636,7 +744,7 @@ func Uint64(v uint64) *uint64
 
 Uint64 stores v in a new uint64 value and returns a pointer to it.
 
-## type [Embed](<https://github.com/itzngga/Roxy/blob/master/types/embed.go#L3-L6>)
+## type [Embed](<https://github.com/itzngga/roxy/blob/master/types/embed.go#L3-L6>)
 
 ```go
 type Embed[T any] interface {
@@ -645,7 +753,7 @@ type Embed[T any] interface {
 }
 ```
 
-## type [EmbedTemplate](<https://github.com/itzngga/Roxy/blob/master/types/embed.go#L14-L16>)
+## type [EmbedTemplate](<https://github.com/itzngga/roxy/blob/master/types/embed.go#L14-L16>)
 
 ```go
 type EmbedTemplate[T any] struct {
@@ -653,19 +761,19 @@ type EmbedTemplate[T any] struct {
 }
 ```
 
-### func [NewEmbed](<https://github.com/itzngga/Roxy/blob/master/types/embed.go#L8>)
+### func [NewEmbed](<https://github.com/itzngga/roxy/blob/master/types/embed.go#L8>)
 
 ```go
 func NewEmbed[T any]() EmbedTemplate[T]
 ```
 
-### func \(\*EmbedTemplate\[T\]\) [Add](<https://github.com/itzngga/Roxy/blob/master/types/embed.go#L22>)
+### func \(\*EmbedTemplate\[T\]\) [Add](<https://github.com/itzngga/roxy/blob/master/types/embed.go#L22>)
 
 ```go
 func (em *EmbedTemplate[T]) Add(val T)
 ```
 
-### func \(\*EmbedTemplate\[T\]\) [Get](<https://github.com/itzngga/Roxy/blob/master/types/embed.go#L18>)
+### func \(\*EmbedTemplate\[T\]\) [Get](<https://github.com/itzngga/roxy/blob/master/types/embed.go#L18>)
 
 ```go
 func (em *EmbedTemplate[T]) Get() []T
@@ -681,7 +789,6 @@ import "github.com/itzngga/Roxy/util"
 
 - [func CreateUid() string](<#func-createuid>)
 - [func DoHTTPRequest(method string, url string) ([]byte, error)](<#func-dohttprequest>)
-- [func GenerateReplyMessage(event *events.Message, obj any) *waProto.Message](<#func-generatereplymessage>)
 - [func GetGroupInfo(c *whatsmeow.Client, jid any) *waTypes.GroupInfo](<#func-getgroupinfo>)
 - [func GetGroupInfoFromInviteLink(c *whatsmeow.Client, link string) *waTypes.GroupInfo](<#func-getgroupinfofrominvitelink>)
 - [func GetGroupInviteLink(c *whatsmeow.Client, jid any, reset bool) string](<#func-getgroupinvitelink>)
@@ -691,7 +798,7 @@ import "github.com/itzngga/Roxy/util"
 - [func JoinInviteLink(c *whatsmeow.Client, link string)](<#func-joininvitelink>)
 - [func ParseAllJid(jid any) (pJid waTypes.JID)](<#func-parsealljid>)
 - [func ParseArgs(str string) []string](<#func-parseargs>)
-- [func ParseCmd(str string) (string, bool)](<#func-parsecmd>)
+- [func ParseCmd(str string) (prefix string, cmd string, ok bool)](<#func-parsecmd>)
 - [func ParseGroupJid(jid any) (pJid waTypes.JID)](<#func-parsegroupjid>)
 - [func ParseJID(arg string) (waTypes.JID, bool)](<#func-parsejid>)
 - [func ParseMessageText(uid string, m *events.Message) string](<#func-parsemessagetext>)
@@ -702,274 +809,156 @@ import "github.com/itzngga/Roxy/util"
 - [func ParseUserJid(jid any) (pJid waTypes.JID)](<#func-parseuserjid>)
 - [func RemoveElementByIndex[T []any](slice []T, index int) []T](<#func-removeelementbyindex>)
 - [func RevokeMessage(c *whatsmeow.Client, jid waTypes.JID, messageId waTypes.MessageID)](<#func-revokemessage>)
-- [func SendReplyMessage(c *whatsmeow.Client, event *events.Message, obj any)](<#func-sendreplymessage>)
 - [func SetUserStatus(c *whatsmeow.Client, status string)](<#func-setuserstatus>)
 - [func StringIsOnSlice(target string, slice []string) bool](<#func-stringisonslice>)
-- [func UploadAudioFromUrl(c *whatsmeow.Client, url string) (*waProto.AudioMessage, error)](<#func-uploadaudiofromurl>)
-- [func UploadAudioMessageFromBytes(c *whatsmeow.Client, bytes []byte) (*waProto.AudioMessage, error)](<#func-uploadaudiomessagefrombytes>)
-- [func UploadAudioMessageFromPath(c *whatsmeow.Client, path string) (*waProto.AudioMessage, error)](<#func-uploadaudiomessagefrompath>)
-- [func UploadDocumentFromUrl(c *whatsmeow.Client, url, title, filename string) (*waProto.DocumentMessage, error)](<#func-uploaddocumentfromurl>)
-- [func UploadDocumentMessageFromBytes(c *whatsmeow.Client, bytes []byte, title, filename string) (*waProto.DocumentMessage, error)](<#func-uploaddocumentmessagefrombytes>)
-- [func UploadDocumentMessageFromPath(c *whatsmeow.Client, path, title string) (*waProto.DocumentMessage, error)](<#func-uploaddocumentmessagefrompath>)
-- [func UploadImageFromUrl(c *whatsmeow.Client, m *events.Message, url, caption string) (*waProto.ImageMessage, error)](<#func-uploadimagefromurl>)
-- [func UploadImageMessageFromBytes(c *whatsmeow.Client, m *events.Message, bytes []byte, caption string) (*waProto.ImageMessage, error)](<#func-uploadimagemessagefrombytes>)
-- [func UploadImageMessageFromPath(c *whatsmeow.Client, path, caption string) (*waProto.ImageMessage, error)](<#func-uploadimagemessagefrompath>)
-- [func UploadStickerFromUrl(c *whatsmeow.Client, m *events.Message, url string) (*waProto.StickerMessage, error)](<#func-uploadstickerfromurl>)
-- [func UploadStickerMessageFromBytes(c *whatsmeow.Client, m *events.Message, bytes []byte) (*waProto.StickerMessage, error)](<#func-uploadstickermessagefrombytes>)
-- [func UploadStickerMessageFromPath(c *whatsmeow.Client, path string) (*waProto.StickerMessage, error)](<#func-uploadstickermessagefrompath>)
-- [func UploadVideoFromUrl(c *whatsmeow.Client, m *events.Message, url, caption string) (*waProto.VideoMessage, error)](<#func-uploadvideofromurl>)
-- [func UploadVideoMessageFromBytes(c *whatsmeow.Client, m *events.Message, bytes []byte, caption string) (*waProto.VideoMessage, error)](<#func-uploadvideomessagefrombytes>)
-- [func UploadVideoMessageFromPath(c *whatsmeow.Client, path, caption string) (*waProto.VideoMessage, error)](<#func-uploadvideomessagefrompath>)
 - [func WithReply(m *events.Message) *waProto.ContextInfo](<#func-withreply>)
 
 
-## func [CreateUid](<https://github.com/itzngga/Roxy/blob/master/util/common.go#L10>)
+## func [CreateUid](<https://github.com/itzngga/roxy/blob/master/util/common.go#L10>)
 
 ```go
 func CreateUid() string
 ```
 
-## func [DoHTTPRequest](<https://github.com/itzngga/Roxy/blob/master/util/http.go#L8>)
+## func [DoHTTPRequest](<https://github.com/itzngga/roxy/blob/master/util/http.go#L8>)
 
 ```go
 func DoHTTPRequest(method string, url string) ([]byte, error)
 ```
 
-## func [GenerateReplyMessage](<https://github.com/itzngga/Roxy/blob/master/util/reply.go#L132>)
-
-```go
-func GenerateReplyMessage(event *events.Message, obj any) *waProto.Message
-```
-
-## func [GetGroupInfo](<https://github.com/itzngga/Roxy/blob/master/util/client.go#L79>)
+## func [GetGroupInfo](<https://github.com/itzngga/roxy/blob/master/util/client.go#L79>)
 
 ```go
 func GetGroupInfo(c *whatsmeow.Client, jid any) *waTypes.GroupInfo
 ```
 
-## func [GetGroupInfoFromInviteLink](<https://github.com/itzngga/Roxy/blob/master/util/client.go#L41>)
+## func [GetGroupInfoFromInviteLink](<https://github.com/itzngga/roxy/blob/master/util/client.go#L41>)
 
 ```go
 func GetGroupInfoFromInviteLink(c *whatsmeow.Client, link string) *waTypes.GroupInfo
 ```
 
-## func [GetGroupInviteLink](<https://github.com/itzngga/Roxy/blob/master/util/client.go#L58>)
+## func [GetGroupInviteLink](<https://github.com/itzngga/roxy/blob/master/util/client.go#L58>)
 
 ```go
 func GetGroupInviteLink(c *whatsmeow.Client, jid any, reset bool) string
 ```
 
-## func [GetJoinedGroups](<https://github.com/itzngga/Roxy/blob/master/util/client.go#L70>)
+## func [GetJoinedGroups](<https://github.com/itzngga/roxy/blob/master/util/client.go#L70>)
 
 ```go
 func GetJoinedGroups(c *whatsmeow.Client) []*waTypes.GroupInfo
 ```
 
-## func [GetProfilePicture](<https://github.com/itzngga/Roxy/blob/master/util/client.go#L91>)
+## func [GetProfilePicture](<https://github.com/itzngga/roxy/blob/master/util/client.go#L91>)
 
 ```go
 func GetProfilePicture(c *whatsmeow.Client, jid any) string
 ```
 
-## func [GetUser](<https://github.com/itzngga/Roxy/blob/master/util/client.go#L102>)
+## func [GetUser](<https://github.com/itzngga/roxy/blob/master/util/client.go#L102>)
 
 ```go
 func GetUser(c *whatsmeow.Client, jid any) *waTypes.UserInfo
 ```
 
-## func [JoinInviteLink](<https://github.com/itzngga/Roxy/blob/master/util/client.go#L23>)
+## func [JoinInviteLink](<https://github.com/itzngga/roxy/blob/master/util/client.go#L23>)
 
 ```go
 func JoinInviteLink(c *whatsmeow.Client, link string)
 ```
 
-## func [ParseAllJid](<https://github.com/itzngga/Roxy/blob/master/util/common.go#L38>)
+## func [ParseAllJid](<https://github.com/itzngga/roxy/blob/master/util/common.go#L38>)
 
 ```go
 func ParseAllJid(jid any) (pJid waTypes.JID)
 ```
 
-## func [ParseArgs](<https://github.com/itzngga/Roxy/blob/master/util/common.go#L15>)
+## func [ParseArgs](<https://github.com/itzngga/roxy/blob/master/util/common.go#L15>)
 
 ```go
 func ParseArgs(str string) []string
 ```
 
-## func [ParseCmd](<https://github.com/itzngga/Roxy/blob/master/util/command.go#L12>)
+## func [ParseCmd](<https://github.com/itzngga/roxy/blob/master/util/command.go#L12>)
 
 ```go
-func ParseCmd(str string) (string, bool)
+func ParseCmd(str string) (prefix string, cmd string, ok bool)
 ```
 
-## func [ParseGroupJid](<https://github.com/itzngga/Roxy/blob/master/util/common.go#L56>)
+## func [ParseGroupJid](<https://github.com/itzngga/roxy/blob/master/util/common.go#L56>)
 
 ```go
 func ParseGroupJid(jid any) (pJid waTypes.JID)
 ```
 
-## func [ParseJID](<https://github.com/itzngga/Roxy/blob/master/util/message.go#L135>)
+## func [ParseJID](<https://github.com/itzngga/roxy/blob/master/util/message.go#L135>)
 
 ```go
 func ParseJID(arg string) (waTypes.JID, bool)
 ```
 
-## func [ParseMessageText](<https://github.com/itzngga/Roxy/blob/master/util/command.go#L26>)
+## func [ParseMessageText](<https://github.com/itzngga/roxy/blob/master/util/command.go#L26>)
 
 ```go
 func ParseMessageText(uid string, m *events.Message) string
 ```
 
-## func [ParseQuotedBy](<https://github.com/itzngga/Roxy/blob/master/util/message.go#L106>)
+## func [ParseQuotedBy](<https://github.com/itzngga/roxy/blob/master/util/message.go#L106>)
 
 ```go
 func ParseQuotedBy(m *waProto.Message, str string) *waProto.Message
 ```
 
-## func [ParseQuotedMessage](<https://github.com/itzngga/Roxy/blob/master/util/message.go#L14>)
+## func [ParseQuotedMessage](<https://github.com/itzngga/roxy/blob/master/util/message.go#L14>)
 
 ```go
 func ParseQuotedMessage(m *waProto.Message) *waProto.Message
 ```
 
-## func [ParseQuotedMessageId](<https://github.com/itzngga/Roxy/blob/master/util/message.go#L75>)
+## func [ParseQuotedMessageId](<https://github.com/itzngga/roxy/blob/master/util/message.go#L75>)
 
 ```go
 func ParseQuotedMessageId(evm *events.Message) *string
 ```
 
-## func [ParseQuotedRemoteJid](<https://github.com/itzngga/Roxy/blob/master/util/message.go#L44>)
+## func [ParseQuotedRemoteJid](<https://github.com/itzngga/roxy/blob/master/util/message.go#L44>)
 
 ```go
 func ParseQuotedRemoteJid(evm *events.Message) *string
 ```
 
-## func [ParseUserJid](<https://github.com/itzngga/Roxy/blob/master/util/common.go#L80>)
+## func [ParseUserJid](<https://github.com/itzngga/roxy/blob/master/util/common.go#L80>)
 
 ```go
 func ParseUserJid(jid any) (pJid waTypes.JID)
 ```
 
-## func [RemoveElementByIndex](<https://github.com/itzngga/Roxy/blob/master/util/common.go#L29>)
+## func [RemoveElementByIndex](<https://github.com/itzngga/roxy/blob/master/util/common.go#L29>)
 
 ```go
 func RemoveElementByIndex[T []any](slice []T, index int) []T
 ```
 
-## func [RevokeMessage](<https://github.com/itzngga/Roxy/blob/master/util/message.go#L152>)
+## func [RevokeMessage](<https://github.com/itzngga/roxy/blob/master/util/message.go#L152>)
 
 ```go
 func RevokeMessage(c *whatsmeow.Client, jid waTypes.JID, messageId waTypes.MessageID)
 ```
 
-## func [SendReplyMessage](<https://github.com/itzngga/Roxy/blob/master/util/reply.go#L13>)
-
-```go
-func SendReplyMessage(c *whatsmeow.Client, event *events.Message, obj any)
-```
-
-## func [SetUserStatus](<https://github.com/itzngga/Roxy/blob/master/util/client.go#L10>)
+## func [SetUserStatus](<https://github.com/itzngga/roxy/blob/master/util/client.go#L10>)
 
 ```go
 func SetUserStatus(c *whatsmeow.Client, status string)
 ```
 
-## func [StringIsOnSlice](<https://github.com/itzngga/Roxy/blob/master/util/common.go#L19>)
+## func [StringIsOnSlice](<https://github.com/itzngga/roxy/blob/master/util/common.go#L19>)
 
 ```go
 func StringIsOnSlice(target string, slice []string) bool
 ```
 
-## func [UploadAudioFromUrl](<https://github.com/itzngga/Roxy/blob/master/util/upload-request.go#L39>)
-
-```go
-func UploadAudioFromUrl(c *whatsmeow.Client, url string) (*waProto.AudioMessage, error)
-```
-
-## func [UploadAudioMessageFromBytes](<https://github.com/itzngga/Roxy/blob/master/util/upload.go#L322>)
-
-```go
-func UploadAudioMessageFromBytes(c *whatsmeow.Client, bytes []byte) (*waProto.AudioMessage, error)
-```
-
-## func [UploadAudioMessageFromPath](<https://github.com/itzngga/Roxy/blob/master/util/upload.go#L288>)
-
-```go
-func UploadAudioMessageFromPath(c *whatsmeow.Client, path string) (*waProto.AudioMessage, error)
-```
-
-## func [UploadDocumentFromUrl](<https://github.com/itzngga/Roxy/blob/master/util/upload-request.go#L30>)
-
-```go
-func UploadDocumentFromUrl(c *whatsmeow.Client, url, title, filename string) (*waProto.DocumentMessage, error)
-```
-
-## func [UploadDocumentMessageFromBytes](<https://github.com/itzngga/Roxy/blob/master/util/upload.go#L265>)
-
-```go
-func UploadDocumentMessageFromBytes(c *whatsmeow.Client, bytes []byte, title, filename string) (*waProto.DocumentMessage, error)
-```
-
-## func [UploadDocumentMessageFromPath](<https://github.com/itzngga/Roxy/blob/master/util/upload.go#L230>)
-
-```go
-func UploadDocumentMessageFromPath(c *whatsmeow.Client, path, title string) (*waProto.DocumentMessage, error)
-```
-
-## func [UploadImageFromUrl](<https://github.com/itzngga/Roxy/blob/master/util/upload-request.go#L12>)
-
-```go
-func UploadImageFromUrl(c *whatsmeow.Client, m *events.Message, url, caption string) (*waProto.ImageMessage, error)
-```
-
-## func [UploadImageMessageFromBytes](<https://github.com/itzngga/Roxy/blob/master/util/upload.go#L62>)
-
-```go
-func UploadImageMessageFromBytes(c *whatsmeow.Client, m *events.Message, bytes []byte, caption string) (*waProto.ImageMessage, error)
-```
-
-## func [UploadImageMessageFromPath](<https://github.com/itzngga/Roxy/blob/master/util/upload.go#L15>)
-
-```go
-func UploadImageMessageFromPath(c *whatsmeow.Client, path, caption string) (*waProto.ImageMessage, error)
-```
-
-## func [UploadStickerFromUrl](<https://github.com/itzngga/Roxy/blob/master/util/upload-request.go#L48>)
-
-```go
-func UploadStickerFromUrl(c *whatsmeow.Client, m *events.Message, url string) (*waProto.StickerMessage, error)
-```
-
-## func [UploadStickerMessageFromBytes](<https://github.com/itzngga/Roxy/blob/master/util/upload.go#L210>)
-
-```go
-func UploadStickerMessageFromBytes(c *whatsmeow.Client, m *events.Message, bytes []byte) (*waProto.StickerMessage, error)
-```
-
-## func [UploadStickerMessageFromPath](<https://github.com/itzngga/Roxy/blob/master/util/upload.go#L178>)
-
-```go
-func UploadStickerMessageFromPath(c *whatsmeow.Client, path string) (*waProto.StickerMessage, error)
-```
-
-## func [UploadVideoFromUrl](<https://github.com/itzngga/Roxy/blob/master/util/upload-request.go#L21>)
-
-```go
-func UploadVideoFromUrl(c *whatsmeow.Client, m *events.Message, url, caption string) (*waProto.VideoMessage, error)
-```
-
-## func [UploadVideoMessageFromBytes](<https://github.com/itzngga/Roxy/blob/master/util/upload.go#L143>)
-
-```go
-func UploadVideoMessageFromBytes(c *whatsmeow.Client, m *events.Message, bytes []byte, caption string) (*waProto.VideoMessage, error)
-```
-
-## func [UploadVideoMessageFromPath](<https://github.com/itzngga/Roxy/blob/master/util/upload.go#L97>)
-
-```go
-func UploadVideoMessageFromPath(c *whatsmeow.Client, path, caption string) (*waProto.VideoMessage, error)
-```
-
-## func [WithReply](<https://github.com/itzngga/Roxy/blob/master/util/message.go#L127>)
+## func [WithReply](<https://github.com/itzngga/roxy/blob/master/util/message.go#L127>)
 
 ```go
 func WithReply(m *events.Message) *waProto.ContextInfo
@@ -996,7 +985,7 @@ import "github.com/itzngga/Roxy/util/cli"
 - [func FfmpegPipeline(data []byte, arg ...string) []byte](<#func-ffmpegpipeline>)
 
 
-## func [FfmpegPipeline](<https://github.com/itzngga/Roxy/blob/master/util/cli/pipeline.go#L10>)
+## func [FfmpegPipeline](<https://github.com/itzngga/roxy/blob/master/util/cli/pipeline.go#L10>)
 
 ```go
 func FfmpegPipeline(data []byte, arg ...string) []byte
@@ -1014,13 +1003,13 @@ import "github.com/itzngga/Roxy/util/thumbnail"
 - [func CreateVideoThumbnail(data []byte) []byte](<#func-createvideothumbnail>)
 
 
-## func [CreateImageThumbnail](<https://github.com/itzngga/Roxy/blob/master/util/thumbnail/thumbnail.go#L12>)
+## func [CreateImageThumbnail](<https://github.com/itzngga/roxy/blob/master/util/thumbnail/thumbnail.go#L12>)
 
 ```go
 func CreateImageThumbnail(data []byte) []byte
 ```
 
-## func [CreateVideoThumbnail](<https://github.com/itzngga/Roxy/blob/master/util/thumbnail/thumbnail.go#L28>)
+## func [CreateVideoThumbnail](<https://github.com/itzngga/roxy/blob/master/util/thumbnail/thumbnail.go#L28>)
 
 ```go
 func CreateVideoThumbnail(data []byte) []byte
