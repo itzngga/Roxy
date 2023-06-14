@@ -28,7 +28,7 @@ type RunFuncContext struct {
 	WaLog          waLog.Logger
 
 	Locals        *skipmap.StringMap[string]
-	UserStateChan chan []string
+	UserStateChan chan []interface{}
 }
 
 func (runFunc *RunFuncContext) GetClient() *whatsmeow.Client {

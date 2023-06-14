@@ -29,7 +29,7 @@ type Muxer struct {
 	Commands             *skipmap.StringMap[*command.Command]
 	CommandResponseCache *skipmap.StringMap[*waProto.Message]
 	UserState            *skipmap.StringMap[*command.StateCommand]
-	UserStateChan        chan []string
+	UserStateChan        chan []interface{}
 	Locals               *skipmap.StringMap[string]
 }
 
@@ -59,11 +59,12 @@ func (m *Muxer) HandleUserStateChannel() {
 		for message := range m.UserStateChan {
 			for _, state := range embed.StateCommand.Get() {
 				if state.Name == message[0] {
-					m.UserState.Store(message[1], state)
+					state.Locals = message[2].(map[string]interface{})
+					m.UserState.Store(message[1].(string), state)
 					go func() {
 						timeout := time.NewTimer(state.StateTimeout)
 						<-timeout.C
-						m.UserState.Delete(message[1])
+						m.UserState.Delete(message[1].(string))
 						timeout.Stop()
 					}()
 					break
@@ -323,7 +324,7 @@ func NewMuxer(log waLog.Logger, options *options.Options) *Muxer {
 		CommandResponseCache: skipmap.NewString[*waProto.Message](),
 		UserState:            skipmap.NewString[*command.StateCommand](),
 		Categories:           skipmap.NewString[string](),
-		UserStateChan:        make(chan []string),
+		UserStateChan:        make(chan []interface{}),
 		MessageTimeout:       options.SendMessageTimeout,
 		Options:              options,
 		Log:                  log,

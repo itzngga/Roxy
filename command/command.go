@@ -17,6 +17,7 @@ type StateCommand struct {
 	PrivateOnly bool
 	CancelReply string
 
+	Locals       map[string]interface{}
 	StateTimeout time.Duration
 	RunFunc      StateFunc
 }

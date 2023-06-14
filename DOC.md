@@ -28,7 +28,7 @@ import "github.com/itzngga/Roxy/command"
   - [func (runFunc *RunFuncContext) SendReplyMessage(obj any)](<#func-runfunccontext-sendreplymessage>)
   - [func (runFunc *RunFuncContext) SetLocals(key string, value string)](<#func-runfunccontext-setlocals>)
   - [func (runFunc *RunFuncContext) SetLocalsWithTTL(key string, value string, ttl time.Duration)](<#func-runfunccontext-setlocalswithttl>)
-  - [func (runFunc *RunFuncContext) SetUserState(stateName string)](<#func-runfunccontext-setuserstate>)
+  - [func (runFunc *RunFuncContext) SetUserState(stateName string, data map[string]interface{})](<#func-runfunccontext-setuserstate>)
   - [func (runFunc *RunFuncContext) UploadAudioFromUrl(url string) (*waProto.AudioMessage, error)](<#func-runfunccontext-uploadaudiofromurl>)
   - [func (runFunc *RunFuncContext) UploadAudioMessageFromBytes(bytes []byte) (*waProto.AudioMessage, error)](<#func-runfunccontext-uploadaudiomessagefrombytes>)
   - [func (runFunc *RunFuncContext) UploadAudioMessageFromPath(path string) (*waProto.AudioMessage, error)](<#func-runfunccontext-uploadaudiomessagefrompath>)
@@ -49,7 +49,7 @@ import "github.com/itzngga/Roxy/command"
 - [type StateFunc](<#type-statefunc>)
 
 
-## type [Command](<https://github.com/itzngga/roxy/blob/master/command/command.go#L42-L56>)
+## type [Command](<https://github.com/itzngga/roxy/blob/master/command/command.go#L43-L57>)
 
 ```go
 type Command struct {
@@ -69,7 +69,7 @@ type Command struct {
 }
 ```
 
-### func \(\*Command\) [Validate](<https://github.com/itzngga/roxy/blob/master/command/command.go#L58>)
+### func \(\*Command\) [Validate](<https://github.com/itzngga/roxy/blob/master/command/command.go#L59>)
 
 ```go
 func (c *Command) Validate()
@@ -107,7 +107,7 @@ type RunFuncContext struct {
     WaLog          waLog.Logger
 
     Locals        *skipmap.StringMap[string]
-    UserStateChan chan []string
+    UserStateChan chan []interface{}
 }
 ```
 
@@ -117,7 +117,7 @@ type RunFuncContext struct {
 func (runFunc *RunFuncContext) DelLocals(key string)
 ```
 
-### func \(\*RunFuncContext\) [GenerateReplyMessage](<https://github.com/itzngga/roxy/blob/master/command/send_mesage.go#L131>)
+### func \(\*RunFuncContext\) [GenerateReplyMessage](<https://github.com/itzngga/roxy/blob/master/command/send_mesage.go#L134>)
 
 ```go
 func (runFunc *RunFuncContext) GenerateReplyMessage(obj any) *waProto.Message
@@ -177,7 +177,7 @@ func (runFunc *RunFuncContext) GetOptions() *options.Options
 func (runFunc *RunFuncContext) RangeLocals(fun func(key string, value string) bool)
 ```
 
-### func \(\*RunFuncContext\) [SendMessage](<https://github.com/itzngga/roxy/blob/master/command/send_mesage.go#L214>)
+### func \(\*RunFuncContext\) [SendMessage](<https://github.com/itzngga/roxy/blob/master/command/send_mesage.go#L217>)
 
 ```go
 func (runFunc *RunFuncContext) SendMessage(obj any)
@@ -201,10 +201,10 @@ func (runFunc *RunFuncContext) SetLocals(key string, value string)
 func (runFunc *RunFuncContext) SetLocalsWithTTL(key string, value string, ttl time.Duration)
 ```
 
-### func \(\*RunFuncContext\) [SetUserState](<https://github.com/itzngga/roxy/blob/master/command/state_command.go#L7>)
+### func \(\*RunFuncContext\) [SetUserState](<https://github.com/itzngga/roxy/blob/master/command/state_command.go#L3>)
 
 ```go
-func (runFunc *RunFuncContext) SetUserState(stateName string)
+func (runFunc *RunFuncContext) SetUserState(stateName string, data map[string]interface{})
 ```
 
 ### func \(\*RunFuncContext\) [UploadAudioFromUrl](<https://github.com/itzngga/roxy/blob/master/command/send_url_media.go#L35>)
@@ -297,7 +297,7 @@ func (runFunc *RunFuncContext) UploadVideoMessageFromBytes(bytes []byte, caption
 func (runFunc *RunFuncContext) UploadVideoMessageFromPath(path, caption string) (*waProto.VideoMessage, error)
 ```
 
-## type [StateCommand](<https://github.com/itzngga/roxy/blob/master/command/command.go#L14-L22>)
+## type [StateCommand](<https://github.com/itzngga/roxy/blob/master/command/command.go#L14-L23>)
 
 ```go
 type StateCommand struct {
@@ -306,12 +306,13 @@ type StateCommand struct {
     PrivateOnly bool
     CancelReply string
 
+    Locals       map[string]interface{}
     StateTimeout time.Duration
     RunFunc      StateFunc
 }
 ```
 
-### func \(\*StateCommand\) [Validate](<https://github.com/itzngga/roxy/blob/master/command/command.go#L24>)
+### func \(\*StateCommand\) [Validate](<https://github.com/itzngga/roxy/blob/master/command/command.go#L25>)
 
 ```go
 func (c *StateCommand) Validate()
@@ -437,42 +438,42 @@ type Muxer struct {
     Commands             *skipmap.StringMap[*command.Command]
     CommandResponseCache *skipmap.StringMap[*waProto.Message]
     UserState            *skipmap.StringMap[*command.StateCommand]
-    UserStateChan        chan []string
+    UserStateChan        chan []interface{}
     Locals               *skipmap.StringMap[string]
 }
 ```
 
-### func [NewMuxer](<https://github.com/itzngga/roxy/blob/master/core/muxer.go#L315>)
+### func [NewMuxer](<https://github.com/itzngga/roxy/blob/master/core/muxer.go#L318>)
 
 ```go
 func NewMuxer(log waLog.Logger, options *options.Options) *Muxer
 ```
 
-### func \(\*Muxer\) [AddAllEmbed](<https://github.com/itzngga/roxy/blob/master/core/muxer.go#L76>)
+### func \(\*Muxer\) [AddAllEmbed](<https://github.com/itzngga/roxy/blob/master/core/muxer.go#L77>)
 
 ```go
 func (m *Muxer) AddAllEmbed()
 ```
 
-### func \(\*Muxer\) [AddCommand](<https://github.com/itzngga/roxy/blob/master/core/muxer.go#L104>)
+### func \(\*Muxer\) [AddCommand](<https://github.com/itzngga/roxy/blob/master/core/muxer.go#L105>)
 
 ```go
 func (m *Muxer) AddCommand(cmd *command.Command)
 ```
 
-### func \(\*Muxer\) [AddGlobalMiddleware](<https://github.com/itzngga/roxy/blob/master/core/muxer.go#L96>)
+### func \(\*Muxer\) [AddGlobalMiddleware](<https://github.com/itzngga/roxy/blob/master/core/muxer.go#L97>)
 
 ```go
 func (m *Muxer) AddGlobalMiddleware(middleware command.MiddlewareFunc)
 ```
 
-### func \(\*Muxer\) [AddMiddleware](<https://github.com/itzngga/roxy/blob/master/core/muxer.go#L100>)
+### func \(\*Muxer\) [AddMiddleware](<https://github.com/itzngga/roxy/blob/master/core/muxer.go#L101>)
 
 ```go
 func (m *Muxer) AddMiddleware(middleware command.MiddlewareFunc)
 ```
 
-### func \(\*Muxer\) [CheckGlobalState](<https://github.com/itzngga/roxy/blob/master/core/muxer.go#L121>)
+### func \(\*Muxer\) [CheckGlobalState](<https://github.com/itzngga/roxy/blob/master/core/muxer.go#L122>)
 
 ```go
 func (m *Muxer) CheckGlobalState(number string) (bool, *command.StateCommand)
@@ -484,19 +485,19 @@ func (m *Muxer) CheckGlobalState(number string) (bool, *command.StateCommand)
 func (m *Muxer) Clean()
 ```
 
-### func \(\*Muxer\) [GetCachedCommandResponse](<https://github.com/itzngga/roxy/blob/master/core/muxer.go#L129>)
+### func \(\*Muxer\) [GetCachedCommandResponse](<https://github.com/itzngga/roxy/blob/master/core/muxer.go#L130>)
 
 ```go
 func (m *Muxer) GetCachedCommandResponse(cmd string) *waProto.Message
 ```
 
-### func \(\*Muxer\) [GlobalMiddlewareProcessing](<https://github.com/itzngga/roxy/blob/master/core/muxer.go#L147>)
+### func \(\*Muxer\) [GlobalMiddlewareProcessing](<https://github.com/itzngga/roxy/blob/master/core/muxer.go#L148>)
 
 ```go
 func (m *Muxer) GlobalMiddlewareProcessing(c *whatsmeow.Client, evt *events.Message, number string) bool
 ```
 
-### func \(\*Muxer\) [HandleUserState](<https://github.com/itzngga/roxy/blob/master/core/muxer.go#L167>)
+### func \(\*Muxer\) [HandleUserState](<https://github.com/itzngga/roxy/blob/master/core/muxer.go#L168>)
 
 ```go
 func (m *Muxer) HandleUserState(c *whatsmeow.Client, evt *events.Message, parsedMsg string) bool
@@ -508,19 +509,19 @@ func (m *Muxer) HandleUserState(c *whatsmeow.Client, evt *events.Message, parsed
 func (m *Muxer) HandleUserStateChannel()
 ```
 
-### func \(\*Muxer\) [PrepareDefaultMiddleware](<https://github.com/itzngga/roxy/blob/master/core/muxer.go#L306>)
+### func \(\*Muxer\) [PrepareDefaultMiddleware](<https://github.com/itzngga/roxy/blob/master/core/muxer.go#L309>)
 
 ```go
 func (m *Muxer) PrepareDefaultMiddleware()
 ```
 
-### func \(\*Muxer\) [RunCommand](<https://github.com/itzngga/roxy/blob/master/core/muxer.go#L215>)
+### func \(\*Muxer\) [RunCommand](<https://github.com/itzngga/roxy/blob/master/core/muxer.go#L216>)
 
 ```go
 func (m *Muxer) RunCommand(c *whatsmeow.Client, evt *events.Message)
 ```
 
-### func \(\*Muxer\) [SetCacheCommandResponse](<https://github.com/itzngga/roxy/blob/master/core/muxer.go#L137>)
+### func \(\*Muxer\) [SetCacheCommandResponse](<https://github.com/itzngga/roxy/blob/master/core/muxer.go#L138>)
 
 ```go
 func (m *Muxer) SetCacheCommandResponse(cmd string, response *waProto.Message)
