@@ -1,18 +1,18 @@
-package util
+package command
 
 import (
 	"bufio"
 	"context"
 	"github.com/gabriel-vasile/mimetype"
 	"github.com/itzngga/roxy/types"
+	"github.com/itzngga/roxy/util"
 	"github.com/itzngga/roxy/util/thumbnail"
 	"go.mau.fi/whatsmeow"
 	waProto "go.mau.fi/whatsmeow/binary/proto"
-	"go.mau.fi/whatsmeow/types/events"
 	"os"
 )
 
-func UploadImageMessageFromPath(c *whatsmeow.Client, path, caption string) (*waProto.ImageMessage, error) {
+func (runFunc *RunFuncContext) UploadImageMessageFromPath(path, caption string) (*waProto.ImageMessage, error) {
 	imageBuff, err := os.Open(path)
 	if err != nil {
 		return nil, err
@@ -30,12 +30,12 @@ func UploadImageMessageFromPath(c *whatsmeow.Client, path, caption string) (*waP
 
 	thumbnailByte := thumbnail.CreateVideoThumbnail(imageBytes)
 
-	resp, err := c.Upload(context.Background(), imageBytes, whatsmeow.MediaImage)
+	resp, err := runFunc.Client.Upload(context.Background(), imageBytes, whatsmeow.MediaImage)
 	if err != nil {
 		return nil, err
 	}
 
-	thumbnail, err := c.Upload(context.Background(), thumbnailByte, whatsmeow.MediaImage)
+	thumbnail, err := runFunc.Client.Upload(context.Background(), thumbnailByte, whatsmeow.MediaImage)
 	if err != nil {
 		return nil, err
 	}
@@ -59,23 +59,23 @@ func UploadImageMessageFromPath(c *whatsmeow.Client, path, caption string) (*waP
 	}, nil
 }
 
-func UploadImageMessageFromBytes(c *whatsmeow.Client, m *events.Message, bytes []byte, caption string) (*waProto.ImageMessage, error) {
+func (runFunc *RunFuncContext) UploadImageMessageFromBytes(bytes []byte, caption string) (*waProto.ImageMessage, error) {
 	mimetypeString := mimetype.Detect(bytes)
 
 	thumbnailByte := thumbnail.CreateImageThumbnail(bytes)
 
-	resp, err := c.Upload(context.Background(), bytes, whatsmeow.MediaImage)
+	resp, err := runFunc.Client.Upload(context.Background(), bytes, whatsmeow.MediaImage)
 	if err != nil {
 		return nil, err
 	}
 
-	thumbnail, err := c.Upload(context.Background(), thumbnailByte, whatsmeow.MediaImage)
+	thumbnail, err := runFunc.Client.Upload(context.Background(), thumbnailByte, whatsmeow.MediaImage)
 	if err != nil {
 		return nil, err
 	}
 
 	return &waProto.ImageMessage{
-		ContextInfo: WithReply(m),
+		ContextInfo: util.WithReply(runFunc.MessageEvent),
 
 		Caption:  types.String(caption),
 		Mimetype: types.String(mimetypeString.String()),
@@ -94,7 +94,7 @@ func UploadImageMessageFromBytes(c *whatsmeow.Client, m *events.Message, bytes [
 	}, nil
 }
 
-func UploadVideoMessageFromPath(c *whatsmeow.Client, path, caption string) (*waProto.VideoMessage, error) {
+func (runFunc *RunFuncContext) UploadVideoMessageFromPath(path, caption string) (*waProto.VideoMessage, error) {
 	videoBuff, err := os.Open(path)
 	if err != nil {
 		return nil, err
@@ -112,12 +112,12 @@ func UploadVideoMessageFromPath(c *whatsmeow.Client, path, caption string) (*waP
 
 	thumbnailByte := thumbnail.CreateVideoThumbnail(videoBytes)
 
-	resp, err := c.Upload(context.Background(), videoBytes, whatsmeow.MediaVideo)
+	resp, err := runFunc.Client.Upload(context.Background(), videoBytes, whatsmeow.MediaVideo)
 	if err != nil {
 		return nil, err
 	}
 
-	thumbnail, err := c.Upload(context.Background(), thumbnailByte, whatsmeow.MediaImage)
+	thumbnail, err := runFunc.Client.Upload(context.Background(), thumbnailByte, whatsmeow.MediaImage)
 	if err != nil {
 		return nil, err
 	}
@@ -140,23 +140,23 @@ func UploadVideoMessageFromPath(c *whatsmeow.Client, path, caption string) (*waP
 	}, nil
 }
 
-func UploadVideoMessageFromBytes(c *whatsmeow.Client, m *events.Message, bytes []byte, caption string) (*waProto.VideoMessage, error) {
+func (runFunc *RunFuncContext) UploadVideoMessageFromBytes(bytes []byte, caption string) (*waProto.VideoMessage, error) {
 	mimetypeString := mimetype.Detect(bytes)
 
 	thumbnailByte := thumbnail.CreateVideoThumbnail(bytes)
 
-	resp, err := c.Upload(context.Background(), bytes, whatsmeow.MediaVideo)
+	resp, err := runFunc.Client.Upload(context.Background(), bytes, whatsmeow.MediaVideo)
 	if err != nil {
 		return nil, err
 	}
 
-	thumbnail, err := c.Upload(context.Background(), thumbnailByte, whatsmeow.MediaImage)
+	thumbnail, err := runFunc.Client.Upload(context.Background(), thumbnailByte, whatsmeow.MediaImage)
 	if err != nil {
 		return nil, err
 	}
 
 	return &waProto.VideoMessage{
-		ContextInfo: WithReply(m),
+		ContextInfo: util.WithReply(runFunc.MessageEvent),
 
 		Caption:  types.String(caption),
 		Mimetype: types.String(mimetypeString.String()),
@@ -175,7 +175,7 @@ func UploadVideoMessageFromBytes(c *whatsmeow.Client, m *events.Message, bytes [
 	}, nil
 }
 
-func UploadStickerMessageFromPath(c *whatsmeow.Client, path string) (*waProto.StickerMessage, error) {
+func (runFunc *RunFuncContext) UploadStickerMessageFromPath(path string) (*waProto.StickerMessage, error) {
 	stickerBuff, err := os.Open(path)
 	if err != nil {
 		return nil, err
@@ -189,7 +189,7 @@ func UploadStickerMessageFromPath(c *whatsmeow.Client, path string) (*waProto.St
 	stickerBuffer := bufio.NewReader(stickerBuff)
 	_, err = stickerBuffer.Read(stickerBytes)
 
-	resp, err := c.Upload(context.Background(), stickerBytes, whatsmeow.MediaImage)
+	resp, err := runFunc.Client.Upload(context.Background(), stickerBytes, whatsmeow.MediaImage)
 
 	if err != nil {
 		return nil, err
@@ -207,14 +207,14 @@ func UploadStickerMessageFromPath(c *whatsmeow.Client, path string) (*waProto.St
 	}, nil
 }
 
-func UploadStickerMessageFromBytes(c *whatsmeow.Client, m *events.Message, bytes []byte) (*waProto.StickerMessage, error) {
-	resp, err := c.Upload(context.Background(), bytes, whatsmeow.MediaImage)
+func (runFunc *RunFuncContext) UploadStickerMessageFromBytes(bytes []byte) (*waProto.StickerMessage, error) {
+	resp, err := runFunc.Client.Upload(context.Background(), bytes, whatsmeow.MediaImage)
 	if err != nil {
 		return nil, err
 	}
 
 	return &waProto.StickerMessage{
-		ContextInfo: WithReply(m),
+		ContextInfo: util.WithReply(runFunc.MessageEvent),
 
 		Mimetype: types.String("image/webp"),
 
@@ -227,7 +227,7 @@ func UploadStickerMessageFromBytes(c *whatsmeow.Client, m *events.Message, bytes
 	}, nil
 }
 
-func UploadDocumentMessageFromPath(c *whatsmeow.Client, path, title string) (*waProto.DocumentMessage, error) {
+func (runFunc *RunFuncContext) UploadDocumentMessageFromPath(path, title string) (*waProto.DocumentMessage, error) {
 	documentBuff, err := os.Open(path)
 	if err != nil {
 		return nil, err
@@ -243,7 +243,7 @@ func UploadDocumentMessageFromPath(c *whatsmeow.Client, path, title string) (*wa
 
 	mimetypeString := mimetype.Detect(documentBytes)
 
-	resp, err := c.Upload(context.Background(), documentBytes, whatsmeow.MediaDocument)
+	resp, err := runFunc.Client.Upload(context.Background(), documentBytes, whatsmeow.MediaDocument)
 	if err != nil {
 		return nil, err
 	}
@@ -262,10 +262,10 @@ func UploadDocumentMessageFromPath(c *whatsmeow.Client, path, title string) (*wa
 	}, nil
 }
 
-func UploadDocumentMessageFromBytes(c *whatsmeow.Client, bytes []byte, title, filename string) (*waProto.DocumentMessage, error) {
+func (runFunc *RunFuncContext) UploadDocumentMessageFromBytes(bytes []byte, title, filename string) (*waProto.DocumentMessage, error) {
 	mimetypeString := mimetype.Detect(bytes)
 
-	resp, err := c.Upload(context.Background(), bytes, whatsmeow.MediaDocument)
+	resp, err := runFunc.Client.Upload(context.Background(), bytes, whatsmeow.MediaDocument)
 
 	if err != nil {
 		return nil, err
@@ -285,7 +285,7 @@ func UploadDocumentMessageFromBytes(c *whatsmeow.Client, bytes []byte, title, fi
 	}, nil
 }
 
-func UploadAudioMessageFromPath(c *whatsmeow.Client, path string) (*waProto.AudioMessage, error) {
+func (runFunc *RunFuncContext) UploadAudioMessageFromPath(path string) (*waProto.AudioMessage, error) {
 	audioBuff, err := os.Open(path)
 	if err != nil {
 		return nil, err
@@ -301,7 +301,7 @@ func UploadAudioMessageFromPath(c *whatsmeow.Client, path string) (*waProto.Audi
 
 	mimetypeString := mimetype.Detect(audioBytes)
 
-	resp, err := c.Upload(context.Background(), audioBytes, whatsmeow.MediaAudio)
+	resp, err := runFunc.Client.Upload(context.Background(), audioBytes, whatsmeow.MediaAudio)
 
 	if err != nil {
 		return nil, err
@@ -319,10 +319,10 @@ func UploadAudioMessageFromPath(c *whatsmeow.Client, path string) (*waProto.Audi
 	}, nil
 }
 
-func UploadAudioMessageFromBytes(c *whatsmeow.Client, bytes []byte) (*waProto.AudioMessage, error) {
+func (runFunc *RunFuncContext) UploadAudioMessageFromBytes(bytes []byte) (*waProto.AudioMessage, error) {
 	mimetypeString := mimetype.Detect(bytes)
 
-	resp, err := c.Upload(context.Background(), bytes, whatsmeow.MediaAudio)
+	resp, err := runFunc.Client.Upload(context.Background(), bytes, whatsmeow.MediaAudio)
 	if err != nil {
 		return nil, err
 	}

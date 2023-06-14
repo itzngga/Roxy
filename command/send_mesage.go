@@ -22,31 +22,31 @@ func (runFunc *RunFuncContext) SendReplyMessage(obj any) {
 	case []byte:
 		mimetypeString := mimetype.Detect(value)
 		if mimetypeString.Is("image/webp") {
-			sticker, _ := util.UploadStickerMessageFromBytes(runFunc.Client, runFunc.MessageEvent, value)
+			sticker, _ := runFunc.UploadStickerMessageFromBytes(value)
 			message = &waProto.Message{
 				StickerMessage: sticker,
 			}
 			sticker.ContextInfo = util.WithReply(runFunc.MessageEvent)
 		} else if strings.Contains(mimetypeString.String(), "image") {
-			image, _ := util.UploadImageMessageFromBytes(runFunc.Client, runFunc.MessageEvent, value, "")
+			image, _ := runFunc.UploadImageMessageFromBytes(value, "")
 			message = &waProto.Message{
 				ImageMessage: image,
 			}
 			image.ContextInfo = util.WithReply(runFunc.MessageEvent)
 		} else if strings.Contains(mimetypeString.String(), "video") {
-			video, _ := util.UploadVideoMessageFromBytes(runFunc.Client, runFunc.MessageEvent, value, "")
+			video, _ := runFunc.UploadVideoMessageFromBytes(value, "")
 			message = &waProto.Message{
 				VideoMessage: video,
 			}
 			video.ContextInfo = util.WithReply(runFunc.MessageEvent)
 		} else if strings.Contains(mimetypeString.String(), "audio") {
-			audio, _ := util.UploadAudioMessageFromBytes(runFunc.Client, value)
+			audio, _ := runFunc.UploadAudioMessageFromBytes(value)
 			message = &waProto.Message{
 				AudioMessage: audio,
 			}
 			audio.ContextInfo = util.WithReply(runFunc.MessageEvent)
 		} else {
-			document, _ := util.UploadDocumentMessageFromBytes(runFunc.Client, value, "", "document."+mimetypeString.Extension())
+			document, _ := runFunc.UploadDocumentMessageFromBytes(value, "", "document."+mimetypeString.Extension())
 			message = &waProto.Message{
 				DocumentMessage: document,
 			}
@@ -223,27 +223,27 @@ func (runFunc *RunFuncContext) SendMessage(obj any) {
 	case []byte:
 		mimetypeString := mimetype.Detect(value)
 		if mimetypeString.Is("image/webp") {
-			sticker, _ := util.UploadStickerMessageFromBytes(runFunc.Client, runFunc.MessageEvent, value)
+			sticker, _ := runFunc.UploadStickerMessageFromBytes(value)
 			message = &waProto.Message{
 				StickerMessage: sticker,
 			}
 		} else if strings.Contains(mimetypeString.String(), "image") {
-			image, _ := util.UploadImageMessageFromBytes(runFunc.Client, runFunc.MessageEvent, value, "")
+			image, _ := runFunc.UploadImageMessageFromBytes(value, "")
 			message = &waProto.Message{
 				ImageMessage: image,
 			}
 		} else if strings.Contains(mimetypeString.String(), "video") {
-			video, _ := util.UploadVideoMessageFromBytes(runFunc.Client, runFunc.MessageEvent, value, "")
+			video, _ := runFunc.UploadVideoMessageFromBytes(value, "")
 			message = &waProto.Message{
 				VideoMessage: video,
 			}
 		} else if strings.Contains(mimetypeString.String(), "audio") {
-			audio, _ := util.UploadAudioMessageFromBytes(runFunc.Client, value)
+			audio, _ := runFunc.UploadAudioMessageFromBytes(value)
 			message = &waProto.Message{
 				AudioMessage: audio,
 			}
 		} else {
-			document, _ := util.UploadDocumentMessageFromBytes(runFunc.Client, value, "", "document."+mimetypeString.Extension())
+			document, _ := runFunc.UploadDocumentMessageFromBytes(value, "", "document."+mimetypeString.Extension())
 			message = &waProto.Message{
 				DocumentMessage: document,
 			}
