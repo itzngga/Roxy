@@ -5,10 +5,16 @@ import (
 	waProto "go.mau.fi/whatsmeow/binary/proto"
 )
 
+// Download message with get quoted message
 func (runFunc *RunFuncContext) Download(message *waProto.Message, quoted bool) ([]byte, error) {
 	var msg *waProto.Message
 	if quoted {
-		msg = util.ParseQuotedMessage(message)
+		result := util.ParseQuotedMessage(message)
+		if result != nil {
+			msg = result
+		} else {
+			msg = message
+		}
 	} else {
 		msg = message
 	}

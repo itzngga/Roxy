@@ -159,6 +159,12 @@ func (m *Muxer) HandleQuestionState(c *whatsmeow.Client, evt *events.Message, pa
 			m.QuestionState.Delete(number)
 			return false
 		} else {
+			go func() {
+				jids := []waTypes.MessageID{
+					evt.Info.ID,
+				}
+				c.MarkRead(jids, evt.Info.Timestamp, evt.Info.Chat, evt.Info.Sender)
+			}()
 			for i, question := range questionState.Questions {
 				if question.Question == questionState.ActiveQuestion && question.GetAnswer() == "" {
 					if questionState.Questions[i].Capture {
@@ -169,12 +175,6 @@ func (m *Muxer) HandleQuestionState(c *whatsmeow.Client, evt *events.Message, pa
 					continue
 				} else if question.Question != questionState.ActiveQuestion && question.GetAnswer() == "" {
 					questionState.ActiveQuestion = question.Question
-					go func() {
-						jids := []waTypes.MessageID{
-							evt.Info.ID,
-						}
-						c.MarkRead(jids, evt.Info.Timestamp, evt.Info.Chat, evt.Info.Sender)
-					}()
 					questionState.RunFuncCtx.SendReplyMessage(question.Question)
 					return false
 				} else if question.Question == questionState.ActiveQuestion && question.GetAnswer() != "" {
