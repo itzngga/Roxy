@@ -184,7 +184,7 @@ func (m *Muxer) HandleQuestionState(c *whatsmeow.Client, evt *events.Message, pa
 
 			m.QuestionState.Delete(number)
 			questionState.ResultChan <- true
-			return true
+			return false
 		}
 	}
 	return true
