@@ -2,6 +2,7 @@ package command
 
 import (
 	"encoding/json"
+	"github.com/itzngga/Roxy/util"
 	waProto "go.mau.fi/whatsmeow/binary/proto"
 	"strings"
 )
@@ -11,13 +12,43 @@ func (q *Questions) SetAnswer(answer any) {
 	case string:
 		*q.Answer.(*string) = v
 	case *waProto.Message:
-		result, _ := json.Marshal(&v)
-		*q.Answer.(*string) = string(result)
+		if q.CaptureMedia {
+			m := util.ParseQuotedMessage(v)
+			if m != nil {
+				v = m
+			}
+			switch {
+			case v.ImageMessage != nil:
+				*q.Answer.(**waProto.Message) = v
+			case v.VideoMessage != nil:
+				*q.Answer.(**waProto.Message) = v
+			case v.AudioMessage != nil:
+				*q.Answer.(**waProto.Message) = v
+			case v.DocumentMessage != nil:
+				*q.Answer.(**waProto.Message) = v
+			case v.StickerMessage != nil:
+				*q.Answer.(**waProto.Message) = v
+			default:
+				*q.Answer.(**waProto.Message) = nil
+			}
+		} else {
+			*q.Answer.(**waProto.Message) = v
+		}
 	}
 }
 
 func (q *Questions) GetAnswer() string {
-	return *q.Answer.(*string)
+	switch v := q.Answer.(type) {
+	case *string:
+		return *q.Answer.(*string)
+	case *waProto.Message:
+		result, err := json.Marshal(&v)
+		if err != nil {
+			return ""
+		}
+		return string(result)
+	}
+	return ""
 }
 
 // NewUserQuestion New user question engine
@@ -44,16 +75,23 @@ func (state *QuestionState) SetQuestion(question string, answer any) *QuestionSt
 }
 
 // CaptureQuestion Set a question to capture message object with json string format
-func (state *QuestionState) CaptureQuestion(question string, answer any) *QuestionState {
-	if _, ok := answer.(*string); !ok {
-		return state
-	}
-
+func (state *QuestionState) CaptureQuestion(question string, answer **waProto.Message) *QuestionState {
 	state.Questions = append(state.Questions, &Questions{
 		Index:    len(state.Questions) + 1,
 		Question: question,
 		Capture:  true,
 		Answer:   answer,
+	})
+	return state
+}
+
+func (state *QuestionState) CaptureMediaQuestion(question string, answer **waProto.Message) *QuestionState {
+	state.Questions = append(state.Questions, &Questions{
+		Index:        len(state.Questions) + 1,
+		Question:     question,
+		Capture:      true,
+		CaptureMedia: true,
+		Answer:       answer,
 	})
 	return state
 }

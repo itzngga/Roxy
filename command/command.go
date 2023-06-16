@@ -25,10 +25,11 @@ type Command struct {
 }
 
 type Questions struct {
-	Index    int
-	Question string
-	Capture  bool
-	Answer   any
+	Index        int
+	Question     string
+	Capture      bool
+	CaptureMedia bool
+	Answer       any
 }
 
 type QuestionState struct {
