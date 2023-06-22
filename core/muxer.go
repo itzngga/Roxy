@@ -56,6 +56,7 @@ func (m *Muxer) Clean() {
 func (m *Muxer) HandleQuestionStateChan() {
 	go func() {
 		for message := range m.QuestionChan {
+			m.QuestionState.Delete(message.RunFuncCtx.Number)
 			for _, question := range message.Questions {
 				if question.GetAnswer() == "" {
 					message.ActiveQuestion = question.Question
@@ -151,8 +152,7 @@ func (m *Muxer) GlobalMiddlewareProcessing(c *whatsmeow.Client, evt *events.Mess
 	return midAreOk
 }
 
-func (m *Muxer) HandleQuestionState(c *whatsmeow.Client, evt *events.Message, parsedMsg string) bool {
-	number := evt.Info.Sender.ToNonAD().String()
+func (m *Muxer) HandleQuestionState(c *whatsmeow.Client, evt *events.Message, number, parsedMsg string) bool {
 	questionState, ok := m.QuestionState.Load(number)
 	if ok {
 		if strings.Contains(parsedMsg, "cancel") || strings.Contains(parsedMsg, "batal") {
@@ -169,6 +169,9 @@ func (m *Muxer) HandleQuestionState(c *whatsmeow.Client, evt *events.Message, pa
 				if question.Question == questionState.ActiveQuestion && question.GetAnswer() == "" {
 					if questionState.Questions[i].Capture {
 						questionState.Questions[i].SetAnswer(evt.Message)
+					} else if questionState.Questions[i].Reply {
+						result := util.GetQuotedText(evt)
+						questionState.Questions[i].SetAnswer(result)
 					} else {
 						questionState.Questions[i].SetAnswer(parsedMsg)
 					}
@@ -198,10 +201,15 @@ func (m *Muxer) RunCommand(c *whatsmeow.Client, evt *events.Message) {
 	parsed := util.ParseMessageText(evt)
 
 	var fromMe = number == c.Store.ID.ToNonAD().String()
-	if ok := m.HandleQuestionState(c, evt, parsed); !fromMe && ok {
-		parsed = util.ParseMessageText(evt)
-	} else if !fromMe && !ok {
-		return
+	if !fromMe {
+		_, ok := m.QuestionState.Load(number)
+		if ok {
+			if ok := m.HandleQuestionState(c, evt, number, parsed); ok {
+				parsed = util.ParseMessageText(evt)
+			} else {
+				return
+			}
+		}
 	}
 
 	prefix, cmd, isCmd := util.ParseCmd(parsed)

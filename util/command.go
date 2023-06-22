@@ -23,6 +23,31 @@ func ParseCmd(str string) (prefix string, cmd string, ok bool) {
 	return "", "", false
 }
 
+func GetQuotedText(m *events.Message) string {
+	var pesan *waProto.Message
+	if m.IsViewOnce {
+		pesan = m.Message.GetViewOnceMessage().GetMessage()
+	} else if m.IsEphemeral {
+		pesan = m.Message.GetEphemeralMessage().GetMessage()
+	} else {
+		pesan = m.Message
+	}
+
+	if quoted := ParseQuotedBy(pesan, "text"); quoted != nil {
+		if quoted.GetExtendedTextMessage() != nil {
+			return *quoted.ExtendedTextMessage.Text
+		} else {
+			return *quoted.Conversation
+		}
+	} else {
+		if pesan.GetExtendedTextMessage() != nil {
+			return *pesan.ExtendedTextMessage.Text
+		} else {
+			return *pesan.Conversation
+		}
+	}
+}
+
 func ParseMessageText(m *events.Message) string {
 	var pesan *waProto.Message
 	if m.IsViewOnce {

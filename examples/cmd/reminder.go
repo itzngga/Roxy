@@ -3,9 +3,8 @@ package cmd
 import (
 	"github.com/itzngga/Roxy/command"
 	"github.com/itzngga/Roxy/embed"
-	"github.com/itzngga/Roxy/util/cli"
 	waProto "go.mau.fi/whatsmeow/binary/proto"
-	"log"
+	"time"
 )
 
 func init() {
@@ -17,17 +16,24 @@ var reminder = &command.Command{
 	Category:    "UTILITY",
 	Description: "Reminder back user",
 	RunFunc: func(ctx *command.RunFuncContext) *waProto.Message {
-		var captured *waProto.Message
+		var captured string
 		command.NewUserQuestion(ctx).
-			CaptureMediaQuestion("Message?", &captured).
+			SetQuestion("Message?", &captured).
 			Exec()
 
-		result, err := ctx.Client.DownloadAny(captured)
-		if err != nil {
-			log.Fatal(err)
-		}
-		res := cli.ExecPipeline("tesseract", result, "stdin", "stdout", "-l", "ind", "--oem", "1", "--psm", "3", "-c", "preserve_interword_spaces=1")
+		time.Sleep(time.Second * 3)
 
-		return ctx.GenerateReplyMessage(string(res))
+		//result, err := ctx.Client.DownloadAny(captured)
+		//if err != nil {
+		//	log.Fatal(err)
+		//}
+		//res := cli.ExecPipeline("tesseract", result, "stdin", "stdout", "-l", "ind", "--oem", "1", "--psm", "3", "-c", "preserve_interword_spaces=1")
+
+		var bro string
+		command.NewUserQuestion(ctx).
+			SetReplyQuestion("Bro?", &bro).
+			Exec()
+
+		return ctx.GenerateReplyMessage(bro)
 	},
 }

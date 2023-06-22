@@ -24,21 +24,6 @@ type Command struct {
 	RunFunc    RunFunc
 }
 
-type Questions struct {
-	Index        int
-	Question     string
-	Capture      bool
-	CaptureMedia bool
-	Answer       any
-}
-
-type QuestionState struct {
-	RunFuncCtx     *RunFuncContext
-	ActiveQuestion string
-	Questions      []*Questions
-	ResultChan     chan bool
-}
-
 func (c *Command) Validate() {
 	if c.Name == "" {
 		panic("error: command name cannot be empty")

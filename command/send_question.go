@@ -7,6 +7,22 @@ import (
 	"strings"
 )
 
+type Questions struct {
+	Index        int
+	Question     string
+	Capture      bool
+	CaptureMedia bool
+	Reply        bool
+	Answer       any
+}
+
+type QuestionState struct {
+	RunFuncCtx     *RunFuncContext
+	ActiveQuestion string
+	Questions      []*Questions
+	ResultChan     chan bool
+}
+
 func (q *Questions) SetAnswer(answer any) {
 	switch v := answer.(type) {
 	case string:
@@ -74,6 +90,20 @@ func (state *QuestionState) SetQuestion(question string, answer any) *QuestionSt
 	return state
 }
 
+// SetReplyQuestion Set a question based on message has a reply string answer pointer
+func (state *QuestionState) SetReplyQuestion(question string, answer any) *QuestionState {
+	if _, ok := answer.(*string); !ok {
+		return state
+	}
+	state.Questions = append(state.Questions, &Questions{
+		Index:    len(state.Questions) + 1,
+		Question: question,
+		Reply:    true,
+		Answer:   answer,
+	})
+	return state
+}
+
 // CaptureQuestion Set a question to capture message object with json string format
 func (state *QuestionState) CaptureQuestion(question string, answer **waProto.Message) *QuestionState {
 	state.Questions = append(state.Questions, &Questions{
@@ -96,8 +126,8 @@ func (state *QuestionState) CaptureMediaQuestion(question string, answer **waPro
 	return state
 }
 
-// Exec Run question engine process
-func (state *QuestionState) Exec() {
+// ExecWithParser Run question engine with argument parser
+func (state *QuestionState) ExecWithParser() {
 	questions := strings.Split(strings.Join(state.RunFuncCtx.Arguments, " "), " | ")
 	if questions[0] != "" && len(state.Questions) == len(questions) {
 		for i, _ := range state.Questions {
@@ -111,4 +141,13 @@ func (state *QuestionState) Exec() {
 		_ = <-state.ResultChan
 		return
 	}
+}
+
+// Exec Run question engine without argument parser
+func (state *QuestionState) Exec() {
+	state.RunFuncCtx.QuestionChan <- state
+	defer close(state.ResultChan)
+
+	_ = <-state.ResultChan
+	return
 }
