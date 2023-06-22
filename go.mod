@@ -6,9 +6,9 @@ require (
 	github.com/alitto/pond v1.8.3
 	github.com/gabriel-vasile/mimetype v1.4.2
 	github.com/google/uuid v1.3.0
-	github.com/liujiawm/graphics-go v0.0.0-20200331105750-879216a3393f
 	github.com/mattn/go-sqlite3 v1.14.17
 	github.com/mdp/qrterminal/v3 v3.1.1
+	github.com/rainu/go-command-chain v0.4.0
 	github.com/zhangyunhao116/skipmap v0.10.1
 	go.mau.fi/whatsmeow v0.0.0-20230610124725-5dd0baf43eda
 )

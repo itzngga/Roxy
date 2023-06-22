@@ -40,6 +40,10 @@ func (runFunc *RunFuncContext) UploadImageMessageFromPath(path, caption string) 
 		return nil, err
 	}
 
+	defer func() {
+		thumbnailByte = nil
+	}()
+
 	return &waProto.ImageMessage{
 		Caption: types.String(caption),
 
@@ -73,6 +77,11 @@ func (runFunc *RunFuncContext) UploadImageMessageFromBytes(bytes []byte, caption
 	if err != nil {
 		return nil, err
 	}
+
+	defer func() {
+		thumbnailByte = nil
+		bytes = nil
+	}()
 
 	return &waProto.ImageMessage{
 		ContextInfo: util.WithReply(runFunc.MessageEvent),
@@ -122,6 +131,10 @@ func (runFunc *RunFuncContext) UploadVideoMessageFromPath(path, caption string) 
 		return nil, err
 	}
 
+	defer func() {
+		thumbnailByte = nil
+	}()
+
 	return &waProto.VideoMessage{
 		Caption:  types.String(caption),
 		Mimetype: types.String(mimetypeString.String()),
@@ -154,6 +167,11 @@ func (runFunc *RunFuncContext) UploadVideoMessageFromBytes(bytes []byte, caption
 	if err != nil {
 		return nil, err
 	}
+
+	defer func() {
+		thumbnailByte = nil
+		bytes = nil
+	}()
 
 	return &waProto.VideoMessage{
 		ContextInfo: util.WithReply(runFunc.MessageEvent),
@@ -213,6 +231,10 @@ func (runFunc *RunFuncContext) UploadStickerMessageFromBytes(bytes []byte) (*waP
 		return nil, err
 	}
 
+	defer func() {
+		bytes = nil
+	}()
+
 	return &waProto.StickerMessage{
 		ContextInfo: util.WithReply(runFunc.MessageEvent),
 
@@ -271,6 +293,10 @@ func (runFunc *RunFuncContext) UploadDocumentMessageFromBytes(bytes []byte, titl
 		return nil, err
 	}
 
+	defer func() {
+		bytes = nil
+	}()
+
 	return &waProto.DocumentMessage{
 		Title:    types.String(title),
 		FileName: types.String(filename),
@@ -326,6 +352,10 @@ func (runFunc *RunFuncContext) UploadAudioMessageFromBytes(bytes []byte) (*waPro
 	if err != nil {
 		return nil, err
 	}
+
+	defer func() {
+		bytes = nil
+	}()
 
 	return &waProto.AudioMessage{
 		Mimetype: types.String(mimetypeString.String()),

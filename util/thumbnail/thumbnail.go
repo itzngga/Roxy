@@ -3,39 +3,50 @@ package thumbnail
 import (
 	"bytes"
 	"fmt"
-	"github.com/itzngga/Roxy/util/cli"
-	"github.com/liujiawm/graphics-go/graphics"
-	"image"
-	"image/jpeg"
+	cmdchain "github.com/rainu/go-command-chain"
+	"os"
 )
 
 func CreateImageThumbnail(data []byte) []byte {
-	img, _, _ := image.Decode(bytes.NewReader(data))
+	var reader = bytes.NewReader(data)
+	var writer = bytes.NewBuffer(nil)
 
-	dstImage := image.NewRGBA(image.Rect(0, 0, 72, 72))
-	err := graphics.Thumbnail(dstImage, img)
+	err := cmdchain.Builder().
+		Join("ffmpeg", "-y", "-hide_banner", "-loglevel", "panic",
+			"-i", "pipe:0",
+			"-vf", "scale=72:72",
+			"-f", "image2pipe",
+			"pipe:1").
+		WithInjections(reader).Finalize().
+		WithError(os.Stdout).WithOutput(writer).Run()
 	if err != nil {
 		fmt.Println(err)
-		return data
+		return nil
 	}
 
-	result := bytes.Buffer{}
-	jpeg.Encode(&result, dstImage, &jpeg.Options{jpeg.DefaultQuality})
-
-	return result.Bytes()
+	return writer.Bytes()
 }
 
 func CreateVideoThumbnail(data []byte) []byte {
-	dataResult := cli.ExecPipeline("ffmpeg", data,
-		"-y", "-hide_banner", "-loglevel", "panic",
-		"-i", "pipe:0",
-		"-map_metadata", "-1",
-		"-ss", "1",
-		"-vframes", "1",
-		"-f", "image2",
-		"-s", "72x72",
-		"pipe:1",
-	)
+	var reader = bytes.NewReader(data)
+	var writer = bytes.NewBuffer(nil)
 
-	return dataResult
+	err := cmdchain.Builder().
+		Join("ffmpeg", "-y", "-hide_banner", "-loglevel", "panic",
+			"-f", "mp4",
+			"-i", "pipe:0",
+			"-vf", "'select=gt(scene\\,0.4)'",
+			"-frames:v", "5",
+			"-fps_mode", "vfr",
+			"-vf", "scale=72:72",
+			"-f", "image2pipe",
+			"pipe:1").
+		WithInjections(reader).Finalize().
+		WithError(os.Stdout).WithOutput(writer).Run()
+	if err != nil {
+		fmt.Println(err)
+		return nil
+	}
+
+	return writer.Bytes()
 }

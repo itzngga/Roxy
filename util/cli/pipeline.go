@@ -1,77 +1,22 @@
 package cli
 
 import (
-	"bufio"
-	"fmt"
-	"io"
-	"os/exec"
+	"bytes"
+	cmdchain "github.com/rainu/go-command-chain"
+	"os"
 )
 
-func ExecPipeline(command string, data []byte, arg ...string) []byte {
-	cmd := exec.Command(command, arg...)
+func ExecPipeline(cmd string, data []byte, params ...string) ([]byte, error) {
+	var reader = bytes.NewReader(data)
+	var writer = bytes.NewBuffer(nil)
 
-	out, err := cmd.StdoutPipe()
+	err := cmdchain.Builder().
+		Join(cmd, params...).
+		WithInjections(reader).Finalize().
+		WithError(os.Stdout).WithOutput(writer).Run()
 	if err != nil {
-		fmt.Println(err)
-		return nil
+		return nil, err
 	}
 
-	in, err := cmd.StdinPipe()
-	writer := bufio.NewWriter(in)
-	if err != nil {
-		fmt.Println(err)
-		return nil
-	}
-
-	stderr, err := cmd.StderrPipe()
-	if err != nil {
-		fmt.Println(err)
-		return nil
-	}
-
-	err = cmd.Start()
-	if err != nil {
-		fmt.Println(err)
-		return nil
-	}
-
-	go func() {
-		defer writer.Flush()
-		defer in.Close()
-		_, err = writer.Write(data)
-		if err != nil {
-			fmt.Println(err)
-			return
-		}
-	}()
-
-	outBytes := make([]byte, 0)
-
-	defer out.Close()
-	outBytes, err = io.ReadAll(out)
-	if err != nil {
-		fmt.Println(err)
-		return nil
-	}
-
-	errBytes := make([]byte, 0)
-
-	defer stderr.Close()
-	errBytes, err = io.ReadAll(stderr)
-	if err != nil {
-		fmt.Println(err)
-		return nil
-	}
-
-	if errBytes != nil {
-		fmt.Println(string(errBytes))
-	}
-
-	err = cmd.Wait()
-	if err != nil {
-		fmt.Println(err)
-		return nil
-	}
-
-	return outBytes
+	return writer.Bytes(), nil
 }
