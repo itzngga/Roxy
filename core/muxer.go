@@ -133,12 +133,19 @@ func (m *Muxer) SetCacheCommandResponse(cmd string, response *waProto.Message) {
 }
 
 func (m *Muxer) GlobalMiddlewareProcessing(c *whatsmeow.Client, evt *events.Message, number string) bool {
+	var fromMe = number == c.Store.ID.ToNonAD().String()
 	param := &command.RunFuncContext{
 		Client:       c,
+		WaLog:        m.Log,
 		Options:      m.Options,
 		MessageEvent: evt,
+		MessageInfo:  &evt.Info,
+		ClientJID:    c.Store.ID,
+		Message:      evt.Message,
+		FromMe:       fromMe,
 		Number:       number,
 		Locals:       m.Locals,
+		QuestionChan: m.QuestionChan,
 	}
 	midAreOk := true
 	m.GlobalMiddlewares.Range(func(key string, value command.MiddlewareFunc) bool {
