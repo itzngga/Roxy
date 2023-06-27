@@ -1108,6 +1108,7 @@ import "github.com/itzngga/Roxy/util"
 - [func CreateUid() string](<#func-createuid>)
 - [func DoHTTPRequest(method string, url string) ([]byte, error)](<#func-dohttprequest>)
 - [func GetQuotedText(m *events.Message) string](<#func-getquotedtext>)
+- [func JIDToString(jidStr any) (result string, err error)](<#func-jidtostring>)
 - [func ParseAllJid(jid any) (pJid waTypes.JID)](<#func-parsealljid>)
 - [func ParseArgs(str string) []string](<#func-parseargs>)
 - [func ParseCmd(str string) (prefix string, cmd string, ok bool)](<#func-parsecmd>)
@@ -1126,7 +1127,7 @@ import "github.com/itzngga/Roxy/util"
 - [func WithReply(m *events.Message) *waProto.ContextInfo](<#func-withreply>)
 
 
-## func [CreateUid](<https://github.com/itzngga/roxy/blob/master/util/common.go#L10>)
+## func [CreateUid](<https://github.com/itzngga/roxy/blob/master/util/common.go#L11>)
 
 ```go
 func CreateUid() string
@@ -1144,13 +1145,19 @@ func DoHTTPRequest(method string, url string) ([]byte, error)
 func GetQuotedText(m *events.Message) string
 ```
 
-## func [ParseAllJid](<https://github.com/itzngga/roxy/blob/master/util/common.go#L38>)
+## func [JIDToString](<https://github.com/itzngga/roxy/blob/master/util/common.go#L105>)
+
+```go
+func JIDToString(jidStr any) (result string, err error)
+```
+
+## func [ParseAllJid](<https://github.com/itzngga/roxy/blob/master/util/common.go#L39>)
 
 ```go
 func ParseAllJid(jid any) (pJid waTypes.JID)
 ```
 
-## func [ParseArgs](<https://github.com/itzngga/roxy/blob/master/util/common.go#L15>)
+## func [ParseArgs](<https://github.com/itzngga/roxy/blob/master/util/common.go#L16>)
 
 ```go
 func ParseArgs(str string) []string
@@ -1162,7 +1169,7 @@ func ParseArgs(str string) []string
 func ParseCmd(str string) (prefix string, cmd string, ok bool)
 ```
 
-## func [ParseGroupJid](<https://github.com/itzngga/roxy/blob/master/util/common.go#L56>)
+## func [ParseGroupJid](<https://github.com/itzngga/roxy/blob/master/util/common.go#L57>)
 
 ```go
 func ParseGroupJid(jid any) (pJid waTypes.JID)
@@ -1210,13 +1217,13 @@ func ParseQuotedMessageId(evm *events.Message) *string
 func ParseQuotedRemoteJid(evm *events.Message) *string
 ```
 
-## func [ParseUserJid](<https://github.com/itzngga/roxy/blob/master/util/common.go#L80>)
+## func [ParseUserJid](<https://github.com/itzngga/roxy/blob/master/util/common.go#L81>)
 
 ```go
 func ParseUserJid(jid any) (pJid waTypes.JID)
 ```
 
-## func [RemoveElementByIndex](<https://github.com/itzngga/roxy/blob/master/util/common.go#L29>)
+## func [RemoveElementByIndex](<https://github.com/itzngga/roxy/blob/master/util/common.go#L30>)
 
 ```go
 func RemoveElementByIndex[T []any](slice []T, index int) []T
@@ -1228,7 +1235,7 @@ func RemoveElementByIndex[T []any](slice []T, index int) []T
 func RevokeMessage(c *whatsmeow.Client, jid waTypes.JID, messageId waTypes.MessageID)
 ```
 
-## func [StringIsOnSlice](<https://github.com/itzngga/roxy/blob/master/util/common.go#L19>)
+## func [StringIsOnSlice](<https://github.com/itzngga/roxy/blob/master/util/common.go#L20>)
 
 ```go
 func StringIsOnSlice(target string, slice []string) bool

@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"github.com/google/uuid"
 	waTypes "go.mau.fi/whatsmeow/types"
+	"strconv"
 	"strings"
 )
 
@@ -99,4 +100,24 @@ func ParseUserJid(jid any) (pJid waTypes.JID) {
 		return pJid
 	}
 	return pJid
+}
+
+func JIDToString(jidStr any) (result string, err error) {
+	switch uJid := jidStr.(type) {
+	case string:
+		jid, ok := ParseJID(uJid)
+		if !ok {
+			return "", fmt.Errorf("error: failed to parse jid: %s", jid)
+		} else if jid.Server != waTypes.DefaultUserServer && jid.Server != waTypes.GroupServer {
+			return "", fmt.Errorf("error: given jid is not user or group jid: %s", jidStr)
+		}
+		return strconv.FormatUint(jid.ToNonAD().UserInt(), 10), nil
+	case waTypes.JID:
+		if uJid.Server != waTypes.DefaultUserServer && uJid.Server != waTypes.GroupServer {
+			return "", fmt.Errorf("error: given jid is not user or group jid: %s", jidStr)
+		}
+		return strconv.FormatUint(uJid.ToNonAD().UserInt(), 10), nil
+	default:
+		return "", fmt.Errorf("error: unsupported jid types: %s", jidStr)
+	}
 }
