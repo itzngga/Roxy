@@ -29,6 +29,15 @@ type Options struct {
 	WithCommandLog              bool
 	CommandResponseCacheTimeout time.Duration
 	SendMessageTimeout          time.Duration
+
+	// Bot General Settings
+
+	// AllowFromPrivate allow messages from private
+	AllowFromPrivate bool
+	// AllowFromGroup allow message from groups
+	AllowFromGroup bool
+	// OnlyFromSelf allow only from self messages
+	OnlyFromSelf bool
 }
 
 func New(options ...func(*Options)) (*Options, error) {
@@ -100,11 +109,31 @@ func WithSendMsgTimeout(sendMsgTimeout time.Duration) func(*Options) {
 	}
 }
 
+func WithAllowFromPrivate(onlyFromPrivate bool) func(*Options) {
+	return func(options *Options) {
+		options.AllowFromPrivate = onlyFromPrivate
+	}
+}
+
+func WithAllowFromGroup(onlyFromGroup bool) func(*Options) {
+	return func(options *Options) {
+		options.AllowFromGroup = onlyFromGroup
+	}
+}
+
+func WithOnlyFromSelf(onlyFromSelf bool) func(*Options) {
+	return func(options *Options) {
+		options.OnlyFromSelf = onlyFromSelf
+	}
+}
+
 func NewDefaultOptions() *Options {
 	return &Options{
 		StoreMode:                   "sqlite",
 		SqliteFile:                  "ROXY.DB",
 		WithCommandLog:              true,
+		AllowFromGroup:              true,
+		AllowFromPrivate:            true,
 		SendMessageTimeout:          time.Second * 30,
 		CommandResponseCacheTimeout: time.Minute * 15,
 	}
@@ -137,6 +166,10 @@ func (o *Options) Validate() error {
 
 	if o.WithSqlDB == nil && o.SqliteFile == "" && o.PostgresDsn == nil {
 		return errors.New("error: please specify sql.db or sqlite file or pg dsn")
+	}
+
+	if !o.AllowFromPrivate && !o.AllowFromGroup {
+		return errors.New("error: please specify one of allow from private or group")
 	}
 
 	return nil
