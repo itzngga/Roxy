@@ -1114,12 +1114,12 @@ import "github.com/itzngga/Roxy/util"
 - [func ParseCmd(str string) (prefix string, cmd string, ok bool)](<#func-parsecmd>)
 - [func ParseGroupJid(jid any) (pJid waTypes.JID)](<#func-parsegroupjid>)
 - [func ParseJID(arg string) (waTypes.JID, bool)](<#func-parsejid>)
-- [func ParseMentionedJid(evm *events.Message) []string](<#func-parsementionedjid>)
+- [func ParseMentionedJid(m *waProto.Message) []string](<#func-parsementionedjid>)
 - [func ParseMessageText(m *events.Message) string](<#func-parsemessagetext>)
 - [func ParseQuotedBy(m *waProto.Message, str string) *waProto.Message](<#func-parsequotedby>)
 - [func ParseQuotedMessage(m *waProto.Message) *waProto.Message](<#func-parsequotedmessage>)
-- [func ParseQuotedMessageId(evm *events.Message) *string](<#func-parsequotedmessageid>)
-- [func ParseQuotedRemoteJid(evm *events.Message) *string](<#func-parsequotedremotejid>)
+- [func ParseQuotedMessageId(m *waProto.Message) *string](<#func-parsequotedmessageid>)
+- [func ParseQuotedRemoteJid(m *waProto.Message) *string](<#func-parsequotedremotejid>)
 - [func ParseUserJid(jid any) (pJid waTypes.JID)](<#func-parseuserjid>)
 - [func RemoveElementByIndex[T []any](slice []T, index int) []T](<#func-removeelementbyindex>)
 - [func RevokeMessage(c *whatsmeow.Client, jid waTypes.JID, messageId waTypes.MessageID)](<#func-revokemessage>)
@@ -1175,16 +1175,16 @@ func ParseCmd(str string) (prefix string, cmd string, ok bool)
 func ParseGroupJid(jid any) (pJid waTypes.JID)
 ```
 
-## func [ParseJID](<https://github.com/itzngga/roxy/blob/master/util/message.go#L166>)
+## func [ParseJID](<https://github.com/itzngga/roxy/blob/master/util/message.go#L163>)
 
 ```go
 func ParseJID(arg string) (waTypes.JID, bool)
 ```
 
-## func [ParseMentionedJid](<https://github.com/itzngga/roxy/blob/master/util/message.go#L75>)
+## func [ParseMentionedJid](<https://github.com/itzngga/roxy/blob/master/util/message.go#L74>)
 
 ```go
-func ParseMentionedJid(evm *events.Message) []string
+func ParseMentionedJid(m *waProto.Message) []string
 ```
 
 ## func [ParseMessageText](<https://github.com/itzngga/roxy/blob/master/util/command.go#L51>)
@@ -1193,7 +1193,7 @@ func ParseMentionedJid(evm *events.Message) []string
 func ParseMessageText(m *events.Message) string
 ```
 
-## func [ParseQuotedBy](<https://github.com/itzngga/roxy/blob/master/util/message.go#L137>)
+## func [ParseQuotedBy](<https://github.com/itzngga/roxy/blob/master/util/message.go#L134>)
 
 ```go
 func ParseQuotedBy(m *waProto.Message, str string) *waProto.Message
@@ -1205,16 +1205,16 @@ func ParseQuotedBy(m *waProto.Message, str string) *waProto.Message
 func ParseQuotedMessage(m *waProto.Message) *waProto.Message
 ```
 
-## func [ParseQuotedMessageId](<https://github.com/itzngga/roxy/blob/master/util/message.go#L106>)
+## func [ParseQuotedMessageId](<https://github.com/itzngga/roxy/blob/master/util/message.go#L104>)
 
 ```go
-func ParseQuotedMessageId(evm *events.Message) *string
+func ParseQuotedMessageId(m *waProto.Message) *string
 ```
 
 ## func [ParseQuotedRemoteJid](<https://github.com/itzngga/roxy/blob/master/util/message.go#L44>)
 
 ```go
-func ParseQuotedRemoteJid(evm *events.Message) *string
+func ParseQuotedRemoteJid(m *waProto.Message) *string
 ```
 
 ## func [ParseUserJid](<https://github.com/itzngga/roxy/blob/master/util/common.go#L81>)
@@ -1229,7 +1229,7 @@ func ParseUserJid(jid any) (pJid waTypes.JID)
 func RemoveElementByIndex[T []any](slice []T, index int) []T
 ```
 
-## func [RevokeMessage](<https://github.com/itzngga/roxy/blob/master/util/message.go#L183>)
+## func [RevokeMessage](<https://github.com/itzngga/roxy/blob/master/util/message.go#L180>)
 
 ```go
 func RevokeMessage(c *whatsmeow.Client, jid waTypes.JID, messageId waTypes.MessageID)
@@ -1241,7 +1241,7 @@ func RevokeMessage(c *whatsmeow.Client, jid waTypes.JID, messageId waTypes.Messa
 func StringIsOnSlice(target string, slice []string) bool
 ```
 
-## func [WithReply](<https://github.com/itzngga/roxy/blob/master/util/message.go#L158>)
+## func [WithReply](<https://github.com/itzngga/roxy/blob/master/util/message.go#L155>)
 
 ```go
 func WithReply(m *events.Message) *waProto.ContextInfo

@@ -41,8 +41,7 @@ func ParseQuotedMessage(m *waProto.Message) *waProto.Message {
 	}
 }
 
-func ParseQuotedRemoteJid(evm *events.Message) *string {
-	m := evm.Message
+func ParseQuotedRemoteJid(m *waProto.Message) *string {
 	if m.GetExtendedTextMessage().GetContextInfo() != nil {
 		return m.GetExtendedTextMessage().GetContextInfo().Participant
 	} else if m.GetImageMessage().GetContextInfo() != nil {
@@ -68,12 +67,11 @@ func ParseQuotedRemoteJid(evm *events.Message) *string {
 	} else if m.GetContactMessage().GetContextInfo() != nil {
 		return m.GetContactMessage().GetContextInfo().Participant
 	} else {
-		return &evm.Info.Chat.User
+		return nil
 	}
 }
 
-func ParseMentionedJid(evm *events.Message) []string {
-	m := evm.Message
+func ParseMentionedJid(m *waProto.Message) []string {
 	if m.GetExtendedTextMessage().GetContextInfo() != nil {
 		return m.GetExtendedTextMessage().GetContextInfo().GetMentionedJid()
 	} else if m.GetImageMessage().GetContextInfo() != nil {
@@ -103,8 +101,7 @@ func ParseMentionedJid(evm *events.Message) []string {
 	}
 }
 
-func ParseQuotedMessageId(evm *events.Message) *string {
-	m := evm.Message
+func ParseQuotedMessageId(m *waProto.Message) *string {
 	if m.GetExtendedTextMessage().GetContextInfo() != nil {
 		return m.GetExtendedTextMessage().GetContextInfo().StanzaId
 	} else if m.GetImageMessage().GetContextInfo() != nil {
@@ -130,7 +127,7 @@ func ParseQuotedMessageId(evm *events.Message) *string {
 	} else if m.GetContactMessage().GetContextInfo() != nil {
 		return m.GetContactMessage().GetContextInfo().StanzaId
 	} else {
-		return &evm.Info.ID
+		return nil
 	}
 }
 
