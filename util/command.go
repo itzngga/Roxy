@@ -7,19 +7,51 @@ import (
 	"strings"
 )
 
-var cmdRegex = regexp.MustCompile(`!|#|\?|.|@|&|\*|-|=|\+`)
+var cmdRegex = regexp.MustCompile("^(!|#|\\?|.|@|&|\\*|-|=|\\+|/)?(.*)")
+
+var ListPrefixes = []string{"!", "/", "#", "?", ".", "@", "&", "*", "-", "=", "+"}
 
 func ParseCmd(str string) (prefix string, cmd string, ok bool) {
 	if str == "" {
 		return "", "", false
 	}
-	word := strings.Split(str, " ")
-	if len(word) == 0 && word[0] == "" {
-		return "", "", false
+	split := strings.Split(str, " ")
+	switch string(str[0]) {
+	case "!":
+		return string(str[0]), split[0][1:], true
+	case "/":
+		return string(str[0]), split[0][1:], true
+	case "#":
+		return string(str[0]), split[0][1:], true
+	case "?":
+		return string(str[0]), split[0][1:], true
+	case ".":
+		return string(str[0]), split[0][1:], true
+	case "@":
+		return string(str[0]), split[0][1:], true
+	case "&":
+		return string(str[0]), split[0][1:], true
+	case "*":
+		return string(str[0]), split[0][1:], true
+	case "-":
+		return string(str[0]), split[0][1:], true
+	case "=":
+		return string(str[0]), split[0][1:], true
+	case "+":
+		return string(str[0]), split[0][1:], true
 	}
-	if cmdRegex.MatchString(word[0][0:1]) {
-		return string(word[0][0]), word[0][1:], true
-	}
+	//word := strings.Split(str, " ")
+	//if len(word) == 0 && word[0] == "" {
+	//	return "", "", false
+	//}
+	//
+	//if len(word) >= 1 && word[0] != "" && cmdRegex.MatchString(string(word[0][0])) {
+	//	fmt.Println(cmdRegex.FindAllString(string(word[0]), -1))
+	//	return string(word[0][0]), word[0][1:], true
+	//}
+	//if cmdRegex.MatchString(word[0][0:1]) {
+	//	return string(word[0][0]), word[0][1:], true
+	//}
 	return "", "", false
 }
 

@@ -22,6 +22,7 @@ func StringIsOnSlice(target string, slice []string) bool {
 	for _, i := range slice {
 		if target == i {
 			inSlice = true
+			break
 		}
 	}
 	return inSlice

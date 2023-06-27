@@ -215,10 +215,6 @@ func (muxer *Muxer) RunCommand(c *whatsmeow.Client, evt *events.Message) {
 	}
 
 	number := evt.Info.Sender.ToNonAD().String()
-	if midOk := muxer.GlobalMiddlewareProcessing(c, evt, number); !midOk {
-		return
-	}
-
 	parsed := util.ParseMessageText(evt)
 	if !evt.Info.IsFromMe {
 		_, ok := muxer.QuestionState.Load(number)
@@ -226,6 +222,10 @@ func (muxer *Muxer) RunCommand(c *whatsmeow.Client, evt *events.Message) {
 			muxer.HandleQuestionState(c, evt, number, parsed)
 			return
 		}
+	}
+
+	if midOk := muxer.GlobalMiddlewareProcessing(c, evt, number); !midOk {
+		return
 	}
 
 	prefix, cmd, isCmd := util.ParseCmd(parsed)

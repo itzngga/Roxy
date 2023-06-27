@@ -4,9 +4,11 @@ import (
 	"context"
 	"fmt"
 	"github.com/gabriel-vasile/mimetype"
+	"github.com/itzngga/Roxy/types"
 	"github.com/itzngga/Roxy/util"
 	waProto "go.mau.fi/whatsmeow/binary/proto"
 	"strings"
+	"time"
 )
 
 func (runFunc *RunFuncContext) SendReplyMessage(obj any) {
@@ -324,4 +326,37 @@ func (runFunc *RunFuncContext) SendMessage(obj any) {
 	}
 
 	return
+}
+
+func (runFunc *RunFuncContext) EditMessageText(to string) error {
+	msgKey := &waProto.MessageKey{
+		RemoteJid: types.String(runFunc.MessageInfo.Chat.String()),
+		FromMe:    types.Bool(true),
+		Id:        types.String(runFunc.MessageInfo.ID),
+	}
+	if runFunc.Message.GetExtendedTextMessage() != nil {
+		runFunc.Message.ExtendedTextMessage.Text = types.String(to)
+	} else if runFunc.Message.GetConversation() != "" {
+		runFunc.Message.Conversation = types.String(to)
+	} else {
+		return fmt.Errorf("error: invalid message type")
+	}
+
+	message := &waProto.Message{
+		ProtocolMessage: &waProto.ProtocolMessage{
+			Key:           msgKey,
+			Type:          (*waProto.ProtocolMessage_Type)(types.Int32(14)),
+			EditedMessage: runFunc.Message,
+		},
+	}
+
+	ctx, cancel := context.WithTimeout(context.Background(), time.Second*runFunc.Options.SendMessageTimeout)
+	defer cancel()
+
+	_, err := runFunc.Client.SendMessage(ctx, runFunc.MessageEvent.Info.Chat, message)
+	if err != nil {
+		return fmt.Errorf("error: sending message: %v\n", err)
+	}
+
+	return nil
 }
