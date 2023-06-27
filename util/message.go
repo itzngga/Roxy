@@ -72,6 +72,37 @@ func ParseQuotedRemoteJid(evm *events.Message) *string {
 	}
 }
 
+func ParseMentionedJid(evm *events.Message) []string {
+	m := evm.Message
+	if m.GetExtendedTextMessage().GetContextInfo() != nil {
+		return m.GetExtendedTextMessage().GetContextInfo().GetMentionedJid()
+	} else if m.GetImageMessage().GetContextInfo() != nil {
+		return m.GetImageMessage().GetContextInfo().GetMentionedJid()
+	} else if m.GetVideoMessage().GetContextInfo() != nil {
+		return m.GetVideoMessage().GetContextInfo().GetMentionedJid()
+	} else if m.GetDocumentMessage().GetContextInfo() != nil {
+		return m.GetDocumentMessage().GetContextInfo().GetMentionedJid()
+	} else if m.GetAudioMessage().GetContextInfo() != nil {
+		return m.GetAudioMessage().GetContextInfo().GetMentionedJid()
+	} else if m.GetStickerMessage().GetContextInfo() != nil {
+		return m.GetStickerMessage().GetContextInfo().GetMentionedJid()
+	} else if m.GetButtonsMessage().GetContextInfo() != nil {
+		return m.GetButtonsMessage().GetContextInfo().GetMentionedJid()
+	} else if m.GetGroupInviteMessage().GetContextInfo() != nil {
+		return m.GetGroupInviteMessage().GetContextInfo().GetMentionedJid()
+	} else if m.GetProductMessage().GetContextInfo() != nil {
+		return m.GetProductMessage().GetContextInfo().GetMentionedJid()
+	} else if m.GetListMessage().GetContextInfo() != nil {
+		return m.GetListMessage().GetContextInfo().GetMentionedJid()
+	} else if m.GetTemplateMessage().GetContextInfo() != nil {
+		return m.GetTemplateMessage().GetContextInfo().GetMentionedJid()
+	} else if m.GetContactMessage().GetContextInfo() != nil {
+		return m.GetContactMessage().GetContextInfo().GetMentionedJid()
+	} else {
+		return make([]string, 0)
+	}
+}
+
 func ParseQuotedMessageId(evm *events.Message) *string {
 	m := evm.Message
 	if m.GetExtendedTextMessage().GetContextInfo() != nil {

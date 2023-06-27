@@ -1113,6 +1113,7 @@ import "github.com/itzngga/Roxy/util"
 - [func ParseCmd(str string) (prefix string, cmd string, ok bool)](<#func-parsecmd>)
 - [func ParseGroupJid(jid any) (pJid waTypes.JID)](<#func-parsegroupjid>)
 - [func ParseJID(arg string) (waTypes.JID, bool)](<#func-parsejid>)
+- [func ParseMentionedJid(evm *events.Message) []string](<#func-parsementionedjid>)
 - [func ParseMessageText(m *events.Message) string](<#func-parsemessagetext>)
 - [func ParseQuotedBy(m *waProto.Message, str string) *waProto.Message](<#func-parsequotedby>)
 - [func ParseQuotedMessage(m *waProto.Message) *waProto.Message](<#func-parsequotedmessage>)
@@ -1167,10 +1168,16 @@ func ParseCmd(str string) (prefix string, cmd string, ok bool)
 func ParseGroupJid(jid any) (pJid waTypes.JID)
 ```
 
-## func [ParseJID](<https://github.com/itzngga/roxy/blob/master/util/message.go#L135>)
+## func [ParseJID](<https://github.com/itzngga/roxy/blob/master/util/message.go#L166>)
 
 ```go
 func ParseJID(arg string) (waTypes.JID, bool)
+```
+
+## func [ParseMentionedJid](<https://github.com/itzngga/roxy/blob/master/util/message.go#L75>)
+
+```go
+func ParseMentionedJid(evm *events.Message) []string
 ```
 
 ## func [ParseMessageText](<https://github.com/itzngga/roxy/blob/master/util/command.go#L51>)
@@ -1179,7 +1186,7 @@ func ParseJID(arg string) (waTypes.JID, bool)
 func ParseMessageText(m *events.Message) string
 ```
 
-## func [ParseQuotedBy](<https://github.com/itzngga/roxy/blob/master/util/message.go#L106>)
+## func [ParseQuotedBy](<https://github.com/itzngga/roxy/blob/master/util/message.go#L137>)
 
 ```go
 func ParseQuotedBy(m *waProto.Message, str string) *waProto.Message
@@ -1191,7 +1198,7 @@ func ParseQuotedBy(m *waProto.Message, str string) *waProto.Message
 func ParseQuotedMessage(m *waProto.Message) *waProto.Message
 ```
 
-## func [ParseQuotedMessageId](<https://github.com/itzngga/roxy/blob/master/util/message.go#L75>)
+## func [ParseQuotedMessageId](<https://github.com/itzngga/roxy/blob/master/util/message.go#L106>)
 
 ```go
 func ParseQuotedMessageId(evm *events.Message) *string
@@ -1215,7 +1222,7 @@ func ParseUserJid(jid any) (pJid waTypes.JID)
 func RemoveElementByIndex[T []any](slice []T, index int) []T
 ```
 
-## func [RevokeMessage](<https://github.com/itzngga/roxy/blob/master/util/message.go#L152>)
+## func [RevokeMessage](<https://github.com/itzngga/roxy/blob/master/util/message.go#L183>)
 
 ```go
 func RevokeMessage(c *whatsmeow.Client, jid waTypes.JID, messageId waTypes.MessageID)
@@ -1227,7 +1234,7 @@ func RevokeMessage(c *whatsmeow.Client, jid waTypes.JID, messageId waTypes.Messa
 func StringIsOnSlice(target string, slice []string) bool
 ```
 
-## func [WithReply](<https://github.com/itzngga/roxy/blob/master/util/message.go#L127>)
+## func [WithReply](<https://github.com/itzngga/roxy/blob/master/util/message.go#L158>)
 
 ```go
 func WithReply(m *events.Message) *waProto.ContextInfo
