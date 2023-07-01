@@ -10,6 +10,7 @@ import (
 type Questions struct {
 	Index        int
 	Question     string
+	HasReplied   bool
 	Capture      bool
 	CaptureMedia bool
 	Reply        bool
@@ -90,6 +91,19 @@ func (state *QuestionState) SetQuestion(question string, answer any) *QuestionSt
 	return state
 }
 
+// SetNoAskQuestions Set no asking question based on question and string answer pointer
+func (state *QuestionState) SetNoAskQuestions(answer any) *QuestionState {
+	if _, ok := answer.(*string); !ok {
+		return state
+	}
+	state.Questions = append(state.Questions, &Questions{
+		Index:    len(state.Questions) + 1,
+		Question: "",
+		Answer:   answer,
+	})
+	return state
+}
+
 // SetReplyQuestion Set a question based on message has a reply string answer pointer
 func (state *QuestionState) SetReplyQuestion(question string, answer any) *QuestionState {
 	if _, ok := answer.(*string); !ok {
@@ -98,6 +112,20 @@ func (state *QuestionState) SetReplyQuestion(question string, answer any) *Quest
 	state.Questions = append(state.Questions, &Questions{
 		Index:    len(state.Questions) + 1,
 		Question: question,
+		Reply:    true,
+		Answer:   answer,
+	})
+	return state
+}
+
+// SetNoAskReplyQuestion Set no asking question based on message has a reply string answer pointer
+func (state *QuestionState) SetNoAskReplyQuestion(answer any) *QuestionState {
+	if _, ok := answer.(*string); !ok {
+		return state
+	}
+	state.Questions = append(state.Questions, &Questions{
+		Index:    len(state.Questions) + 1,
+		Question: "",
 		Reply:    true,
 		Answer:   answer,
 	})
@@ -115,10 +143,34 @@ func (state *QuestionState) CaptureQuestion(question string, answer **waProto.Me
 	return state
 }
 
+// NoAskCaptureQuestion Set no asking question to capture message object with json string format
+func (state *QuestionState) NoAskCaptureQuestion(answer **waProto.Message) *QuestionState {
+	state.Questions = append(state.Questions, &Questions{
+		Index:    len(state.Questions) + 1,
+		Question: "",
+		Capture:  true,
+		Answer:   answer,
+	})
+	return state
+}
+
+// CaptureMediaQuestion Set a question to capture media object
 func (state *QuestionState) CaptureMediaQuestion(question string, answer **waProto.Message) *QuestionState {
 	state.Questions = append(state.Questions, &Questions{
 		Index:        len(state.Questions) + 1,
 		Question:     question,
+		Capture:      true,
+		CaptureMedia: true,
+		Answer:       answer,
+	})
+	return state
+}
+
+// NoAskCaptureMediaQuestion Set no asking question to capture media object
+func (state *QuestionState) NoAskCaptureMediaQuestion(answer **waProto.Message) *QuestionState {
+	state.Questions = append(state.Questions, &Questions{
+		Index:        len(state.Questions) + 1,
+		Question:     "",
 		Capture:      true,
 		CaptureMedia: true,
 		Answer:       answer,

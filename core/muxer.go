@@ -61,7 +61,9 @@ func (muxer *Muxer) HandleQuestionStateChan() {
 				if question.GetAnswer() == "" {
 					message.ActiveQuestion = question.Question
 					muxer.QuestionState.Store(message.RunFuncCtx.Number, message)
-					message.RunFuncCtx.SendReplyMessage(question.Question)
+					if question.Question != "" {
+						message.RunFuncCtx.SendReplyMessage(question.Question)
+					}
 					break
 				}
 			}
@@ -187,7 +189,9 @@ func (muxer *Muxer) HandleQuestionState(c *whatsmeow.Client, evt *events.Message
 				continue
 			} else if question.Question != questionState.ActiveQuestion && question.GetAnswer() == "" {
 				questionState.ActiveQuestion = question.Question
-				questionState.RunFuncCtx.SendReplyMessage(question.Question)
+				if question.Question != "" {
+					questionState.RunFuncCtx.SendReplyMessage(question.Question)
+				}
 				return
 			} else if question.Question == questionState.ActiveQuestion && question.GetAnswer() != "" {
 				continue
