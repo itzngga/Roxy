@@ -186,6 +186,9 @@ func (muxer *Muxer) HandleQuestionState(c *whatsmeow.Client, evt *events.Message
 				} else {
 					questionState.Questions[i].SetAnswer(parsedMsg)
 				}
+				if questionState.WithEmojiReact {
+					util.SendEmojiMessage(c, evt, questionState.EmojiReact)
+				}
 				continue
 			} else if question.Question != questionState.ActiveQuestion && question.GetAnswer() == "" {
 				questionState.ActiveQuestion = question.Question

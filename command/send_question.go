@@ -18,6 +18,8 @@ type Questions struct {
 }
 
 type QuestionState struct {
+	WithEmojiReact bool
+	EmojiReact     string
 	RunFuncCtx     *RunFuncContext
 	ActiveQuestion string
 	Questions      []*Questions
@@ -193,6 +195,34 @@ func (state *QuestionState) ExecWithParser() {
 		_ = <-state.ResultChan
 		return
 	}
+}
+
+// WithOkEmoji react 👌 when user answered a question
+func (state *QuestionState) WithOkEmoji() *QuestionState {
+	state.WithEmojiReact = true
+	state.EmojiReact = "👌"
+	return state
+}
+
+// WithLikeEmoji react 👍 when user answered a question
+func (state *QuestionState) WithLikeEmoji() *QuestionState {
+	state.WithEmojiReact = true
+	state.EmojiReact = "👍"
+	return state
+}
+
+// WithTimeEmoji react ⏳ when user answered a question
+func (state *QuestionState) WithTimeEmoji() *QuestionState {
+	state.WithEmojiReact = true
+	state.EmojiReact = "⏳"
+	return state
+}
+
+// WithEmoji react custom emoji when user answered a question
+func (state *QuestionState) WithEmoji(emoji string) *QuestionState {
+	state.WithEmojiReact = true
+	state.EmojiReact = emoji
+	return state
 }
 
 // Exec Run question engine without argument parser

@@ -8,7 +8,9 @@ import (
 	waProto "go.mau.fi/whatsmeow/binary/proto"
 	waTypes "go.mau.fi/whatsmeow/types"
 	"go.mau.fi/whatsmeow/types/events"
+	"google.golang.org/protobuf/proto"
 	"strings"
+	"time"
 )
 
 func ParseQuotedMessage(m *waProto.Message) *waProto.Message {
@@ -182,5 +184,40 @@ func RevokeMessage(c *whatsmeow.Client, jid waTypes.JID, messageId waTypes.Messa
 	if err != nil {
 		fmt.Printf("error: revoking message: %v\n", err)
 	}
+	return
+}
+
+func SendEmojiMessage(client *whatsmeow.Client, event *events.Message, emoji string) {
+	id := event.Info.ID
+	chat := event.Info.Chat
+	sender := event.Info.Sender
+	key := &waProto.MessageKey{
+		FromMe:    proto.Bool(true),
+		Id:        proto.String(id),
+		RemoteJid: proto.String(chat.String()),
+	}
+
+	if !sender.IsEmpty() && sender.User != client.Store.ID.String() {
+		key.FromMe = proto.Bool(false)
+		key.Participant = proto.String(sender.ToNonAD().String())
+	}
+
+	message := &waProto.Message{
+		ReactionMessage: &waProto.ReactionMessage{
+			Key:               key,
+			Text:              proto.String(emoji),
+			SenderTimestampMs: proto.Int64(time.Now().UnixMilli()),
+		},
+	}
+
+	ctx, cancel := context.WithTimeout(context.Background(), time.Second*15)
+	defer cancel()
+
+	_, err := client.SendMessage(ctx, event.Info.Chat, message)
+	if err != nil {
+		fmt.Printf("error: sending message: %v\n", err)
+		return
+	}
+
 	return
 }

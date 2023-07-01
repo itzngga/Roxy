@@ -23,6 +23,9 @@ import "github.com/itzngga/Roxy/command"
   - [func (state *QuestionState) SetNoAskReplyQuestion(answer any) *QuestionState](<#func-questionstate-setnoaskreplyquestion>)
   - [func (state *QuestionState) SetQuestion(question string, answer any) *QuestionState](<#func-questionstate-setquestion>)
   - [func (state *QuestionState) SetReplyQuestion(question string, answer any) *QuestionState](<#func-questionstate-setreplyquestion>)
+  - [func (state *QuestionState) WithEmoji(emoji string) *QuestionState](<#func-questionstate-withemoji>)
+  - [func (state *QuestionState) WithLikeEmoji() *QuestionState](<#func-questionstate-withlikeemoji>)
+  - [func (state *QuestionState) WithOkEmoji() *QuestionState](<#func-questionstate-withokemoji>)
 - [type Questions](<#type-questions>)
   - [func (q *Questions) GetAnswer() string](<#func-questions-getanswer>)
   - [func (q *Questions) SetAnswer(answer any)](<#func-questions-setanswer>)
@@ -110,10 +113,12 @@ func (c *Command) Validate()
 type MiddlewareFunc func(c *RunFuncContext) bool
 ```
 
-## type [QuestionState](<https://github.com/itzngga/roxy/blob/master/command/send_question.go#L20-L25>)
+## type [QuestionState](<https://github.com/itzngga/roxy/blob/master/command/send_question.go#L20-L27>)
 
 ```go
 type QuestionState struct {
+    WithEmojiReact bool
+    EmojiReact     string
     RunFuncCtx     *RunFuncContext
     ActiveQuestion string
     Questions      []*Questions
@@ -121,7 +126,7 @@ type QuestionState struct {
 }
 ```
 
-### func [NewUserQuestion](<https://github.com/itzngga/roxy/blob/master/command/send_question.go#L72>)
+### func [NewUserQuestion](<https://github.com/itzngga/roxy/blob/master/command/send_question.go#L74>)
 
 ```go
 func NewUserQuestion(ctx *RunFuncContext) *QuestionState
@@ -129,7 +134,7 @@ func NewUserQuestion(ctx *RunFuncContext) *QuestionState
 
 NewUserQuestion New user question engine
 
-### func \(\*QuestionState\) [CaptureMediaQuestion](<https://github.com/itzngga/roxy/blob/master/command/send_question.go#L158>)
+### func \(\*QuestionState\) [CaptureMediaQuestion](<https://github.com/itzngga/roxy/blob/master/command/send_question.go#L160>)
 
 ```go
 func (state *QuestionState) CaptureMediaQuestion(question string, answer **waProto.Message) *QuestionState
@@ -137,7 +142,7 @@ func (state *QuestionState) CaptureMediaQuestion(question string, answer **waPro
 
 CaptureMediaQuestion Set a question to capture media object
 
-### func \(\*QuestionState\) [CaptureQuestion](<https://github.com/itzngga/roxy/blob/master/command/send_question.go#L136>)
+### func \(\*QuestionState\) [CaptureQuestion](<https://github.com/itzngga/roxy/blob/master/command/send_question.go#L138>)
 
 ```go
 func (state *QuestionState) CaptureQuestion(question string, answer **waProto.Message) *QuestionState
@@ -145,7 +150,7 @@ func (state *QuestionState) CaptureQuestion(question string, answer **waProto.Me
 
 CaptureQuestion Set a question to capture message object with json string format
 
-### func \(\*QuestionState\) [Exec](<https://github.com/itzngga/roxy/blob/master/command/send_question.go#L199>)
+### func \(\*QuestionState\) [Exec](<https://github.com/itzngga/roxy/blob/master/command/send_question.go#L219>)
 
 ```go
 func (state *QuestionState) Exec()
@@ -153,7 +158,7 @@ func (state *QuestionState) Exec()
 
 Exec Run question engine without argument parser
 
-### func \(\*QuestionState\) [ExecWithParser](<https://github.com/itzngga/roxy/blob/master/command/send_question.go#L182>)
+### func \(\*QuestionState\) [ExecWithParser](<https://github.com/itzngga/roxy/blob/master/command/send_question.go#L184>)
 
 ```go
 func (state *QuestionState) ExecWithParser()
@@ -161,7 +166,7 @@ func (state *QuestionState) ExecWithParser()
 
 ExecWithParser Run question engine with argument parser
 
-### func \(\*QuestionState\) [NoAskCaptureMediaQuestion](<https://github.com/itzngga/roxy/blob/master/command/send_question.go#L170>)
+### func \(\*QuestionState\) [NoAskCaptureMediaQuestion](<https://github.com/itzngga/roxy/blob/master/command/send_question.go#L172>)
 
 ```go
 func (state *QuestionState) NoAskCaptureMediaQuestion(answer **waProto.Message) *QuestionState
@@ -169,7 +174,7 @@ func (state *QuestionState) NoAskCaptureMediaQuestion(answer **waProto.Message) 
 
 NoAskCaptureMediaQuestion Set no asking question to capture media object
 
-### func \(\*QuestionState\) [NoAskCaptureQuestion](<https://github.com/itzngga/roxy/blob/master/command/send_question.go#L147>)
+### func \(\*QuestionState\) [NoAskCaptureQuestion](<https://github.com/itzngga/roxy/blob/master/command/send_question.go#L149>)
 
 ```go
 func (state *QuestionState) NoAskCaptureQuestion(answer **waProto.Message) *QuestionState
@@ -177,7 +182,7 @@ func (state *QuestionState) NoAskCaptureQuestion(answer **waProto.Message) *Ques
 
 NoAskCaptureQuestion Set no asking question to capture message object with json string format
 
-### func \(\*QuestionState\) [SetNoAskQuestions](<https://github.com/itzngga/roxy/blob/master/command/send_question.go#L95>)
+### func \(\*QuestionState\) [SetNoAskQuestions](<https://github.com/itzngga/roxy/blob/master/command/send_question.go#L97>)
 
 ```go
 func (state *QuestionState) SetNoAskQuestions(answer any) *QuestionState
@@ -185,7 +190,7 @@ func (state *QuestionState) SetNoAskQuestions(answer any) *QuestionState
 
 SetNoAskQuestions Set no asking question based on question and string answer pointer
 
-### func \(\*QuestionState\) [SetNoAskReplyQuestion](<https://github.com/itzngga/roxy/blob/master/command/send_question.go#L122>)
+### func \(\*QuestionState\) [SetNoAskReplyQuestion](<https://github.com/itzngga/roxy/blob/master/command/send_question.go#L124>)
 
 ```go
 func (state *QuestionState) SetNoAskReplyQuestion(answer any) *QuestionState
@@ -193,7 +198,7 @@ func (state *QuestionState) SetNoAskReplyQuestion(answer any) *QuestionState
 
 SetNoAskReplyQuestion Set no asking question based on message has a reply string answer pointer
 
-### func \(\*QuestionState\) [SetQuestion](<https://github.com/itzngga/roxy/blob/master/command/send_question.go#L82>)
+### func \(\*QuestionState\) [SetQuestion](<https://github.com/itzngga/roxy/blob/master/command/send_question.go#L84>)
 
 ```go
 func (state *QuestionState) SetQuestion(question string, answer any) *QuestionState
@@ -201,13 +206,31 @@ func (state *QuestionState) SetQuestion(question string, answer any) *QuestionSt
 
 SetQuestion Set a question based on question and string answer pointer
 
-### func \(\*QuestionState\) [SetReplyQuestion](<https://github.com/itzngga/roxy/blob/master/command/send_question.go#L108>)
+### func \(\*QuestionState\) [SetReplyQuestion](<https://github.com/itzngga/roxy/blob/master/command/send_question.go#L110>)
 
 ```go
 func (state *QuestionState) SetReplyQuestion(question string, answer any) *QuestionState
 ```
 
 SetReplyQuestion Set a question based on message has a reply string answer pointer
+
+### func \(\*QuestionState\) [WithEmoji](<https://github.com/itzngga/roxy/blob/master/command/send_question.go#L212>)
+
+```go
+func (state *QuestionState) WithEmoji(emoji string) *QuestionState
+```
+
+### func \(\*QuestionState\) [WithLikeEmoji](<https://github.com/itzngga/roxy/blob/master/command/send_question.go#L206>)
+
+```go
+func (state *QuestionState) WithLikeEmoji() *QuestionState
+```
+
+### func \(\*QuestionState\) [WithOkEmoji](<https://github.com/itzngga/roxy/blob/master/command/send_question.go#L200>)
+
+```go
+func (state *QuestionState) WithOkEmoji() *QuestionState
+```
 
 ## type [Questions](<https://github.com/itzngga/roxy/blob/master/command/send_question.go#L10-L18>)
 
@@ -223,13 +246,13 @@ type Questions struct {
 }
 ```
 
-### func \(\*Questions\) [GetAnswer](<https://github.com/itzngga/roxy/blob/master/command/send_question.go#L57>)
+### func \(\*Questions\) [GetAnswer](<https://github.com/itzngga/roxy/blob/master/command/send_question.go#L59>)
 
 ```go
 func (q *Questions) GetAnswer() string
 ```
 
-### func \(\*Questions\) [SetAnswer](<https://github.com/itzngga/roxy/blob/master/command/send_question.go#L27>)
+### func \(\*Questions\) [SetAnswer](<https://github.com/itzngga/roxy/blob/master/command/send_question.go#L29>)
 
 ```go
 func (q *Questions) SetAnswer(answer any)
@@ -683,7 +706,7 @@ type Muxer struct {
 }
 ```
 
-### func [NewMuxer](<https://github.com/itzngga/roxy/blob/master/core/muxer.go#L324>)
+### func [NewMuxer](<https://github.com/itzngga/roxy/blob/master/core/muxer.go#L327>)
 
 ```go
 func NewMuxer(log waLog.Logger, options *options.Options) *Muxer
@@ -743,13 +766,13 @@ func (muxer *Muxer) HandleQuestionState(c *whatsmeow.Client, evt *events.Message
 func (muxer *Muxer) HandleQuestionStateChan()
 ```
 
-### func \(\*Muxer\) [PrepareDefaultMiddleware](<https://github.com/itzngga/roxy/blob/master/core/muxer.go#L315>)
+### func \(\*Muxer\) [PrepareDefaultMiddleware](<https://github.com/itzngga/roxy/blob/master/core/muxer.go#L318>)
 
 ```go
 func (muxer *Muxer) PrepareDefaultMiddleware()
 ```
 
-### func \(\*Muxer\) [RunCommand](<https://github.com/itzngga/roxy/blob/master/core/muxer.go#L207>)
+### func \(\*Muxer\) [RunCommand](<https://github.com/itzngga/roxy/blob/master/core/muxer.go#L210>)
 
 ```go
 func (muxer *Muxer) RunCommand(c *whatsmeow.Client, evt *events.Message)
@@ -1178,6 +1201,7 @@ import "github.com/itzngga/Roxy/util"
 - [func ParseUserJid(jid any) (pJid waTypes.JID)](<#func-parseuserjid>)
 - [func RemoveElementByIndex[T []any](slice []T, index int) []T](<#func-removeelementbyindex>)
 - [func RevokeMessage(c *whatsmeow.Client, jid waTypes.JID, messageId waTypes.MessageID)](<#func-revokemessage>)
+- [func SendEmojiMessage(client *whatsmeow.Client, event *events.Message, emoji string)](<#func-sendemojimessage>)
 - [func StringIsOnSlice(target string, slice []string) bool](<#func-stringisonslice>)
 - [func WithReply(m *events.Message) *waProto.ContextInfo](<#func-withreply>)
 
@@ -1242,13 +1266,13 @@ func ParseCmd(str string) (prefix string, cmd string, ok bool)
 func ParseGroupJid(jid any) (pJid waTypes.JID)
 ```
 
-## func [ParseJID](<https://github.com/itzngga/roxy/blob/master/util/message.go#L163>)
+## func [ParseJID](<https://github.com/itzngga/roxy/blob/master/util/message.go#L164>)
 
 ```go
 func ParseJID(arg string) (waTypes.JID, bool)
 ```
 
-## func [ParseMentionedJid](<https://github.com/itzngga/roxy/blob/master/util/message.go#L74>)
+## func [ParseMentionedJid](<https://github.com/itzngga/roxy/blob/master/util/message.go#L75>)
 
 ```go
 func ParseMentionedJid(m *waProto.Message) []string
@@ -1260,25 +1284,25 @@ func ParseMentionedJid(m *waProto.Message) []string
 func ParseMessageText(m *events.Message) string
 ```
 
-## func [ParseQuotedBy](<https://github.com/itzngga/roxy/blob/master/util/message.go#L134>)
+## func [ParseQuotedBy](<https://github.com/itzngga/roxy/blob/master/util/message.go#L135>)
 
 ```go
 func ParseQuotedBy(m *waProto.Message, str string) *waProto.Message
 ```
 
-## func [ParseQuotedMessage](<https://github.com/itzngga/roxy/blob/master/util/message.go#L14>)
+## func [ParseQuotedMessage](<https://github.com/itzngga/roxy/blob/master/util/message.go#L15>)
 
 ```go
 func ParseQuotedMessage(m *waProto.Message) *waProto.Message
 ```
 
-## func [ParseQuotedMessageId](<https://github.com/itzngga/roxy/blob/master/util/message.go#L104>)
+## func [ParseQuotedMessageId](<https://github.com/itzngga/roxy/blob/master/util/message.go#L105>)
 
 ```go
 func ParseQuotedMessageId(m *waProto.Message) *string
 ```
 
-## func [ParseQuotedRemoteJid](<https://github.com/itzngga/roxy/blob/master/util/message.go#L44>)
+## func [ParseQuotedRemoteJid](<https://github.com/itzngga/roxy/blob/master/util/message.go#L45>)
 
 ```go
 func ParseQuotedRemoteJid(m *waProto.Message) *string
@@ -1296,10 +1320,16 @@ func ParseUserJid(jid any) (pJid waTypes.JID)
 func RemoveElementByIndex[T []any](slice []T, index int) []T
 ```
 
-## func [RevokeMessage](<https://github.com/itzngga/roxy/blob/master/util/message.go#L180>)
+## func [RevokeMessage](<https://github.com/itzngga/roxy/blob/master/util/message.go#L181>)
 
 ```go
 func RevokeMessage(c *whatsmeow.Client, jid waTypes.JID, messageId waTypes.MessageID)
+```
+
+## func [SendEmojiMessage](<https://github.com/itzngga/roxy/blob/master/util/message.go#L189>)
+
+```go
+func SendEmojiMessage(client *whatsmeow.Client, event *events.Message, emoji string)
 ```
 
 ## func [StringIsOnSlice](<https://github.com/itzngga/roxy/blob/master/util/common.go#L38>)
@@ -1308,7 +1338,7 @@ func RevokeMessage(c *whatsmeow.Client, jid waTypes.JID, messageId waTypes.Messa
 func StringIsOnSlice(target string, slice []string) bool
 ```
 
-## func [WithReply](<https://github.com/itzngga/roxy/blob/master/util/message.go#L155>)
+## func [WithReply](<https://github.com/itzngga/roxy/blob/master/util/message.go#L156>)
 
 ```go
 func WithReply(m *events.Message) *waProto.ContextInfo
