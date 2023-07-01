@@ -11,6 +11,53 @@ import (
 	"time"
 )
 
+func (runFunc *RunFuncContext) ByteToMessage(value []byte, withReply bool, caption string) *waProto.Message {
+	var message *waProto.Message
+	mimetypeString := mimetype.Detect(value)
+	if mimetypeString.Is("image/webp") {
+		sticker, _ := runFunc.UploadStickerMessageFromBytes(value)
+		message = &waProto.Message{
+			StickerMessage: sticker,
+		}
+		if withReply {
+			sticker.ContextInfo = util.WithReply(runFunc.MessageEvent)
+		}
+	} else if strings.Contains(mimetypeString.String(), "image") {
+		image, _ := runFunc.UploadImageMessageFromBytes(value, caption)
+		message = &waProto.Message{
+			ImageMessage: image,
+		}
+		if withReply {
+			image.ContextInfo = util.WithReply(runFunc.MessageEvent)
+		}
+	} else if strings.Contains(mimetypeString.String(), "video") {
+		video, _ := runFunc.UploadVideoMessageFromBytes(value, caption)
+		message = &waProto.Message{
+			VideoMessage: video,
+		}
+		if withReply {
+			video.ContextInfo = util.WithReply(runFunc.MessageEvent)
+		}
+	} else if strings.Contains(mimetypeString.String(), "audio") {
+		audio, _ := runFunc.UploadAudioMessageFromBytes(value)
+		message = &waProto.Message{
+			AudioMessage: audio,
+		}
+		if withReply {
+			audio.ContextInfo = util.WithReply(runFunc.MessageEvent)
+		}
+	} else {
+		document, _ := runFunc.UploadDocumentMessageFromBytes(value, caption, "document."+mimetypeString.Extension())
+		message = &waProto.Message{
+			DocumentMessage: document,
+		}
+		if withReply {
+			document.ContextInfo = util.WithReply(runFunc.MessageEvent)
+		}
+	}
+	return message
+}
+
 func (runFunc *RunFuncContext) SendReplyMessage(obj any) {
 	var message *waProto.Message
 	switch value := obj.(type) {
@@ -21,39 +68,19 @@ func (runFunc *RunFuncContext) SendReplyMessage(obj any) {
 				ContextInfo: util.WithReply(runFunc.MessageEvent),
 			},
 		}
-	case []byte:
-		mimetypeString := mimetype.Detect(value)
-		if mimetypeString.Is("image/webp") {
-			sticker, _ := runFunc.UploadStickerMessageFromBytes(value)
-			message = &waProto.Message{
-				StickerMessage: sticker,
+	case map[string]string:
+		for url, caption := range value {
+			if util.IsValidUrl(url) {
+				byteResult, err := util.DoHTTPRequest("GET", url)
+				if err != nil {
+					fmt.Println("error: " + err.Error())
+					return
+				}
+				message = runFunc.ByteToMessage(byteResult, true, caption)
 			}
-			sticker.ContextInfo = util.WithReply(runFunc.MessageEvent)
-		} else if strings.Contains(mimetypeString.String(), "image") {
-			image, _ := runFunc.UploadImageMessageFromBytes(value, "")
-			message = &waProto.Message{
-				ImageMessage: image,
-			}
-			image.ContextInfo = util.WithReply(runFunc.MessageEvent)
-		} else if strings.Contains(mimetypeString.String(), "video") {
-			video, _ := runFunc.UploadVideoMessageFromBytes(value, "")
-			message = &waProto.Message{
-				VideoMessage: video,
-			}
-			video.ContextInfo = util.WithReply(runFunc.MessageEvent)
-		} else if strings.Contains(mimetypeString.String(), "audio") {
-			audio, _ := runFunc.UploadAudioMessageFromBytes(value)
-			message = &waProto.Message{
-				AudioMessage: audio,
-			}
-			audio.ContextInfo = util.WithReply(runFunc.MessageEvent)
-		} else {
-			document, _ := runFunc.UploadDocumentMessageFromBytes(value, "", "document."+mimetypeString.Extension())
-			message = &waProto.Message{
-				DocumentMessage: document,
-			}
-			document.ContextInfo = util.WithReply(runFunc.MessageEvent)
 		}
+	case []byte:
+		message = runFunc.ByteToMessage(value, true, "")
 	case *waProto.Conversation:
 		a := value.String()
 		message = &waProto.Message{
@@ -145,6 +172,19 @@ func (runFunc *RunFuncContext) GenerateReplyMessage(obj any) *waProto.Message {
 				ContextInfo: util.WithReply(runFunc.MessageEvent),
 			},
 		}
+	case map[string]string:
+		for url, caption := range value {
+			if util.IsValidUrl(url) {
+				byteResult, err := util.DoHTTPRequest("GET", url)
+				if err != nil {
+					fmt.Println("error: " + err.Error())
+					return nil
+				}
+				message = runFunc.ByteToMessage(byteResult, true, caption)
+			}
+		}
+	case []byte:
+		message = runFunc.ByteToMessage(value, true, "")
 	case *waProto.Conversation:
 		a := value.String()
 		message = &waProto.Message{
@@ -226,37 +266,23 @@ func (runFunc *RunFuncContext) SendMessage(obj any) {
 	case string:
 		message = &waProto.Message{
 			ExtendedTextMessage: &waProto.ExtendedTextMessage{
-				Text: &value,
+				Text:        &value,
+				ContextInfo: util.WithReply(runFunc.MessageEvent),
 			},
 		}
-	case []byte:
-		mimetypeString := mimetype.Detect(value)
-		if mimetypeString.Is("image/webp") {
-			sticker, _ := runFunc.UploadStickerMessageFromBytes(value)
-			message = &waProto.Message{
-				StickerMessage: sticker,
-			}
-		} else if strings.Contains(mimetypeString.String(), "image") {
-			image, _ := runFunc.UploadImageMessageFromBytes(value, "")
-			message = &waProto.Message{
-				ImageMessage: image,
-			}
-		} else if strings.Contains(mimetypeString.String(), "video") {
-			video, _ := runFunc.UploadVideoMessageFromBytes(value, "")
-			message = &waProto.Message{
-				VideoMessage: video,
-			}
-		} else if strings.Contains(mimetypeString.String(), "audio") {
-			audio, _ := runFunc.UploadAudioMessageFromBytes(value)
-			message = &waProto.Message{
-				AudioMessage: audio,
-			}
-		} else {
-			document, _ := runFunc.UploadDocumentMessageFromBytes(value, "", "document."+mimetypeString.Extension())
-			message = &waProto.Message{
-				DocumentMessage: document,
+	case map[string]string:
+		for url, caption := range value {
+			if util.IsValidUrl(url) {
+				byteResult, err := util.DoHTTPRequest("GET", url)
+				if err != nil {
+					fmt.Println("error: " + err.Error())
+					return
+				}
+				message = runFunc.ByteToMessage(byteResult, false, caption)
 			}
 		}
+	case []byte:
+		message = runFunc.ByteToMessage(value, false, "")
 	case *waProto.Conversation:
 		a := value.String()
 		message = &waProto.Message{

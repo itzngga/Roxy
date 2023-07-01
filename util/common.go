@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"github.com/google/uuid"
 	waTypes "go.mau.fi/whatsmeow/types"
+	"net/url"
 	"strconv"
 	"strings"
 )
@@ -15,6 +16,23 @@ func CreateUid() string {
 
 func ParseArgs(str string) []string {
 	return strings.Split(str, "")
+}
+
+func IsValidUrl(s string) bool {
+	if len(s) == 0 {
+		return false
+	}
+
+	url, err := url.Parse(s)
+	if err != nil || url.Scheme == "" {
+		return false
+	}
+
+	if url.Host == "" && url.Fragment == "" && url.Opaque == "" {
+		return false
+	}
+
+	return true
 }
 
 func StringIsOnSlice(target string, slice []string) bool {
