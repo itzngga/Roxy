@@ -52,6 +52,13 @@ func (app *App) HandleEvents(event interface{}) {
 	switch v := event.(type) {
 	case *events.LoggedOut:
 		app.Log.Warnf("%s Client logged out", app.client.Store.ID)
+		app.client.Store.Delete()
+
+		newApp, err := NewGoRoxyBase(app.Options)
+		if err != nil {
+			panic(err)
+		}
+		*app = *newApp
 	case *events.Connected:
 		app.startTime = time.Now()
 		if len(app.client.Store.PushName) == 0 {
