@@ -13,7 +13,7 @@ func ExecPipeline(cmd string, data []byte, params ...string) ([]byte, error) {
 
 	err := cmdchain.Builder().
 		Join(cmd, params...).
-		WithInjections(reader).Finalize().
+		WithInjections(reader).DiscardStdOut().Finalize().
 		WithError(os.Stdout).WithOutput(writer).Run()
 	if err != nil {
 		return nil, err
@@ -27,7 +27,7 @@ func Exec(cmd string, params ...string) ([]byte, error) {
 	var writer = bytes.NewBuffer(nil)
 
 	err := cmdchain.Builder().
-		Join(cmd, params...).Finalize().
+		Join(cmd, params...).DiscardStdOut().Finalize().
 		WithError(os.Stdout).WithOutput(writer).Run()
 	if err != nil {
 		return nil, err

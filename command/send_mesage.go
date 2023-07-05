@@ -386,3 +386,8 @@ func (runFunc *RunFuncContext) EditMessageText(to string) error {
 
 	return nil
 }
+
+func (runFunc *RunFuncContext) SendEmoji(emoji string) {
+	util.SendEmojiMessage(runFunc.Client, runFunc.MessageEvent, emoji)
+	return
+}
