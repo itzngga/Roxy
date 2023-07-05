@@ -26,6 +26,7 @@ import "github.com/itzngga/Roxy/command"
   - [func (state *QuestionState) WithEmoji(emoji string) *QuestionState](<#func-questionstate-withemoji>)
   - [func (state *QuestionState) WithLikeEmoji() *QuestionState](<#func-questionstate-withlikeemoji>)
   - [func (state *QuestionState) WithOkEmoji() *QuestionState](<#func-questionstate-withokemoji>)
+  - [func (state *QuestionState) WithTimeEmoji() *QuestionState](<#func-questionstate-withtimeemoji>)
 - [type Questions](<#type-questions>)
   - [func (q *Questions) GetAnswer() string](<#func-questions-getanswer>)
   - [func (q *Questions) SetAnswer(answer any)](<#func-questions-setanswer>)
@@ -150,7 +151,7 @@ func (state *QuestionState) CaptureQuestion(question string, answer **waProto.Me
 
 CaptureQuestion Set a question to capture message object with json string format
 
-### func \(\*QuestionState\) [Exec](<https://github.com/itzngga/roxy/blob/master/command/send_question.go#L219>)
+### func \(\*QuestionState\) [Exec](<https://github.com/itzngga/roxy/blob/master/command/send_question.go#L229>)
 
 ```go
 func (state *QuestionState) Exec()
@@ -214,23 +215,37 @@ func (state *QuestionState) SetReplyQuestion(question string, answer any) *Quest
 
 SetReplyQuestion Set a question based on message has a reply string answer pointer
 
-### func \(\*QuestionState\) [WithEmoji](<https://github.com/itzngga/roxy/blob/master/command/send_question.go#L212>)
+### func \(\*QuestionState\) [WithEmoji](<https://github.com/itzngga/roxy/blob/master/command/send_question.go#L222>)
 
 ```go
 func (state *QuestionState) WithEmoji(emoji string) *QuestionState
 ```
 
-### func \(\*QuestionState\) [WithLikeEmoji](<https://github.com/itzngga/roxy/blob/master/command/send_question.go#L206>)
+WithEmoji react custom emoji when user answered a question
+
+### func \(\*QuestionState\) [WithLikeEmoji](<https://github.com/itzngga/roxy/blob/master/command/send_question.go#L208>)
 
 ```go
 func (state *QuestionState) WithLikeEmoji() *QuestionState
 ```
 
-### func \(\*QuestionState\) [WithOkEmoji](<https://github.com/itzngga/roxy/blob/master/command/send_question.go#L200>)
+WithLikeEmoji react 👍 when user answered a question
+
+### func \(\*QuestionState\) [WithOkEmoji](<https://github.com/itzngga/roxy/blob/master/command/send_question.go#L201>)
 
 ```go
 func (state *QuestionState) WithOkEmoji() *QuestionState
 ```
+
+WithOkEmoji react 👌 when user answered a question
+
+### func \(\*QuestionState\) [WithTimeEmoji](<https://github.com/itzngga/roxy/blob/master/command/send_question.go#L215>)
+
+```go
+func (state *QuestionState) WithTimeEmoji() *QuestionState
+```
+
+WithTimeEmoji react ⏳ when user answered a question
 
 ## type [Questions](<https://github.com/itzngga/roxy/blob/master/command/send_question.go#L10-L18>)
 
@@ -835,27 +850,29 @@ import "github.com/itzngga/Roxy/options"
 - [func WithAllowFromPrivate(onlyFromPrivate bool) func(*Options)](<#func-withallowfromprivate>)
 - [func WithCmdCacheTimeout(respCacheTimeout time.Duration) func(*Options)](<#func-withcmdcachetimeout>)
 - [func WithCommandLog(cmdLog bool) func(*Options)](<#func-withcommandlog>)
-- [func WithDatabase(database string) func(*PostgresDSN)](<#func-withdatabase>)
 - [func WithHostNumber(hostNumber string) func(*Options)](<#func-withhostnumber>)
 - [func WithLogLevel(logLevel string) func(*Options)](<#func-withloglevel>)
 - [func WithOnlyFromSelf(onlyFromSelf bool) func(*Options)](<#func-withonlyfromself>)
-- [func WithPassword(password string) func(*PostgresDSN)](<#func-withpassword>)
-- [func WithPort(port string) func(*PostgresDSN)](<#func-withport>)
 - [func WithPostgresDSN(pgDsn *PostgresDSN) func(*Options)](<#func-withpostgresdsn>)
 - [func WithSendMsgTimeout(sendMsgTimeout time.Duration) func(*Options)](<#func-withsendmsgtimeout>)
 - [func WithSqlDB(sqlDB *sql.DB) func(*Options)](<#func-withsqldb>)
 - [func WithSqliteFile(sqliteFile string) func(*Options)](<#func-withsqlitefile>)
-- [func WithSslMode(sslMode string) func(*PostgresDSN)](<#func-withsslmode>)
 - [func WithStoreMode(storeMode string) func(*Options)](<#func-withstoremode>)
-- [func WithTimeZone(timeZone string) func(*PostgresDSN)](<#func-withtimezone>)
-- [func WithUsername(userName string) func(*PostgresDSN)](<#func-withusername>)
 - [type Options](<#type-options>)
   - [func New(options ...func(*Options)) (*Options, error)](<#func-new>)
   - [func NewDefaultOptions() *Options](<#func-newdefaultoptions>)
   - [func (o *Options) Validate() error](<#func-options-validate>)
 - [type PostgresDSN](<#type-postgresdsn>)
-  - [func NewPostgresDSN(options ...func(dsn *PostgresDSN)) (*PostgresDSN, error)](<#func-newpostgresdsn>)
+  - [func NewPostgresDSN() *PostgresDSN](<#func-newpostgresdsn>)
+  - [func (dsn *PostgresDSN) FromEnv() *PostgresDSN](<#func-postgresdsn-fromenv>)
   - [func (dsn *PostgresDSN) GenerateDSN() string](<#func-postgresdsn-generatedsn>)
+  - [func (dsn *PostgresDSN) SetDatabase(database string) *PostgresDSN](<#func-postgresdsn-setdatabase>)
+  - [func (dsn *PostgresDSN) SetHost(host string) *PostgresDSN](<#func-postgresdsn-sethost>)
+  - [func (dsn *PostgresDSN) SetMode(sslMode string) *PostgresDSN](<#func-postgresdsn-setmode>)
+  - [func (dsn *PostgresDSN) SetPassword(password string) *PostgresDSN](<#func-postgresdsn-setpassword>)
+  - [func (dsn *PostgresDSN) SetPort(port string) *PostgresDSN](<#func-postgresdsn-setport>)
+  - [func (dsn *PostgresDSN) SetTimeZone(timeZone string) *PostgresDSN](<#func-postgresdsn-settimezone>)
+  - [func (dsn *PostgresDSN) SetUsername(userName string) *PostgresDSN](<#func-postgresdsn-setusername>)
   - [func (dsn *PostgresDSN) Validate() error](<#func-postgresdsn-validate>)
 
 
@@ -883,12 +900,6 @@ func WithCmdCacheTimeout(respCacheTimeout time.Duration) func(*Options)
 func WithCommandLog(cmdLog bool) func(*Options)
 ```
 
-## func [WithDatabase](<https://github.com/itzngga/roxy/blob/master/options/postgresql.go#L79>)
-
-```go
-func WithDatabase(database string) func(*PostgresDSN)
-```
-
 ## func [WithHostNumber](<https://github.com/itzngga/roxy/blob/master/options/options.go#L58>)
 
 ```go
@@ -905,18 +916,6 @@ func WithLogLevel(logLevel string) func(*Options)
 
 ```go
 func WithOnlyFromSelf(onlyFromSelf bool) func(*Options)
-```
-
-## func [WithPassword](<https://github.com/itzngga/roxy/blob/master/options/postgresql.go#L73>)
-
-```go
-func WithPassword(password string) func(*PostgresDSN)
-```
-
-## func [WithPort](<https://github.com/itzngga/roxy/blob/master/options/postgresql.go#L85>)
-
-```go
-func WithPort(port string) func(*PostgresDSN)
 ```
 
 ## func [WithPostgresDSN](<https://github.com/itzngga/roxy/blob/master/options/options.go#L76>)
@@ -943,28 +942,10 @@ func WithSqlDB(sqlDB *sql.DB) func(*Options)
 func WithSqliteFile(sqliteFile string) func(*Options)
 ```
 
-## func [WithSslMode](<https://github.com/itzngga/roxy/blob/master/options/postgresql.go#L91>)
-
-```go
-func WithSslMode(sslMode string) func(*PostgresDSN)
-```
-
 ## func [WithStoreMode](<https://github.com/itzngga/roxy/blob/master/options/options.go#L64>)
 
 ```go
 func WithStoreMode(storeMode string) func(*Options)
-```
-
-## func [WithTimeZone](<https://github.com/itzngga/roxy/blob/master/options/postgresql.go#L97>)
-
-```go
-func WithTimeZone(timeZone string) func(*PostgresDSN)
-```
-
-## func [WithUsername](<https://github.com/itzngga/roxy/blob/master/options/postgresql.go#L67>)
-
-```go
-func WithUsername(userName string) func(*PostgresDSN)
 ```
 
 ## type [Options](<https://github.com/itzngga/roxy/blob/master/options/options.go#L10-L41>)
@@ -1020,10 +1001,11 @@ func NewDefaultOptions() *Options
 func (o *Options) Validate() error
 ```
 
-## type [PostgresDSN](<https://github.com/itzngga/roxy/blob/master/options/postgresql.go#L9-L16>)
+## type [PostgresDSN](<https://github.com/itzngga/roxy/blob/master/options/postgresql.go#L10-L18>)
 
 ```go
 type PostgresDSN struct {
+    Host     string
     Username string
     Password string
     Database string
@@ -1033,19 +1015,67 @@ type PostgresDSN struct {
 }
 ```
 
-### func [NewPostgresDSN](<https://github.com/itzngga/roxy/blob/master/options/postgresql.go#L53>)
+### func [NewPostgresDSN](<https://github.com/itzngga/roxy/blob/master/options/postgresql.go#L58>)
 
 ```go
-func NewPostgresDSN(options ...func(dsn *PostgresDSN)) (*PostgresDSN, error)
+func NewPostgresDSN() *PostgresDSN
 ```
 
-### func \(\*PostgresDSN\) [GenerateDSN](<https://github.com/itzngga/roxy/blob/master/options/postgresql.go#L49>)
+### func \(\*PostgresDSN\) [FromEnv](<https://github.com/itzngga/roxy/blob/master/options/postgresql.go#L97>)
+
+```go
+func (dsn *PostgresDSN) FromEnv() *PostgresDSN
+```
+
+### func \(\*PostgresDSN\) [GenerateDSN](<https://github.com/itzngga/roxy/blob/master/options/postgresql.go#L54>)
 
 ```go
 func (dsn *PostgresDSN) GenerateDSN() string
 ```
 
-### func \(\*PostgresDSN\) [Validate](<https://github.com/itzngga/roxy/blob/master/options/postgresql.go#L18>)
+### func \(\*PostgresDSN\) [SetDatabase](<https://github.com/itzngga/roxy/blob/master/options/postgresql.go#L77>)
+
+```go
+func (dsn *PostgresDSN) SetDatabase(database string) *PostgresDSN
+```
+
+### func \(\*PostgresDSN\) [SetHost](<https://github.com/itzngga/roxy/blob/master/options/postgresql.go#L62>)
+
+```go
+func (dsn *PostgresDSN) SetHost(host string) *PostgresDSN
+```
+
+### func \(\*PostgresDSN\) [SetMode](<https://github.com/itzngga/roxy/blob/master/options/postgresql.go#L87>)
+
+```go
+func (dsn *PostgresDSN) SetMode(sslMode string) *PostgresDSN
+```
+
+### func \(\*PostgresDSN\) [SetPassword](<https://github.com/itzngga/roxy/blob/master/options/postgresql.go#L72>)
+
+```go
+func (dsn *PostgresDSN) SetPassword(password string) *PostgresDSN
+```
+
+### func \(\*PostgresDSN\) [SetPort](<https://github.com/itzngga/roxy/blob/master/options/postgresql.go#L82>)
+
+```go
+func (dsn *PostgresDSN) SetPort(port string) *PostgresDSN
+```
+
+### func \(\*PostgresDSN\) [SetTimeZone](<https://github.com/itzngga/roxy/blob/master/options/postgresql.go#L92>)
+
+```go
+func (dsn *PostgresDSN) SetTimeZone(timeZone string) *PostgresDSN
+```
+
+### func \(\*PostgresDSN\) [SetUsername](<https://github.com/itzngga/roxy/blob/master/options/postgresql.go#L67>)
+
+```go
+func (dsn *PostgresDSN) SetUsername(userName string) *PostgresDSN
+```
+
+### func \(\*PostgresDSN\) [Validate](<https://github.com/itzngga/roxy/blob/master/options/postgresql.go#L20>)
 
 ```go
 func (dsn *PostgresDSN) Validate() error
@@ -1266,13 +1296,13 @@ func ParseCmd(str string) (prefix string, cmd string, ok bool)
 func ParseGroupJid(jid any) (pJid waTypes.JID)
 ```
 
-## func [ParseJID](<https://github.com/itzngga/roxy/blob/master/util/message.go#L164>)
+## func [ParseJID](<https://github.com/itzngga/roxy/blob/master/util/message.go#L165>)
 
 ```go
 func ParseJID(arg string) (waTypes.JID, bool)
 ```
 
-## func [ParseMentionedJid](<https://github.com/itzngga/roxy/blob/master/util/message.go#L75>)
+## func [ParseMentionedJid](<https://github.com/itzngga/roxy/blob/master/util/message.go#L76>)
 
 ```go
 func ParseMentionedJid(m *waProto.Message) []string
@@ -1284,25 +1314,25 @@ func ParseMentionedJid(m *waProto.Message) []string
 func ParseMessageText(m *events.Message) string
 ```
 
-## func [ParseQuotedBy](<https://github.com/itzngga/roxy/blob/master/util/message.go#L135>)
+## func [ParseQuotedBy](<https://github.com/itzngga/roxy/blob/master/util/message.go#L136>)
 
 ```go
 func ParseQuotedBy(m *waProto.Message, str string) *waProto.Message
 ```
 
-## func [ParseQuotedMessage](<https://github.com/itzngga/roxy/blob/master/util/message.go#L15>)
+## func [ParseQuotedMessage](<https://github.com/itzngga/roxy/blob/master/util/message.go#L16>)
 
 ```go
 func ParseQuotedMessage(m *waProto.Message) *waProto.Message
 ```
 
-## func [ParseQuotedMessageId](<https://github.com/itzngga/roxy/blob/master/util/message.go#L105>)
+## func [ParseQuotedMessageId](<https://github.com/itzngga/roxy/blob/master/util/message.go#L106>)
 
 ```go
 func ParseQuotedMessageId(m *waProto.Message) *string
 ```
 
-## func [ParseQuotedRemoteJid](<https://github.com/itzngga/roxy/blob/master/util/message.go#L45>)
+## func [ParseQuotedRemoteJid](<https://github.com/itzngga/roxy/blob/master/util/message.go#L46>)
 
 ```go
 func ParseQuotedRemoteJid(m *waProto.Message) *string
@@ -1320,13 +1350,13 @@ func ParseUserJid(jid any) (pJid waTypes.JID)
 func RemoveElementByIndex[T []any](slice []T, index int) []T
 ```
 
-## func [RevokeMessage](<https://github.com/itzngga/roxy/blob/master/util/message.go#L181>)
+## func [RevokeMessage](<https://github.com/itzngga/roxy/blob/master/util/message.go#L182>)
 
 ```go
 func RevokeMessage(c *whatsmeow.Client, jid waTypes.JID, messageId waTypes.MessageID)
 ```
 
-## func [SendEmojiMessage](<https://github.com/itzngga/roxy/blob/master/util/message.go#L189>)
+## func [SendEmojiMessage](<https://github.com/itzngga/roxy/blob/master/util/message.go#L190>)
 
 ```go
 func SendEmojiMessage(client *whatsmeow.Client, event *events.Message, emoji string)
@@ -1338,7 +1368,7 @@ func SendEmojiMessage(client *whatsmeow.Client, event *events.Message, emoji str
 func StringIsOnSlice(target string, slice []string) bool
 ```
 
-## func [WithReply](<https://github.com/itzngga/roxy/blob/master/util/message.go#L156>)
+## func [WithReply](<https://github.com/itzngga/roxy/blob/master/util/message.go#L157>)
 
 ```go
 func WithReply(m *events.Message) *waProto.ContextInfo
@@ -1362,14 +1392,25 @@ import "github.com/itzngga/Roxy/util/cli"
 
 ## Index
 
+- [func Exec(cmd string, params ...string) ([]byte, error)](<#func-exec>)
 - [func ExecPipeline(cmd string, data []byte, params ...string) ([]byte, error)](<#func-execpipeline>)
 
 
-## func [ExecPipeline](<https://github.com/itzngga/roxy/blob/master/util/cli/pipeline.go#L9>)
+## func [Exec](<https://github.com/itzngga/roxy/blob/master/util/cli/pipeline.go#L26>)
+
+```go
+func Exec(cmd string, params ...string) ([]byte, error)
+```
+
+Exec execute command without input data and capture stdout to byte
+
+## func [ExecPipeline](<https://github.com/itzngga/roxy/blob/master/util/cli/pipeline.go#L10>)
 
 ```go
 func ExecPipeline(cmd string, data []byte, params ...string) ([]byte, error)
 ```
+
+ExecPipeline execute command with stdin input and capture stdout to byte
 
 # thumbnail
 

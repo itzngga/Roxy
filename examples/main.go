@@ -13,7 +13,8 @@ import (
 )
 
 func main() {
-	app, err := core.NewGoRoxyBase(options.NewDefaultOptions())
+	opt := options.NewDefaultOptions()
+	app, err := core.NewGoRoxyBase(opt)
 	if err != nil {
 		log.Fatal(err)
 	}

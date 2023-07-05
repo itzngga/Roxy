@@ -80,20 +80,26 @@ type Options struct {
 ```
 ### PostgresSQL
 ```go
-options := options.Options{
-	StoreMode: "postgres"
-	PostgresDsn: options.NewPostgresDSN("username", "password", "dbname", "port", "disable", "Asia/Jakarta")
+opt := options.NewDefaultOptions()
+opt.StoreMode = "postgres"
+opt.PostgresDsn = options.NewPostgresDSN().FromEnv()
+
+app, err := core.NewGoRoxyBase(opt)
+if err != nil {
+    log.Fatal(err)
 }
-app := core.NewGoRoxyBase(options)
 ```
 
 ### Sqlite
 ```go
-options := options.Options{
-	StoreMode: "sqlite"
-	SqliteFile: "store.db"
+opt := options.NewDefaultOptions()
+opt.StoreMode = "sqlite"
+opt.SqliteFile = "ROXY.DB"
+
+app, err := core.NewGoRoxyBase(opt)
+if err != nil {
+    log.Fatal(err)
 }
-app := core.NewGoRoxyBase(options)
 ```
 
 # Add a Command

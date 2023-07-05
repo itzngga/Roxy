@@ -172,5 +172,12 @@ func (o *Options) Validate() error {
 		return errors.New("error: please specify one of allow from private or group")
 	}
 
+	if o.PostgresDsn != nil {
+		err := o.PostgresDsn.Validate()
+		if err != nil {
+			return err
+		}
+	}
+
 	return nil
 }
