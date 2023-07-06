@@ -33,8 +33,8 @@ func CreateVideoThumbnail(data []byte) []byte {
 
 	err := cmdchain.Builder().
 		Join("ffmpeg", "-y", "-hide_banner", "-loglevel", "panic",
-			"-f", "mp4",
-			"-i", "pipe:0",
+			"-f", "mp4", "-i", "pipe:0",
+			"-ss", "00:00:00", "-t", "00:00:01",
 			"-vf", "'select=gt(scene\\,0.4)'",
 			"-frames:v", "5",
 			"-fps_mode", "vfr",

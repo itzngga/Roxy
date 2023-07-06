@@ -40,6 +40,10 @@ func ParseCmd(str string) (prefix string, cmd string, ok bool) {
 	case "+":
 		return string(str[0]), split[0][1:], true
 	}
+
+	if len(str) >= 1 {
+		return string(str[0]), split[0][1:], false
+	}
 	//word := strings.Split(str, " ")
 	//if len(word) == 0 && word[0] == "" {
 	//	return "", "", false

@@ -38,6 +38,8 @@ type Options struct {
 	AllowFromGroup bool
 	// OnlyFromSelf allow only from self messages
 	OnlyFromSelf bool
+	// CommandSuggestion allow command suggestion
+	CommandSuggestion bool
 }
 
 func New(options ...func(*Options)) (*Options, error) {
@@ -134,6 +136,7 @@ func NewDefaultOptions() *Options {
 		WithCommandLog:              true,
 		AllowFromGroup:              true,
 		AllowFromPrivate:            true,
+		CommandSuggestion:           true,
 		SendMessageTimeout:          time.Second * 30,
 		CommandResponseCacheTimeout: time.Minute * 15,
 	}

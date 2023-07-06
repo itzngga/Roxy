@@ -9,8 +9,10 @@ require (
 	github.com/mattn/go-sqlite3 v1.14.17
 	github.com/mdp/qrterminal/v3 v3.1.1
 	github.com/rainu/go-command-chain v0.4.0
+	github.com/sajari/fuzzy v1.0.0
 	github.com/zhangyunhao116/skipmap v0.10.1
 	go.mau.fi/whatsmeow v0.0.0-20230610124725-5dd0baf43eda
+	google.golang.org/protobuf v1.30.0
 )
 
 require (
@@ -21,6 +23,5 @@ require (
 	go.mau.fi/libsignal v0.1.0 // indirect
 	golang.org/x/crypto v0.9.0 // indirect
 	golang.org/x/net v0.10.0 // indirect
-	google.golang.org/protobuf v1.30.0 // indirect
 	rsc.io/qr v0.2.0 // indirect
 )

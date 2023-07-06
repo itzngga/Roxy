@@ -8,6 +8,7 @@ import (
 	"github.com/itzngga/Roxy/embed"
 	"github.com/itzngga/Roxy/options"
 	"github.com/itzngga/Roxy/util"
+	"github.com/sajari/fuzzy"
 	"github.com/zhangyunhao116/skipmap"
 	"go.mau.fi/whatsmeow"
 	waProto "go.mau.fi/whatsmeow/binary/proto"
@@ -30,6 +31,7 @@ type Muxer struct {
 	QuestionState        *skipmap.StringMap[*command.QuestionState]
 	QuestionChan         chan *command.QuestionState
 	Locals               *skipmap.StringMap[string]
+	SuggestionModel      *fuzzy.Model
 }
 
 func (muxer *Muxer) Clean() {
@@ -237,6 +239,11 @@ func (muxer *Muxer) RunCommand(c *whatsmeow.Client, evt *events.Message) {
 
 	prefix, cmd, isCmd := util.ParseCmd(parsed)
 	cmdLoad, isAvailable := muxer.Commands.Load(cmd)
+	if muxer.Options.CommandSuggestion && !isAvailable {
+		muxer.SuggestCommand(c, evt, prefix, cmd)
+		return
+	}
+
 	if isCmd && isAvailable {
 		go func() {
 			jids := []waTypes.MessageID{
@@ -342,6 +349,10 @@ func NewMuxer(log waLog.Logger, options *options.Options) *Muxer {
 	muxer.HandleQuestionStateChan()
 
 	muxer.AddAllEmbed()
+
+	if options.CommandSuggestion {
+		muxer.GenerateSuggestionModel()
+	}
 
 	return muxer
 }
