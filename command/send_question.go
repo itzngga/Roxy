@@ -20,6 +20,7 @@ type Questions struct {
 type QuestionState struct {
 	WithEmojiReact bool
 	EmojiReact     string
+	Separator      string
 	RunFuncCtx     *RunFuncContext
 	ActiveQuestion string
 	Questions      []*Questions
@@ -75,9 +76,17 @@ func NewUserQuestion(ctx *RunFuncContext) *QuestionState {
 	question := &QuestionState{
 		RunFuncCtx: ctx,
 		ResultChan: make(chan bool),
+		Separator:  " | ",
 	}
 
 	return question
+}
+
+// SetParserSeparator Set parser separator for question, eg:
+// /hello world | info [" | " is the separator]
+func (state *QuestionState) SetParserSeparator(separator string) *QuestionState {
+	state.Separator = separator
+	return state
 }
 
 // SetQuestion Set a question based on question and string answer pointer
@@ -182,7 +191,7 @@ func (state *QuestionState) NoAskCaptureMediaQuestion(answer **waProto.Message) 
 
 // ExecWithParser Run question engine with argument parser
 func (state *QuestionState) ExecWithParser() {
-	questions := strings.Split(strings.Join(state.RunFuncCtx.Arguments, " "), " | ")
+	questions := strings.Split(strings.Join(state.RunFuncCtx.Arguments, " "), state.Separator)
 	if questions[0] != "" && len(state.Questions) == len(questions) {
 		for i, _ := range state.Questions {
 			state.Questions[i].SetAnswer(questions[i])

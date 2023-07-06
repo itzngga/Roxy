@@ -70,7 +70,7 @@ func ParseAllJid(jid any) (pJid waTypes.JID) {
 		fmt.Printf("error: unsupported jid types : %s\n", jid)
 		return pJid
 	}
-	return pJid
+	return pJid.ToNonAD()
 }
 
 func ParseGroupJid(jid any) (pJid waTypes.JID) {
@@ -94,7 +94,7 @@ func ParseGroupJid(jid any) (pJid waTypes.JID) {
 		fmt.Printf("error: unsupported jid types : %s\n", jid)
 		return pJid
 	}
-	return pJid
+	return pJid.ToNonAD()
 }
 
 func ParseUserJid(jid any) (pJid waTypes.JID) {
@@ -118,7 +118,7 @@ func ParseUserJid(jid any) (pJid waTypes.JID) {
 		fmt.Printf("error: unsupported jid types : %s\n", jid)
 		return pJid
 	}
-	return pJid
+	return pJid.ToNonAD()
 }
 
 func JIDToString(jidStr any) (result string, err error) {
