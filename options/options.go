@@ -7,6 +7,13 @@ import (
 	"time"
 )
 
+type LoginOptions int8
+
+const (
+	SCAN_QR   LoginOptions = 0
+	PAIR_CODE LoginOptions = 1
+)
+
 type Options struct {
 	// HostNumber will use the first available device when null
 	HostNumber string
@@ -29,6 +36,9 @@ type Options struct {
 	WithCommandLog              bool
 	CommandResponseCacheTimeout time.Duration
 	SendMessageTimeout          time.Duration
+
+	// LoginOptions constant of ScanQR or PairCode
+	LoginOptions LoginOptions
 
 	// Bot General Settings
 
@@ -129,6 +139,18 @@ func WithOnlyFromSelf(onlyFromSelf bool) func(*Options) {
 	}
 }
 
+func WithScanQRLogin() func(*Options) {
+	return func(options *Options) {
+		options.LoginOptions = SCAN_QR
+	}
+}
+
+func WithPairCodeLogin() func(*Options) {
+	return func(options *Options) {
+		options.LoginOptions = PAIR_CODE
+	}
+}
+
 func NewDefaultOptions() *Options {
 	return &Options{
 		StoreMode:                   "sqlite",
@@ -137,6 +159,7 @@ func NewDefaultOptions() *Options {
 		AllowFromGroup:              true,
 		AllowFromPrivate:            true,
 		CommandSuggestion:           true,
+		LoginOptions:                SCAN_QR,
 		SendMessageTimeout:          time.Second * 30,
 		CommandResponseCacheTimeout: time.Minute * 15,
 	}
@@ -180,6 +203,10 @@ func (o *Options) Validate() error {
 		if err != nil {
 			return err
 		}
+	}
+
+	if o.LoginOptions == PAIR_CODE && o.HostNumber == "" {
+		return errors.New("error: you must specify host number when using pair code login options")
 	}
 
 	return nil

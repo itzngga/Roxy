@@ -11,7 +11,7 @@ require (
 	github.com/rainu/go-command-chain v0.4.0
 	github.com/sajari/fuzzy v1.0.0
 	github.com/zhangyunhao116/skipmap v0.10.1
-	go.mau.fi/whatsmeow v0.0.0-20230610124725-5dd0baf43eda
+	go.mau.fi/whatsmeow v0.0.0-20230718190209-efef6f1cec8e
 	google.golang.org/protobuf v1.30.0
 )
 

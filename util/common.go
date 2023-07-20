@@ -55,70 +55,60 @@ func RemoveElementByIndex[T []any](slice []T, index int) []T {
 	return slice[:sliceLastIndex]
 }
 
-func ParseAllJid(jid any) (pJid waTypes.JID) {
+func ParseAllJid(jid any) (pJid waTypes.JID, err error) {
 	switch uJid := jid.(type) {
 	case string:
 		result, ok := ParseJID(uJid)
 		if !ok {
-			fmt.Printf("error: failed to parse jid : %s\n", jid)
-			return pJid
+			return pJid, fmt.Errorf("error: failed to parse jid : %s\n", jid)
 		}
 		pJid = result
 	case waTypes.JID:
 		pJid = uJid
 	default:
-		fmt.Printf("error: unsupported jid types : %s\n", jid)
-		return pJid
+		return pJid, fmt.Errorf("error: unsupported jid types : %s\n", jid)
 	}
-	return pJid.ToNonAD()
+	return pJid.ToNonAD(), nil
 }
 
-func ParseGroupJid(jid any) (pJid waTypes.JID) {
+func ParseGroupJid(jid any) (pJid waTypes.JID, err error) {
 	switch uJid := jid.(type) {
 	case string:
 		result, ok := ParseJID(uJid)
 		if !ok {
-			fmt.Printf("error: failed to parse jid : %s\n", jid)
-			return pJid
+			return pJid, fmt.Errorf("error: failed to parse jid : %s\n", jid)
 		} else if result.Server != waTypes.GroupServer {
-			fmt.Printf("error: given jid is not group jid : %s\n", jid)
-			return pJid
+			return pJid, fmt.Errorf("error: given jid is not group jid : %s\n", jid)
 		}
 		pJid = result
 	case waTypes.JID:
 		if uJid.Server != waTypes.GroupServer {
-			fmt.Printf("error: given jid is not group jid : %s\n", jid)
-			return pJid
+			return pJid, fmt.Errorf("error: given jid is not group jid : %s\n", jid)
 		}
 	default:
-		fmt.Printf("error: unsupported jid types : %s\n", jid)
-		return pJid
+		return pJid, fmt.Errorf("error: unsupported jid types : %s\n", jid)
 	}
-	return pJid.ToNonAD()
+	return pJid.ToNonAD(), nil
 }
 
-func ParseUserJid(jid any) (pJid waTypes.JID) {
+func ParseUserJid(jid any) (pJid waTypes.JID, err error) {
 	switch uJid := jid.(type) {
 	case string:
 		result, ok := ParseJID(uJid)
 		if !ok {
-			fmt.Printf("error: failed to parse jid : %s\n", jid)
-			return pJid
+			return pJid, fmt.Errorf("error: failed to parse jid : %s\n", jid)
 		} else if result.Server != waTypes.DefaultUserServer {
-			fmt.Printf("error: given jid is not user jid : %s\n", jid)
-			return pJid
+			return pJid, fmt.Errorf("error: given jid is not user jid : %s\n", jid)
 		}
 		pJid = result
 	case waTypes.JID:
 		if uJid.Server != waTypes.DefaultUserServer {
-			fmt.Printf("error: given jid is not user jid : %s\n", jid)
-			return pJid
+			return pJid, fmt.Errorf("error: given jid is not user jid : %s\n", jid)
 		}
 	default:
-		fmt.Printf("error: unsupported jid types : %s\n", jid)
-		return pJid
+		return pJid, fmt.Errorf("error: unsupported jid types : %s\n", jid)
 	}
-	return pJid.ToNonAD()
+	return pJid.ToNonAD(), nil
 }
 
 func JIDToString(jidStr any) (result string, err error) {

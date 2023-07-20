@@ -28,17 +28,19 @@ type App struct {
 	Log  waLog.Logger
 	Pool *pond.WorkerPool
 
-	startTime time.Time
-	client    *whatsmeow.Client
-	muxer     *Muxer
+	StartTime    time.Time
+	Client       *whatsmeow.Client
+	Muxer        *Muxer
+	pairCodeChan chan bool
 }
 
 func NewGoRoxyBase(options *options.Options) (*App, error) {
 	stdLog := waLog.Stdout("WaBOT", options.LogLevel, true)
 	app := &App{
-		Log:     stdLog,
-		Options: options,
-		muxer:   NewMuxer(stdLog, options),
+		Log:          stdLog,
+		Options:      options,
+		Muxer:        NewMuxer(stdLog, options),
+		pairCodeChan: make(chan bool),
 	}
 	app.Pool = pond.New(100, 1000)
 	err := app.InitializeClient()
@@ -51,8 +53,8 @@ func NewGoRoxyBase(options *options.Options) (*App, error) {
 func (app *App) HandleEvents(event interface{}) {
 	switch v := event.(type) {
 	case *events.LoggedOut:
-		app.Log.Warnf("%s Client logged out", app.client.Store.ID)
-		app.client.Store.Delete()
+		app.Log.Warnf("%s Client logged out", app.Client.Store.ID)
+		app.Client.Store.Delete()
 
 		newApp, err := NewGoRoxyBase(app.Options)
 		if err != nil {
@@ -60,16 +62,20 @@ func (app *App) HandleEvents(event interface{}) {
 		}
 		*app = *newApp
 	case *events.Connected:
-		app.startTime = time.Now()
-		if len(app.client.Store.PushName) == 0 {
+		app.StartTime = time.Now()
+		if len(app.Client.Store.PushName) == 0 {
 			return
 		}
+		if app.Options.LoginOptions == options.PAIR_CODE {
+			app.pairCodeChan <- true
+		}
 		app.Log.Infof("Connected!")
-		_ = app.client.SendPresence(waTypes.PresenceAvailable)
+		_ = app.Client.SendPresence(waTypes.PresenceAvailable)
+		command.CacheAllGroup(app.Client)
 	case *events.Message:
 		app.Pool.Submit(func() {
-			if !app.startTime.IsZero() && v.Info.Timestamp.After(app.startTime) {
-				app.muxer.RunCommand(app.client, v)
+			if !app.StartTime.IsZero() && v.Info.Timestamp.After(app.StartTime) {
+				app.Muxer.RunCommand(app.Client, v)
 				return
 			}
 		})
@@ -88,10 +94,14 @@ func (app *App) HandleEvents(event interface{}) {
 	case *events.AppState:
 		// Ignore
 	case *events.PushNameSetting:
-		err := app.client.SendPresence(waTypes.PresenceAvailable)
+		err := app.Client.SendPresence(waTypes.PresenceAvailable)
 		if err != nil {
 			app.Log.Warnf("Failed to send presence after push name update: %v\n", err)
 		}
+	case *events.JoinedGroup:
+		command.UNCacheOneGroup(app.Client, nil, v)
+	case *events.GroupInfo:
+		command.UNCacheOneGroup(app.Client, v, nil)
 	}
 }
 func (app *App) InitializeContainer() (*sqlstore.Container, error) {
@@ -157,52 +167,79 @@ func (app *App) InitializeClient() error {
 	store.DeviceProps.PlatformType = waProto.DeviceProps_CHROME.Enum()
 	store.DeviceProps.RequireFullSync = types.Bool(false)
 
-	app.client = whatsmeow.NewClient(device, waLog.Stdout("WhatsMeow", "ERROR", true))
-	qrChan, _ := app.client.GetQRChannel(context.Background())
-	err = app.client.Connect()
-	if err != nil {
-		if !errors.Is(err, whatsmeow.ErrQRStoreContainsID) {
-			app.Log.Errorf("error connecting to client: %v", err)
+	app.Client = whatsmeow.NewClient(device, waLog.Stdout("WhatsMeow", "ERROR", true))
+	app.Client.AddEventHandler(app.HandleEvents)
+	if app.Options.LoginOptions == options.SCAN_QR {
+		qrChan, _ := app.Client.GetQRChannel(context.Background())
+		err = app.Client.Connect()
+		if err != nil {
+			if !errors.Is(err, whatsmeow.ErrQRStoreContainsID) {
+				app.Log.Errorf("error connecting to Client: %v", err)
+			}
+		} else {
+			go func() {
+				for evt := range qrChan {
+					if evt.Event == "code" {
+						qrterminal.GenerateHalfBlock(evt.Code, qrterminal.L, os.Stdout)
+						app.Log.Infof("QR Generated!")
+					} else if evt.Event == "success" {
+						app.Log.Infof("QR Scanned!")
+					} else {
+						app.Log.Infof("QR channel result: %s", evt.Event)
+					}
+				}
+			}()
+		}
+
+		err = app.Client.Connect()
+		if err != nil {
+			if !errors.Is(err, whatsmeow.ErrAlreadyConnected) {
+				app.Log.Errorf("error connecting to Client: %v", err)
+				return err
+			}
 		}
 	} else {
-		go func() {
-			for evt := range qrChan {
-				if evt.Event == "code" {
-					qrterminal.GenerateHalfBlock(evt.Code, qrterminal.L, os.Stdout)
-					app.Log.Infof("QR Generated!")
-				} else if evt.Event == "success" {
-					app.Log.Infof("QR Scanned!")
-				} else {
-					app.Log.Infof("QR channel result: %s", evt.Event)
-				}
+		app.Client.Disconnect()
+		err = app.Client.Connect()
+		if err != nil {
+			if !errors.Is(err, whatsmeow.ErrAlreadyConnected) {
+				app.Log.Errorf("error connecting to Client: %v", err)
+				return err
 			}
-		}()
-	}
+		}
+		if app.Options.HostNumber == "" {
+			return errors.New("error: you must specify host number when using pair code login options")
+		}
 
-	err = app.client.Connect()
-	if err != nil {
-		if !errors.Is(err, whatsmeow.ErrAlreadyConnected) {
-			app.Log.Errorf("error connecting to client: %v", err)
+		pairCode, err := app.Client.PairPhone(app.Options.HostNumber, true)
+		if err != nil {
 			return err
+		}
+
+		app.Log.Infof("PairCode: %s", pairCode)
+
+		for res := range app.pairCodeChan {
+			if res {
+				break
+			}
 		}
 	}
 
-	app.client.AddEventHandler(app.HandleEvents)
 	return nil
 }
 
 func (app *App) AddNewCategory(category string) {
-	app.muxer.Categories.Store(category, category)
+	app.Muxer.Categories.Store(category, category)
 }
 
 func (app *App) AddNewCommand(command command.Command) {
-	app.muxer.AddCommand(&command)
+	app.Muxer.AddCommand(&command)
 }
 
 func (app *App) AddNewMiddleware(middleware command.MiddlewareFunc) {
-	app.muxer.AddMiddleware(middleware)
+	app.Muxer.AddMiddleware(middleware)
 }
 
 func (app *App) Shutdown() {
-	app.client.Disconnect()
+	app.Client.Disconnect()
 }
