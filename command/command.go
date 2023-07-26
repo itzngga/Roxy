@@ -20,6 +20,9 @@ type Command struct {
 	GroupOnly    bool
 	PrivateOnly  bool
 
+	OnlyAdminGroup bool
+	OnlyIfBotAdmin bool
+
 	Middleware MiddlewareFunc
 	RunFunc    RunFunc
 }

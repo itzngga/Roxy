@@ -51,8 +51,6 @@ func (muxer *Muxer) Clean() {
 		muxer.Locals.Delete(key)
 		return true
 	})
-	muxer.PrepareDefaultMiddleware()
-	muxer.Locals.Store("uid", util.CreateUid())
 }
 
 func (muxer *Muxer) HandleQuestionStateChan() {
@@ -245,7 +243,30 @@ func (muxer *Muxer) RunCommand(c *whatsmeow.Client, evt *events.Message) {
 	}
 
 	if isCmd && isAvailable {
+		if cmdLoad.GroupOnly {
+			if !evt.Info.IsGroup {
+				return
+			}
+		}
+		if cmdLoad.PrivateOnly {
+			if evt.Info.IsGroup {
+				return
+			}
+		}
+		if cmdLoad.OnlyAdminGroup && evt.Info.IsGroup {
+			if ok, _ := IsGroupAdmin(c, evt.Info.Chat, evt.Info.Sender); !ok {
+				return
+			}
+		}
+		if cmdLoad.OnlyIfBotAdmin && evt.Info.IsGroup {
+			if ok, _ := IsClientGroupAdmin(c, evt.Info.Chat); !ok {
+				return
+			}
+		}
 		go func() {
+			if muxer.Options.WithCommandLog {
+				muxer.Log.Infof("[CMD] [%s] command > %s", number, cmdLoad.Name)
+			}
 			jids := []waTypes.MessageID{
 				evt.Info.ID,
 			}
@@ -288,16 +309,6 @@ func (muxer *Muxer) RunCommand(c *whatsmeow.Client, evt *events.Message) {
 				return
 			}
 		}
-		if cmdLoad.GroupOnly {
-			if !evt.Info.IsGroup {
-				return
-			}
-		}
-		if cmdLoad.PrivateOnly {
-			if evt.Info.IsGroup {
-				return
-			}
-		}
 		var msg *waProto.Message
 		if cmdLoad.Cache {
 			msg = muxer.GetCachedCommandResponse(parsed)
@@ -322,15 +333,6 @@ func (muxer *Muxer) RunCommand(c *whatsmeow.Client, evt *events.Message) {
 	}
 }
 
-func (muxer *Muxer) PrepareDefaultMiddleware() {
-	if muxer.Options.WithCommandLog {
-		muxer.Middlewares.Store("log", func(ctx *command.RunFuncContext) bool {
-			ctx.WaLog.Infof("[CMD] [%s] command > %s", ctx.Number, ctx.CurrentCommand.Name)
-			return true
-		})
-	}
-}
-
 func NewMuxer(log waLog.Logger, options *options.Options) *Muxer {
 	muxer := &Muxer{
 		Locals:               skipmap.NewString[string](),
@@ -345,7 +347,6 @@ func NewMuxer(log waLog.Logger, options *options.Options) *Muxer {
 		Options:              options,
 		Log:                  log,
 	}
-	muxer.PrepareDefaultMiddleware()
 	muxer.HandleQuestionStateChan()
 
 	muxer.AddAllEmbed()
@@ -355,4 +356,59 @@ func NewMuxer(log waLog.Logger, options *options.Options) *Muxer {
 	}
 
 	return muxer
+}
+
+func IsGroupAdmin(c *whatsmeow.Client, chat waTypes.JID, jid any) (bool, error) {
+	jids, err := util.ParseUserJid(jid)
+	if err != nil {
+		return false, err
+	}
+
+	group, err := command.FindGroupByJid(c, chat)
+	if err != nil {
+		return false, err
+	}
+
+	var isAdmin bool
+	for _, participant := range group.Participants {
+		if participant.JID.ToNonAD() == jids {
+			if participant.IsSuperAdmin {
+				isAdmin = true
+				break
+			}
+			if participant.IsAdmin {
+				isAdmin = true
+				break
+			}
+		}
+	}
+
+	return isAdmin, nil
+}
+
+func IsClientGroupAdmin(c *whatsmeow.Client, chat waTypes.JID) (bool, error) {
+	if chat.Server != waTypes.GroupServer {
+		return false, fmt.Errorf("error: chat is not a group")
+	}
+
+	group, err := command.FindGroupByJid(c, chat)
+	if err != nil {
+		return false, err
+	}
+
+	var isAdmin bool
+	for _, participant := range group.Participants {
+		if participant.JID.ToNonAD() == c.Store.ID.ToNonAD() {
+			if participant.IsSuperAdmin {
+				isAdmin = true
+				break
+			}
+			if participant.IsAdmin {
+				isAdmin = true
+				break
+			}
+		}
+	}
+
+	return isAdmin, nil
 }
