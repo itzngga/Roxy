@@ -14,7 +14,7 @@ import (
 	"time"
 )
 
-func (muxer *Muxer) GenerateSuggestionModel() {
+func (muxer *Muxer) generateSuggestionModel() {
 	model := fuzzy.NewModel()
 	model.SetThreshold(1)
 	model.SetDepth(5)
@@ -32,7 +32,7 @@ func (muxer *Muxer) GenerateSuggestionModel() {
 	muxer.SuggestionModel = model
 }
 
-func (muxer *Muxer) SuggestCommand(client *whatsmeow.Client, event *events.Message, prefix, command string) {
+func (muxer *Muxer) suggestCommand(event *events.Message, prefix, command string) {
 	suggested := muxer.SuggestionModel.Suggestions(command, false)
 
 	if len(suggested) == 0 {
@@ -54,6 +54,7 @@ func (muxer *Muxer) SuggestCommand(client *whatsmeow.Client, event *events.Messa
 	ctx, cancel := context.WithTimeout(context.Background(), time.Second*15)
 	defer cancel()
 
+	var client = types.GetContext[*whatsmeow.Client](muxer.ctx, "appClient")
 	_, err := client.SendMessage(ctx, event.Info.Chat, message)
 	if err != nil {
 		fmt.Printf("error: sending message: %v\n", err)

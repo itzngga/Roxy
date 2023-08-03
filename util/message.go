@@ -179,14 +179,6 @@ func ParseJID(arg string) (waTypes.JID, bool) {
 	}
 }
 
-func RevokeMessage(c *whatsmeow.Client, jid waTypes.JID, messageId waTypes.MessageID) {
-	_, err := c.SendMessage(context.Background(), jid, c.BuildRevoke(jid, waTypes.EmptyJID, messageId))
-	if err != nil {
-		fmt.Printf("error: revoking message: %v\n", err)
-	}
-	return
-}
-
 func SendEmojiMessage(client *whatsmeow.Client, event *events.Message, emoji string) {
 	id := event.Info.ID
 	chat := event.Info.Chat

@@ -2,6 +2,7 @@ package command
 
 import (
 	"github.com/itzngga/Roxy/options"
+	"github.com/itzngga/Roxy/types"
 	"github.com/zhangyunhao116/skipmap"
 	"go.mau.fi/whatsmeow"
 	waProto "go.mau.fi/whatsmeow/binary/proto"
@@ -12,23 +13,23 @@ import (
 )
 
 type RunFuncContext struct {
-	ParsedMsg string
-	Arguments []string
-	Number    string
 	FromMe    bool
+	ParsedMsg string
+	Number    string
 	Prefix    string
+	Arguments []string
 
-	Client         *whatsmeow.Client
-	Options        *options.Options
-	MessageEvent   *events.Message
-	MessageInfo    *waTypes.MessageInfo
-	ClientJID      *waTypes.JID
-	Message        *waProto.Message
 	CurrentCommand *Command
 	WaLog          waLog.Logger
-
-	Locals       *skipmap.StringMap[string]
-	QuestionChan chan *QuestionState
+	ClientJID      *waTypes.JID
+	MessageEvent   *events.Message
+	Options        *options.Options
+	Message        *waProto.Message
+	Client         *whatsmeow.Client
+	QuestionChan   chan *QuestionState
+	MessageInfo    *waTypes.MessageInfo
+	Locals         *skipmap.StringMap[string]
+	Ctx            *skipmap.StringMap[types.RoxyContext]
 }
 
 func (runFunc *RunFuncContext) GetClient() *whatsmeow.Client {

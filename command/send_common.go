@@ -3,6 +3,7 @@ package command
 import (
 	"errors"
 	"fmt"
+	"github.com/itzngga/Roxy/types"
 	"github.com/itzngga/Roxy/util"
 	"go.mau.fi/whatsmeow"
 	waTypes "go.mau.fi/whatsmeow/types"
@@ -81,7 +82,8 @@ func (runFunc *RunFuncContext) GetGroupInfo(jid any) (*waTypes.GroupInfo, error)
 		return nil, err
 	}
 
-	group, err := FindGroupByJid(runFunc.Client, jids)
+	FindGroupByJid := types.GetContext[types.FindGroupByJid](runFunc.Ctx, "FindGroupByJid")
+	group, err := FindGroupByJid(jids)
 	if err != nil {
 		return nil, fmt.Errorf("error: failed to get group info : %v\n", err)
 	}
@@ -128,7 +130,8 @@ func (runFunc *RunFuncContext) UpdateProfilePicture(jid any, data []byte) error 
 	}
 
 	if jids.Server == waTypes.GroupServer {
-		group, err := FindGroupByJid(runFunc.Client, jids)
+		FindGroupByJid := types.GetContext[types.FindGroupByJid](runFunc.Ctx, "FindGroupByJid")
+		group, err := FindGroupByJid(jids)
 		if err != nil {
 			return err
 		}

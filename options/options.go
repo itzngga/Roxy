@@ -27,7 +27,7 @@ type Options struct {
 	// This PostgresDsn Must add when StoreMode equal to "postgres"
 	PostgresDsn *PostgresDSN
 
-	// This SqliteFile Generate "ROXY.DB" when it null
+	// This SqliteFile Generate "ROXY.sqlDB" when it null
 	SqliteFile string
 
 	// WithSqlDB wrap with sql.DB interface
@@ -39,6 +39,9 @@ type Options struct {
 
 	// LoginOptions constant of ScanQR or PairCode
 	LoginOptions LoginOptions
+
+	// HistorySync is used to synchronize message history
+	HistorySync bool
 
 	// Bot General Settings
 
@@ -159,6 +162,7 @@ func NewDefaultOptions() *Options {
 		AllowFromGroup:              true,
 		AllowFromPrivate:            true,
 		CommandSuggestion:           true,
+		HistorySync:                 true,
 		LoginOptions:                SCAN_QR,
 		SendMessageTimeout:          time.Second * 30,
 		CommandResponseCacheTimeout: time.Minute * 15,
@@ -187,7 +191,7 @@ func (o *Options) Validate() error {
 	}
 
 	if o.WithSqlDB == nil && o.StoreMode == "sqlite" && o.SqliteFile == "" {
-		o.SqliteFile = "GoRoxy.DB"
+		o.SqliteFile = "GoRoxy.sqlDB"
 	}
 
 	if o.WithSqlDB == nil && o.SqliteFile == "" && o.PostgresDsn == nil {

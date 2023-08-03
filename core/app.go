@@ -2,6 +2,7 @@ package core
 
 import (
 	"context"
+	"database/sql"
 	"errors"
 	"fmt"
 	"github.com/alitto/pond"
@@ -10,6 +11,7 @@ import (
 	"github.com/itzngga/Roxy/types"
 	"github.com/itzngga/Roxy/util"
 	"github.com/mdp/qrterminal/v3"
+	"github.com/zhangyunhao116/skipmap"
 	"go.mau.fi/whatsmeow"
 	waBinary "go.mau.fi/whatsmeow/binary"
 	waProto "go.mau.fi/whatsmeow/binary/proto"
@@ -23,62 +25,74 @@ import (
 )
 
 type App struct {
-	Options *options.Options
+	log     waLog.Logger
+	pool    *pond.WorkerPool
+	options *options.Options
 
-	Log  waLog.Logger
-	Pool *pond.WorkerPool
-
-	StartTime    time.Time
-	Client       *whatsmeow.Client
-	Muxer        *Muxer
+	muxer        *Muxer
+	sqlDB        *sql.DB
 	pairCodeChan chan bool
+	startTime    time.Time
+	client       *whatsmeow.Client
+	ctx          *skipmap.StringMap[types.RoxyContext]
 }
 
 func NewGoRoxyBase(options *options.Options) (*App, error) {
 	stdLog := waLog.Stdout("WaBOT", options.LogLevel, true)
 	app := &App{
-		Log:          stdLog,
-		Options:      options,
-		Muxer:        NewMuxer(stdLog, options),
+		log:          stdLog,
+		options:      options,
 		pairCodeChan: make(chan bool),
 	}
-	app.Pool = pond.New(100, 1000)
-	err := app.InitializeClient()
+	app.pool = pond.New(100, 1000)
+	err := app.initializeClient()
 	if err != nil {
 		return nil, err
 	}
+	if app.client != nil {
+		app.generateContext()
+		app.muxer = NewMuxer(app.ctx, stdLog, options)
+	}
+
 	return app, nil
 }
 
-func (app *App) HandleEvents(event interface{}) {
+func (app *App) handleEvents(event interface{}) {
 	switch v := event.(type) {
 	case *events.LoggedOut:
-		app.Log.Warnf("%s Client logged out", app.Client.Store.ID)
-		app.Client.Store.Delete()
+		app.log.Warnf("%s client logged out", app.client.Store.ID)
+		app.client.Store.Delete()
 
-		newApp, err := NewGoRoxyBase(app.Options)
+		newApp, err := NewGoRoxyBase(app.options)
 		if err != nil {
 			panic(err)
 		}
 		*app = *newApp
 	case *events.Connected:
-		app.StartTime = time.Now()
-		if len(app.Client.Store.PushName) == 0 {
+		app.startTime = time.Now()
+		if len(app.client.Store.PushName) == 0 {
 			return
 		}
-		if app.Options.LoginOptions == options.PAIR_CODE {
+		if app.options.LoginOptions == options.PAIR_CODE {
 			app.pairCodeChan <- true
 		}
-		app.Log.Infof("Connected!")
-		_ = app.Client.SendPresence(waTypes.PresenceAvailable)
-		command.CacheAllGroup(app.Client)
+		app.log.Infof("Connected!")
+		app.ctx.Store("appClient", app.client)
+		_ = app.client.SendPresence(waTypes.PresenceAvailable)
+		app.muxer.cacheAllGroup()
 	case *events.Message:
-		app.Pool.Submit(func() {
-			if !app.StartTime.IsZero() && v.Info.Timestamp.After(app.StartTime) {
-				app.Muxer.RunCommand(app.Client, v)
+		app.pool.Submit(func() {
+			if !app.startTime.IsZero() && v.Info.Timestamp.After(app.startTime) {
+				app.muxer.RunCommand(app.client, v)
 				return
 			}
 		})
+		if app.options.HistorySync {
+			app.pool.Submit(func() {
+				app.handleMessageUpdates(v)
+				return
+			})
+		}
 	case *events.StreamError:
 		var message string
 		if v.Code != "" {
@@ -88,69 +102,92 @@ func (app *App) HandleEvents(event interface{}) {
 		} else {
 			message = "Unknown stream error"
 		}
-		app.Log.Errorf("error: %s", message)
+		app.log.Errorf("error: %s", message)
 	case *events.CallOffer, *events.CallTerminate, *events.CallRelayLatency, *events.CallAccept, *events.UnknownCallEvent:
 		// ignore
 	case *events.AppState:
 		// Ignore
 	case *events.PushNameSetting:
-		err := app.Client.SendPresence(waTypes.PresenceAvailable)
+		err := app.client.SendPresence(waTypes.PresenceAvailable)
 		if err != nil {
-			app.Log.Warnf("Failed to send presence after push name update: %v\n", err)
+			app.log.Warnf("Failed to send presence after push name update: %v\n", err)
 		}
 	case *events.JoinedGroup:
-		command.UNCacheOneGroup(app.Client, nil, v)
+		app.muxer.unCacheOneGroup(nil, v)
 	case *events.GroupInfo:
-		command.UNCacheOneGroup(app.Client, v, nil)
+		app.muxer.unCacheOneGroup(v, nil)
+	case *events.HistorySync:
+		if app.options.HistorySync {
+			app.pool.Submit(func() {
+				app.handleHistorySync(v.Data)
+				return
+			})
+		}
 	}
 }
-func (app *App) InitializeContainer() (*sqlstore.Container, error) {
-	store.DeviceProps.RequireFullSync = types.Bool(false)
-	if app.Options.WithSqlDB != nil {
-		container := sqlstore.NewWithDB(app.Options.WithSqlDB, app.Options.StoreMode, waLog.Stdout("Database", "ERROR", true))
+func (app *App) initializeContainer() (*sqlstore.Container, error) {
+	store.DeviceProps.RequireFullSync = types.Bool(app.options.HistorySync)
+	if app.options.WithSqlDB != nil {
+		container := sqlstore.NewWithDB(app.options.WithSqlDB, app.options.StoreMode, waLog.Stdout("Database", "ERROR", true))
 		err := container.Upgrade()
 		if err != nil {
 			panic(err)
 		}
+		app.sqlDB = app.options.WithSqlDB
+		app.initializeTables()
 		return container, nil
-	} else if app.Options.StoreMode == "postgres" {
-		container, err := sqlstore.New("postgres", app.Options.PostgresDsn.GenerateDSN(), waLog.Stdout("Database", "ERROR", true))
+	} else if app.options.StoreMode == "postgres" {
+		db, err := sql.Open("postgres", app.options.PostgresDsn.GenerateDSN())
+		if err != nil {
+			return nil, fmt.Errorf("failed to open database: %w", err)
+		}
+		container := sqlstore.NewWithDB(db, "postgres", waLog.Stdout("Database", "ERROR", true))
+		err = container.Upgrade()
 		if err != nil {
 			panic(err)
 		}
+		app.sqlDB = db
+		app.initializeTables()
 		return container, nil
-	} else if app.Options.StoreMode == "sqlite" {
-		container, err := sqlstore.New("sqlite3", app.Options.SqliteFile, waLog.Stdout("Database", "ERROR", true))
+	} else if app.options.StoreMode == "sqlite" {
+		db, err := sql.Open("sqlite3", app.options.SqliteFile)
+		if err != nil {
+			return nil, fmt.Errorf("failed to open database: %w", err)
+		}
+		container := sqlstore.NewWithDB(db, "sqlite3", waLog.Stdout("Database", "ERROR", true))
+		err = container.Upgrade()
 		if err != nil {
 			panic(err)
 		}
+		app.sqlDB = db
+		app.initializeTables()
 		return container, nil
 	} else {
 		return nil, errors.New("error: invalid store mode")
 	}
 }
 
-func (app *App) HandlePanic(p interface{}) {
+func (app *App) handlePanic(p interface{}) {
 	if p != nil {
-		app.Log.Errorf("panic: \n%v", p)
+		app.log.Errorf("panic: \n%v", p)
 	}
 }
 
-func (app *App) InitializeClient() error {
-	container, err := app.InitializeContainer()
+func (app *App) initializeClient() error {
+	container, err := app.initializeContainer()
 	if err != nil {
 		return err
 	}
 
 	var device *store.Device
-	if app.Options.HostNumber != "" {
-		jid, ok := util.ParseJID(app.Options.HostNumber)
+	if app.options.HostNumber != "" {
+		jid, ok := util.ParseJID(app.options.HostNumber)
 		if !ok {
 			panic("invalid given number")
 		}
 		device, err = container.GetDevice(jid.ToNonAD())
 		if err != nil {
-			app.Log.Errorf("get device error %v", err)
+			app.log.Errorf("get device error %v", err)
 		}
 		if device == nil {
 			device = container.NewDevice()
@@ -158,7 +195,7 @@ func (app *App) InitializeClient() error {
 	} else {
 		device, err = container.GetFirstDevice()
 		if err != nil {
-			app.Log.Errorf("get device error %v", err)
+			app.log.Errorf("get device error %v", err)
 		}
 	}
 
@@ -167,56 +204,56 @@ func (app *App) InitializeClient() error {
 	store.DeviceProps.PlatformType = waProto.DeviceProps_CHROME.Enum()
 	store.DeviceProps.RequireFullSync = types.Bool(false)
 
-	app.Client = whatsmeow.NewClient(device, waLog.Stdout("WhatsMeow", "ERROR", true))
-	app.Client.AddEventHandler(app.HandleEvents)
-	if app.Options.LoginOptions == options.SCAN_QR {
-		qrChan, _ := app.Client.GetQRChannel(context.Background())
-		err = app.Client.Connect()
+	app.client = whatsmeow.NewClient(device, waLog.Stdout("WhatsMeow", "ERROR", true))
+	app.client.AddEventHandler(app.handleEvents)
+	if app.options.LoginOptions == options.SCAN_QR {
+		qrChan, _ := app.client.GetQRChannel(context.Background())
+		err = app.client.Connect()
 		if err != nil {
 			if !errors.Is(err, whatsmeow.ErrQRStoreContainsID) {
-				app.Log.Errorf("error connecting to Client: %v", err)
+				app.log.Errorf("error connecting to client: %v", err)
 			}
 		} else {
-			go func() {
+			app.pool.Submit(func() {
 				for evt := range qrChan {
 					if evt.Event == "code" {
 						qrterminal.GenerateHalfBlock(evt.Code, qrterminal.L, os.Stdout)
-						app.Log.Infof("QR Generated!")
+						app.log.Infof("QR Generated!")
 					} else if evt.Event == "success" {
-						app.Log.Infof("QR Scanned!")
+						app.log.Infof("QR Scanned!")
 					} else {
-						app.Log.Infof("QR channel result: %s", evt.Event)
+						app.log.Infof("QR channel result: %s", evt.Event)
 					}
 				}
-			}()
+			})
 		}
 
-		err = app.Client.Connect()
+		err = app.client.Connect()
 		if err != nil {
 			if !errors.Is(err, whatsmeow.ErrAlreadyConnected) {
-				app.Log.Errorf("error connecting to Client: %v", err)
+				app.log.Errorf("error connecting to client: %v", err)
 				return err
 			}
 		}
 	} else {
-		app.Client.Disconnect()
-		err = app.Client.Connect()
+		app.client.Disconnect()
+		err = app.client.Connect()
 		if err != nil {
 			if !errors.Is(err, whatsmeow.ErrAlreadyConnected) {
-				app.Log.Errorf("error connecting to Client: %v", err)
+				app.log.Errorf("error connecting to client: %v", err)
 				return err
 			}
 		}
-		if app.Options.HostNumber == "" {
+		if app.options.HostNumber == "" {
 			return errors.New("error: you must specify host number when using pair code login options")
 		}
 
-		pairCode, err := app.Client.PairPhone(app.Options.HostNumber, true)
+		pairCode, err := app.client.PairPhone(app.options.HostNumber, true)
 		if err != nil {
 			return err
 		}
 
-		app.Log.Infof("PairCode: %s", pairCode)
+		app.log.Infof("PairCode: %s", pairCode)
 
 		for res := range app.pairCodeChan {
 			if res {
@@ -228,18 +265,28 @@ func (app *App) InitializeClient() error {
 	return nil
 }
 
+func (app *App) generateContext() {
+	app.ctx = skipmap.NewString[types.RoxyContext]()
+	app.ctx.Store("UpsertMessages", types.UpsertMessages(app.upsertMessages))
+	app.ctx.Store("GetAllChats", types.GetAllChats(app.getAllChats))
+	app.ctx.Store("GetChatInJID", types.GetChatInJID(app.getChatInJID))
+	app.ctx.Store("GetStatusMessages", types.GetStatusMessages(app.getStatusMessages))
+	app.ctx.Store("FindMessageByID", types.FindMessageByID(app.findMessageByID))
+	app.ctx.Store("workerPool", app.pool)
+}
+
 func (app *App) AddNewCategory(category string) {
-	app.Muxer.Categories.Store(category, category)
+	app.muxer.Categories.Store(category, category)
 }
 
 func (app *App) AddNewCommand(command command.Command) {
-	app.Muxer.AddCommand(&command)
+	app.muxer.AddCommand(&command)
 }
 
 func (app *App) AddNewMiddleware(middleware command.MiddlewareFunc) {
-	app.Muxer.AddMiddleware(middleware)
+	app.muxer.AddMiddleware(middleware)
 }
 
 func (app *App) Shutdown() {
-	app.Client.Disconnect()
+	app.client.Disconnect()
 }

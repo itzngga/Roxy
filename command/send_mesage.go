@@ -7,9 +7,21 @@ import (
 	"github.com/itzngga/Roxy/types"
 	"github.com/itzngga/Roxy/util"
 	waProto "go.mau.fi/whatsmeow/binary/proto"
+	waTypes "go.mau.fi/whatsmeow/types"
 	"strings"
 	"time"
 )
+
+func (runFunc *RunFuncContext) RevokeMessage(jid waTypes.JID, messageId waTypes.MessageID) {
+	ctx, cancel := context.WithTimeout(context.Background(), runFunc.Options.SendMessageTimeout)
+	defer cancel()
+
+	_, err := runFunc.Client.SendMessage(ctx, jid, runFunc.Client.BuildRevoke(jid, waTypes.EmptyJID, messageId))
+	if err != nil {
+		fmt.Printf("error: revoking message: %v\n", err)
+	}
+	return
+}
 
 func (runFunc *RunFuncContext) ByteToMessage(value []byte, withReply bool, caption string) *waProto.Message {
 	var message *waProto.Message

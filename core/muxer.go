@@ -3,10 +3,12 @@ package core
 import (
 	"context"
 	"fmt"
+	"github.com/alitto/pond"
 	"github.com/google/uuid"
 	"github.com/itzngga/Roxy/command"
 	"github.com/itzngga/Roxy/embed"
 	"github.com/itzngga/Roxy/options"
+	"github.com/itzngga/Roxy/types"
 	"github.com/itzngga/Roxy/util"
 	"github.com/sajari/fuzzy"
 	"github.com/zhangyunhao116/skipmap"
@@ -29,9 +31,38 @@ type Muxer struct {
 	Commands             *skipmap.StringMap[*command.Command]
 	CommandResponseCache *skipmap.StringMap[*waProto.Message]
 	QuestionState        *skipmap.StringMap[*command.QuestionState]
-	QuestionChan         chan *command.QuestionState
-	Locals               *skipmap.StringMap[string]
-	SuggestionModel      *fuzzy.Model
+	GroupCache           *skipmap.StringMap[[]*waTypes.GroupInfo]
+
+	QuestionChan    chan *command.QuestionState
+	Locals          *skipmap.StringMap[string]
+	SuggestionModel *fuzzy.Model
+	ctx             *skipmap.StringMap[types.RoxyContext]
+}
+
+func NewMuxer(ctx *skipmap.StringMap[types.RoxyContext], log waLog.Logger, options *options.Options) *Muxer {
+	muxer := &Muxer{
+		Locals:               skipmap.NewString[string](),
+		Commands:             skipmap.NewString[*command.Command](),
+		GlobalMiddlewares:    skipmap.NewString[command.MiddlewareFunc](),
+		Middlewares:          skipmap.NewString[command.MiddlewareFunc](),
+		CommandResponseCache: skipmap.NewString[*waProto.Message](),
+		QuestionState:        skipmap.NewString[*command.QuestionState](),
+		Categories:           skipmap.NewString[string](),
+		GroupCache:           skipmap.NewString[[]*waTypes.GroupInfo](),
+		QuestionChan:         make(chan *command.QuestionState),
+		MessageTimeout:       options.SendMessageTimeout,
+		Options:              options,
+		Log:                  log,
+	}
+	muxer.extendContext(ctx)
+	muxer.handleQuestionStateChan()
+	muxer.addAllEmbed()
+
+	if options.CommandSuggestion {
+		muxer.generateSuggestionModel()
+	}
+
+	return muxer
 }
 
 func (muxer *Muxer) Clean() {
@@ -53,8 +84,8 @@ func (muxer *Muxer) Clean() {
 	})
 }
 
-func (muxer *Muxer) HandleQuestionStateChan() {
-	go func() {
+func (muxer *Muxer) handleQuestionStateChan() {
+	muxer.getPool().Submit(func() {
 		for message := range muxer.QuestionChan {
 			muxer.QuestionState.Delete(message.RunFuncCtx.Number)
 			for _, question := range message.Questions {
@@ -68,10 +99,10 @@ func (muxer *Muxer) HandleQuestionStateChan() {
 				}
 			}
 		}
-	}()
+	})
 }
 
-func (muxer *Muxer) AddAllEmbed() {
+func (muxer *Muxer) addAllEmbed() {
 	categories := embed.Categories.Get()
 	for _, cat := range categories {
 		muxer.Categories.Store(cat, cat)
@@ -116,7 +147,7 @@ func (muxer *Muxer) AddCommand(cmd *command.Command) {
 	muxer.Commands.Store(cmd.Name, cmd)
 }
 
-func (muxer *Muxer) GetCachedCommandResponse(cmd string) *waProto.Message {
+func (muxer *Muxer) getCachedCommandResponse(cmd string) *waProto.Message {
 	cache, ok := muxer.CommandResponseCache.Load(cmd)
 	if ok {
 		return cache
@@ -124,17 +155,17 @@ func (muxer *Muxer) GetCachedCommandResponse(cmd string) *waProto.Message {
 	return nil
 }
 
-func (muxer *Muxer) SetCacheCommandResponse(cmd string, response *waProto.Message) {
+func (muxer *Muxer) setCacheCommandResponse(cmd string, response *waProto.Message) {
 	muxer.CommandResponseCache.Store(cmd, response)
-	go func() {
+	muxer.getPool().Submit(func() {
 		timeout := time.NewTimer(muxer.Options.CommandResponseCacheTimeout)
 		<-timeout.C
 		muxer.CommandResponseCache.Delete(cmd)
 		timeout.Stop()
-	}()
+	})
 }
 
-func (muxer *Muxer) GlobalMiddlewareProcessing(c *whatsmeow.Client, evt *events.Message, number string) bool {
+func (muxer *Muxer) globalMiddlewareProcessing(c *whatsmeow.Client, evt *events.Message, number string) bool {
 	if muxer.GlobalMiddlewares.Len() >= 1 {
 		param := &command.RunFuncContext{
 			Client:       c,
@@ -164,18 +195,18 @@ func (muxer *Muxer) GlobalMiddlewareProcessing(c *whatsmeow.Client, evt *events.
 	return true
 }
 
-func (muxer *Muxer) HandleQuestionState(c *whatsmeow.Client, evt *events.Message, number, parsedMsg string) {
+func (muxer *Muxer) handleQuestionState(c *whatsmeow.Client, evt *events.Message, number, parsedMsg string) {
 	questionState, _ := muxer.QuestionState.Load(number)
 	if strings.Contains(parsedMsg, "cancel") || strings.Contains(parsedMsg, "batal") {
 		muxer.QuestionState.Delete(number)
 		return
 	} else {
-		go func() {
+		muxer.getPool().Submit(func() {
 			jids := []waTypes.MessageID{
 				evt.Info.ID,
 			}
 			c.MarkRead(jids, evt.Info.Timestamp, evt.Info.Chat, evt.Info.Sender)
-		}()
+		})
 		for i, question := range questionState.Questions {
 			if question.Question == questionState.ActiveQuestion && question.GetAnswer() == "" {
 				if questionState.Questions[i].Capture {
@@ -226,19 +257,19 @@ func (muxer *Muxer) RunCommand(c *whatsmeow.Client, evt *events.Message) {
 	if !evt.Info.IsFromMe {
 		_, ok := muxer.QuestionState.Load(number)
 		if ok {
-			muxer.HandleQuestionState(c, evt, number, parsed)
+			muxer.handleQuestionState(c, evt, number, parsed)
 			return
 		}
 	}
 
-	if midOk := muxer.GlobalMiddlewareProcessing(c, evt, number); !midOk {
+	if midOk := muxer.globalMiddlewareProcessing(c, evt, number); !midOk {
 		return
 	}
 
 	prefix, cmd, isCmd := util.ParseCmd(parsed)
 	cmdLoad, isAvailable := muxer.Commands.Load(cmd)
 	if muxer.Options.CommandSuggestion && !isAvailable {
-		muxer.SuggestCommand(c, evt, prefix, cmd)
+		muxer.suggestCommand(evt, prefix, cmd)
 		return
 	}
 
@@ -254,16 +285,16 @@ func (muxer *Muxer) RunCommand(c *whatsmeow.Client, evt *events.Message) {
 			}
 		}
 		if cmdLoad.OnlyAdminGroup && evt.Info.IsGroup {
-			if ok, _ := IsGroupAdmin(c, evt.Info.Chat, evt.Info.Sender); !ok {
+			if ok, _ := muxer.isGroupAdmin(evt.Info.Chat, evt.Info.Sender); !ok {
 				return
 			}
 		}
 		if cmdLoad.OnlyIfBotAdmin && evt.Info.IsGroup {
-			if ok, _ := IsClientGroupAdmin(c, evt.Info.Chat); !ok {
+			if ok, _ := muxer.isClientGroupAdmin(evt.Info.Chat); !ok {
 				return
 			}
 		}
-		go func() {
+		muxer.getPool().Submit(func() {
 			if muxer.Options.WithCommandLog {
 				muxer.Log.Infof("[CMD] [%s] command > %s", number, cmdLoad.Name)
 			}
@@ -271,7 +302,7 @@ func (muxer *Muxer) RunCommand(c *whatsmeow.Client, evt *events.Message) {
 				evt.Info.ID,
 			}
 			c.MarkRead(jids, evt.Info.Timestamp, evt.Info.Chat, evt.Info.Sender)
-		}()
+		})
 
 		var args = strings.Split(parsed, " ")[1:]
 		params := &command.RunFuncContext{
@@ -290,6 +321,7 @@ func (muxer *Muxer) RunCommand(c *whatsmeow.Client, evt *events.Message) {
 			QuestionChan:   muxer.QuestionChan,
 			Prefix:         prefix,
 			Arguments:      args,
+			Ctx:            muxer.ctx,
 		}
 		if muxer.Middlewares.Len() >= 1 {
 			var midAreOk = true
@@ -311,7 +343,7 @@ func (muxer *Muxer) RunCommand(c *whatsmeow.Client, evt *events.Message) {
 		}
 		var msg *waProto.Message
 		if cmdLoad.Cache {
-			msg = muxer.GetCachedCommandResponse(parsed)
+			msg = muxer.getCachedCommandResponse(parsed)
 			if msg == nil {
 				msg = cmdLoad.RunFunc(params)
 			}
@@ -327,88 +359,27 @@ func (muxer *Muxer) RunCommand(c *whatsmeow.Client, evt *events.Message) {
 				fmt.Println("[SEND MESSAGE ERR]\n", err)
 			}
 			if cmdLoad.Cache {
-				muxer.SetCacheCommandResponse(parsed, msg)
+				muxer.setCacheCommandResponse(parsed, msg)
 			}
 		}
 	}
 }
 
-func NewMuxer(log waLog.Logger, options *options.Options) *Muxer {
-	muxer := &Muxer{
-		Locals:               skipmap.NewString[string](),
-		Commands:             skipmap.NewString[*command.Command](),
-		GlobalMiddlewares:    skipmap.NewString[command.MiddlewareFunc](),
-		Middlewares:          skipmap.NewString[command.MiddlewareFunc](),
-		CommandResponseCache: skipmap.NewString[*waProto.Message](),
-		QuestionState:        skipmap.NewString[*command.QuestionState](),
-		Categories:           skipmap.NewString[string](),
-		QuestionChan:         make(chan *command.QuestionState),
-		MessageTimeout:       options.SendMessageTimeout,
-		Options:              options,
-		Log:                  log,
-	}
-	muxer.HandleQuestionStateChan()
-
-	muxer.AddAllEmbed()
-
-	if options.CommandSuggestion {
-		muxer.GenerateSuggestionModel()
-	}
-
-	return muxer
+func (muxer *Muxer) getPool() *pond.WorkerPool {
+	return types.GetContext[*pond.WorkerPool](muxer.ctx, "workerPool")
 }
 
-func IsGroupAdmin(c *whatsmeow.Client, chat waTypes.JID, jid any) (bool, error) {
-	jids, err := util.ParseUserJid(jid)
-	if err != nil {
-		return false, err
-	}
-
-	group, err := command.FindGroupByJid(c, chat)
-	if err != nil {
-		return false, err
-	}
-
-	var isAdmin bool
-	for _, participant := range group.Participants {
-		if participant.JID.ToNonAD() == jids {
-			if participant.IsSuperAdmin {
-				isAdmin = true
-				break
-			}
-			if participant.IsAdmin {
-				isAdmin = true
-				break
-			}
-		}
-	}
-
-	return isAdmin, nil
+func (muxer *Muxer) getCurrentClient() *whatsmeow.Client {
+	return types.GetContext[*whatsmeow.Client](muxer.ctx, "appClient")
 }
+func (muxer *Muxer) extendContext(appCtx *skipmap.StringMap[types.RoxyContext]) {
+	// muxer context
+	appCtx.Store("FindGroupByJid", types.FindGroupByJid(muxer.findGroupByJid))
+	appCtx.Store("GetAllGroups", types.GetAllGroups(muxer.getAllGroups))
+	appCtx.Store("CacheAllGroup", types.CacheAllGroup(muxer.cacheAllGroup))
+	appCtx.Store("UNCacheOneGroup", types.UNCacheOneGroup(muxer.unCacheOneGroup))
+	appCtx.Store("IsClientGroupAdmin", types.IsClientGroupAdmin(muxer.isClientGroupAdmin))
+	appCtx.Store("IsGroupAdmin", types.IsGroupAdmin(muxer.isGroupAdmin))
 
-func IsClientGroupAdmin(c *whatsmeow.Client, chat waTypes.JID) (bool, error) {
-	if chat.Server != waTypes.GroupServer {
-		return false, fmt.Errorf("error: chat is not a group")
-	}
-
-	group, err := command.FindGroupByJid(c, chat)
-	if err != nil {
-		return false, err
-	}
-
-	var isAdmin bool
-	for _, participant := range group.Participants {
-		if participant.JID.ToNonAD() == c.Store.ID.ToNonAD() {
-			if participant.IsSuperAdmin {
-				isAdmin = true
-				break
-			}
-			if participant.IsAdmin {
-				isAdmin = true
-				break
-			}
-		}
-	}
-
-	return isAdmin, nil
+	muxer.ctx = appCtx
 }

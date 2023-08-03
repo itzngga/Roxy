@@ -2,9 +2,20 @@ package command
 
 import (
 	"fmt"
+	"github.com/itzngga/Roxy/types"
 	"github.com/itzngga/Roxy/util"
 	waTypes "go.mau.fi/whatsmeow/types"
 )
+
+func (runFunc *RunFuncContext) FindGroupByJid(groupJid waTypes.JID) (group *waTypes.GroupInfo, err error) {
+	FindGroupByJid := types.GetContext[types.FindGroupByJid](runFunc.Ctx, "FindGroupByJid")
+	return FindGroupByJid(groupJid)
+}
+
+func (runFunc *RunFuncContext) GetAllGroups() (group []*waTypes.GroupInfo, err error) {
+	GetAllGroups := types.GetContext[types.GetAllGroups](runFunc.Ctx, "GetAllGroups")
+	return GetAllGroups()
+}
 
 func (runFunc *RunFuncContext) IsGroupAdmin(jid any) (bool, error) {
 	jids, err := util.ParseUserJid(jid)
@@ -12,7 +23,7 @@ func (runFunc *RunFuncContext) IsGroupAdmin(jid any) (bool, error) {
 		return false, err
 	}
 
-	group, err := FindGroupByJid(runFunc.Client, runFunc.MessageInfo.Chat)
+	group, err := runFunc.FindGroupByJid(runFunc.MessageInfo.Chat)
 	if err != nil {
 		return false, err
 	}
@@ -39,7 +50,7 @@ func (runFunc *RunFuncContext) IsClientGroupAdmin() (bool, error) {
 		return false, fmt.Errorf("error: chat is not a group")
 	}
 
-	group, err := FindGroupByJid(runFunc.Client, runFunc.MessageInfo.Chat)
+	group, err := runFunc.FindGroupByJid(runFunc.MessageInfo.Chat)
 	if err != nil {
 		return false, err
 	}
