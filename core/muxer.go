@@ -268,7 +268,7 @@ func (muxer *Muxer) RunCommand(c *whatsmeow.Client, evt *events.Message) {
 
 	prefix, cmd, isCmd := util.ParseCmd(parsed)
 	cmdLoad, isAvailable := muxer.Commands.Load(cmd)
-	if muxer.Options.CommandSuggestion && !isAvailable {
+	if muxer.Options.CommandSuggestion && isCmd && !isAvailable {
 		muxer.suggestCommand(evt, prefix, cmd)
 		return
 	}
