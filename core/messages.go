@@ -2,7 +2,7 @@ package core
 
 import (
 	"context"
-	"github.com/goccy/go-json"
+	"github.com/itzngga/Roxy/util/gzip"
 	waProto "go.mau.fi/whatsmeow/binary/proto"
 	waTypes "go.mau.fi/whatsmeow/types"
 	"go.mau.fi/whatsmeow/types/events"
@@ -45,7 +45,7 @@ func (app *App) handleHistorySync(evt *waProto.HistorySync) {
 			return messages[i].Info.Timestamp.Before(messages[j].Info.Timestamp)
 		})
 
-		result, err := json.Marshal(messages)
+		result, err := gzip.MarshallGzip(messages)
 		if err != nil {
 			return
 		}
@@ -84,7 +84,7 @@ func (app *App) handleHistorySync(evt *waProto.HistorySync) {
 				return messages[i].Info.Timestamp.Before(messages[j].Info.Timestamp)
 			})
 
-			result, err := json.Marshal(messages)
+			result, err := gzip.MarshallGzip(messages)
 			if err != nil {
 				continue
 			}
@@ -116,7 +116,7 @@ func (app *App) upsertMessages(jid waTypes.JID, message []*events.Message) {
 			return chats[i].Info.Timestamp.Before(chats[j].Info.Timestamp)
 		})
 
-		result, err := json.Marshal(chats)
+		result, err := gzip.MarshallGzip(chats)
 		if err != nil {
 			return
 		}
@@ -130,7 +130,7 @@ func (app *App) upsertMessages(jid waTypes.JID, message []*events.Message) {
 			return message[i].Info.Timestamp.Before(message[j].Info.Timestamp)
 		})
 
-		result, err := json.Marshal(message)
+		result, err := gzip.MarshallGzip(message)
 		if err != nil {
 			return
 		}
@@ -162,7 +162,7 @@ func (app *App) getAllChats() []*events.Message {
 		}
 
 		var message = make([]*events.Message, 0)
-		err = json.Unmarshal(rawMessage, &message)
+		err = gzip.UnmarshallGzip(rawMessage, &message)
 		if err != nil {
 			continue
 		}
@@ -192,13 +192,16 @@ func (app *App) getChatInJID(jid waTypes.JID) []*events.Message {
 		return nil
 	}
 
+	defer func() {
+		rawMessage = nil
+	}()
+
 	var message = make([]*events.Message, 0)
-	err = json.Unmarshal(rawMessage, &message)
+	err = gzip.UnmarshallGzip(rawMessage, &message)
 	if err != nil {
 		return nil
 	}
 
-	rawMessage = nil
 	return message
 }
 
@@ -213,13 +216,16 @@ func (app *App) getStatusMessages() []*events.Message {
 		return nil
 	}
 
+	defer func() {
+		rawMessage = nil
+	}()
+
 	var message = make([]*events.Message, 0)
-	err = json.Unmarshal(rawMessage, &message)
+	err = gzip.UnmarshallGzip(rawMessage, &message)
 	if err != nil {
 		return nil
 	}
 
-	rawMessage = nil
 	return message
 }
 
@@ -235,7 +241,7 @@ func (app *App) findMessageByID(jid waTypes.JID, id string) *events.Message {
 	}
 
 	var message = make([]*events.Message, 0)
-	err = json.Unmarshal(rawMessage, &message)
+	err = gzip.UnmarshallGzip(rawMessage, &message)
 	if err != nil {
 		return nil
 	}

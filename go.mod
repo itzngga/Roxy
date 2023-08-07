@@ -7,6 +7,7 @@ require (
 	github.com/gabriel-vasile/mimetype v1.4.2
 	github.com/goccy/go-json v0.10.2
 	github.com/google/uuid v1.3.0
+	github.com/klauspost/compress v1.16.7
 	github.com/mattn/go-sqlite3 v1.14.17
 	github.com/mdp/qrterminal/v3 v3.1.1
 	github.com/rainu/go-command-chain v0.4.0
