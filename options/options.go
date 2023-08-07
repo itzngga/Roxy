@@ -42,6 +42,8 @@ type Options struct {
 
 	// HistorySync is used to synchronize message history
 	HistorySync bool
+	// AutoRejectCall allow to auto reject incoming calls
+	AutoRejectCall bool
 
 	// Bot General Settings
 
@@ -154,6 +156,18 @@ func WithPairCodeLogin() func(*Options) {
 	}
 }
 
+func WithHistorySync() func(*Options) {
+	return func(options *Options) {
+		options.HistorySync = true
+	}
+}
+
+func WithAutoRejectCall() func(*Options) {
+	return func(options *Options) {
+		options.AutoRejectCall = true
+	}
+}
+
 func NewDefaultOptions() *Options {
 	return &Options{
 		StoreMode:                   "sqlite",
@@ -163,6 +177,7 @@ func NewDefaultOptions() *Options {
 		AllowFromPrivate:            true,
 		CommandSuggestion:           true,
 		HistorySync:                 true,
+		AutoRejectCall:              false,
 		LoginOptions:                SCAN_QR,
 		SendMessageTimeout:          time.Second * 30,
 		CommandResponseCacheTimeout: time.Minute * 15,

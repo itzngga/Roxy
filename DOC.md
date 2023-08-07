@@ -804,25 +804,25 @@ type App struct {
 func NewGoRoxyBase(options *options.Options) (*App, error)
 ```
 
-### func \(\*App\) [AddNewCategory](<https://github.com/itzngga/roxy/blob/master/core/app.go#L278>)
+### func \(\*App\) [AddNewCategory](<https://github.com/itzngga/roxy/blob/master/core/app.go#L320>)
 
 ```go
 func (app *App) AddNewCategory(category string)
 ```
 
-### func \(\*App\) [AddNewCommand](<https://github.com/itzngga/roxy/blob/master/core/app.go#L282>)
+### func \(\*App\) [AddNewCommand](<https://github.com/itzngga/roxy/blob/master/core/app.go#L324>)
 
 ```go
 func (app *App) AddNewCommand(command command.Command)
 ```
 
-### func \(\*App\) [AddNewMiddleware](<https://github.com/itzngga/roxy/blob/master/core/app.go#L286>)
+### func \(\*App\) [AddNewMiddleware](<https://github.com/itzngga/roxy/blob/master/core/app.go#L328>)
 
 ```go
 func (app *App) AddNewMiddleware(middleware command.MiddlewareFunc)
 ```
 
-### func \(\*App\) [Shutdown](<https://github.com/itzngga/roxy/blob/master/core/app.go#L290>)
+### func \(\*App\) [Shutdown](<https://github.com/itzngga/roxy/blob/master/core/app.go#L332>)
 
 ```go
 func (app *App) Shutdown()
@@ -935,8 +935,10 @@ import "github.com/itzngga/Roxy/options"
 
 - [func WithAllowFromGroup(onlyFromGroup bool) func(*Options)](<#func-withallowfromgroup>)
 - [func WithAllowFromPrivate(onlyFromPrivate bool) func(*Options)](<#func-withallowfromprivate>)
+- [func WithAutoRejectCall() func(*Options)](<#func-withautorejectcall>)
 - [func WithCmdCacheTimeout(respCacheTimeout time.Duration) func(*Options)](<#func-withcmdcachetimeout>)
 - [func WithCommandLog(cmdLog bool) func(*Options)](<#func-withcommandlog>)
+- [func WithHistorySync() func(*Options)](<#func-withhistorysync>)
 - [func WithHostNumber(hostNumber string) func(*Options)](<#func-withhostnumber>)
 - [func WithLogLevel(logLevel string) func(*Options)](<#func-withloglevel>)
 - [func WithOnlyFromSelf(onlyFromSelf bool) func(*Options)](<#func-withonlyfromself>)
@@ -966,85 +968,97 @@ import "github.com/itzngga/Roxy/options"
   - [func (dsn *PostgresDSN) Validate() error](<#func-postgresdsn-validate>)
 
 
-## func [WithAllowFromGroup](<https://github.com/itzngga/roxy/blob/master/options/options.go#L133>)
+## func [WithAllowFromGroup](<https://github.com/itzngga/roxy/blob/master/options/options.go#L135>)
 
 ```go
 func WithAllowFromGroup(onlyFromGroup bool) func(*Options)
 ```
 
-## func [WithAllowFromPrivate](<https://github.com/itzngga/roxy/blob/master/options/options.go#L127>)
+## func [WithAllowFromPrivate](<https://github.com/itzngga/roxy/blob/master/options/options.go#L129>)
 
 ```go
 func WithAllowFromPrivate(onlyFromPrivate bool) func(*Options)
 ```
 
-## func [WithCmdCacheTimeout](<https://github.com/itzngga/roxy/blob/master/options/options.go#L115>)
+## func [WithAutoRejectCall](<https://github.com/itzngga/roxy/blob/master/options/options.go#L165>)
+
+```go
+func WithAutoRejectCall() func(*Options)
+```
+
+## func [WithCmdCacheTimeout](<https://github.com/itzngga/roxy/blob/master/options/options.go#L117>)
 
 ```go
 func WithCmdCacheTimeout(respCacheTimeout time.Duration) func(*Options)
 ```
 
-## func [WithCommandLog](<https://github.com/itzngga/roxy/blob/master/options/options.go#L109>)
+## func [WithCommandLog](<https://github.com/itzngga/roxy/blob/master/options/options.go#L111>)
 
 ```go
 func WithCommandLog(cmdLog bool) func(*Options)
 ```
 
-## func [WithHostNumber](<https://github.com/itzngga/roxy/blob/master/options/options.go#L73>)
+## func [WithHistorySync](<https://github.com/itzngga/roxy/blob/master/options/options.go#L159>)
+
+```go
+func WithHistorySync() func(*Options)
+```
+
+## func [WithHostNumber](<https://github.com/itzngga/roxy/blob/master/options/options.go#L75>)
 
 ```go
 func WithHostNumber(hostNumber string) func(*Options)
 ```
 
-## func [WithLogLevel](<https://github.com/itzngga/roxy/blob/master/options/options.go#L85>)
+## func [WithLogLevel](<https://github.com/itzngga/roxy/blob/master/options/options.go#L87>)
 
 ```go
 func WithLogLevel(logLevel string) func(*Options)
 ```
 
-## func [WithOnlyFromSelf](<https://github.com/itzngga/roxy/blob/master/options/options.go#L139>)
+## func [WithOnlyFromSelf](<https://github.com/itzngga/roxy/blob/master/options/options.go#L141>)
 
 ```go
 func WithOnlyFromSelf(onlyFromSelf bool) func(*Options)
 ```
 
-## func [WithPairCodeLogin](<https://github.com/itzngga/roxy/blob/master/options/options.go#L151>)
+## func [WithPairCodeLogin](<https://github.com/itzngga/roxy/blob/master/options/options.go#L153>)
 
 ```go
 func WithPairCodeLogin() func(*Options)
 ```
 
-## func [WithPostgresDSN](<https://github.com/itzngga/roxy/blob/master/options/options.go#L91>)
+## func [WithPostgresDSN](<https://github.com/itzngga/roxy/blob/master/options/options.go#L93>)
 
 ```go
 func WithPostgresDSN(pgDsn *PostgresDSN) func(*Options)
 ```
 
-## func [WithScanQRLogin](<https://github.com/itzngga/roxy/blob/master/options/options.go#L145>)
+## func [WithScanQRLogin](<https://github.com/itzngga/roxy/blob/master/options/options.go#L147>)
 
 ```go
 func WithScanQRLogin() func(*Options)
 ```
 
-## func [WithSendMsgTimeout](<https://github.com/itzngga/roxy/blob/master/options/options.go#L121>)
+## func [WithSendMsgTimeout](<https://github.com/itzngga/roxy/blob/master/options/options.go#L123>)
 
 ```go
 func WithSendMsgTimeout(sendMsgTimeout time.Duration) func(*Options)
 ```
 
-## func [WithSqlDB](<https://github.com/itzngga/roxy/blob/master/options/options.go#L103>)
+## func [WithSqlDB](<https://github.com/itzngga/roxy/blob/master/options/options.go#L105>)
 
 ```go
 func WithSqlDB(sqlDB *sql.DB) func(*Options)
 ```
 
-## func [WithSqliteFile](<https://github.com/itzngga/roxy/blob/master/options/options.go#L97>)
+## func [WithSqliteFile](<https://github.com/itzngga/roxy/blob/master/options/options.go#L99>)
 
 ```go
 func WithSqliteFile(sqliteFile string) func(*Options)
 ```
 
-## func [WithStoreMode](<https://github.com/itzngga/roxy/blob/master/options/options.go#L79>)
+## func [WithStoreMode](<https://github.com/itzngga/roxy/blob/master/options/options.go#L81>)
 
 ```go
 func WithStoreMode(storeMode string) func(*Options)
@@ -1063,7 +1077,7 @@ const (
 )
 ```
 
-## type [Options](<https://github.com/itzngga/roxy/blob/master/options/options.go#L17-L56>)
+## type [Options](<https://github.com/itzngga/roxy/blob/master/options/options.go#L17-L58>)
 
 ```go
 type Options struct {
@@ -1094,6 +1108,8 @@ type Options struct {
 
     // HistorySync is used to synchronize message history
     HistorySync bool
+    // AutoRejectCall allow to auto reject incoming calls
+    AutoRejectCall bool
 
     // AllowFromPrivate allow messages from private
     AllowFromPrivate bool
@@ -1106,19 +1122,19 @@ type Options struct {
 }
 ```
 
-### func [New](<https://github.com/itzngga/roxy/blob/master/options/options.go#L58>)
+### func [New](<https://github.com/itzngga/roxy/blob/master/options/options.go#L60>)
 
 ```go
 func New(options ...func(*Options)) (*Options, error)
 ```
 
-### func [NewDefaultOptions](<https://github.com/itzngga/roxy/blob/master/options/options.go#L157>)
+### func [NewDefaultOptions](<https://github.com/itzngga/roxy/blob/master/options/options.go#L171>)
 
 ```go
 func NewDefaultOptions() *Options
 ```
 
-### func \(\*Options\) [Validate](<https://github.com/itzngga/roxy/blob/master/options/options.go#L172>)
+### func \(\*Options\) [Validate](<https://github.com/itzngga/roxy/blob/master/options/options.go#L187>)
 
 ```go
 func (o *Options) Validate() error
@@ -1624,6 +1640,30 @@ func ExecPipeline(cmd string, data []byte, params ...string) ([]byte, error)
 ```
 
 ExecPipeline execute command with stdin input and capture stdout to byte
+
+# compress
+
+```go
+import "github.com/itzngga/Roxy/util/compress"
+```
+
+## Index
+
+- [func MarshallBrotli(v interface{}) ([]byte, error)](<#func-marshallbrotli>)
+- [func UnmarshallBrotli[T any](data []byte, v T) error](<#func-unmarshallbrotli>)
+
+
+## func [MarshallBrotli](<https://github.com/itzngga/roxy/blob/master/util/compress/brotli.go#L11>)
+
+```go
+func MarshallBrotli(v interface{}) ([]byte, error)
+```
+
+## func [UnmarshallBrotli](<https://github.com/itzngga/roxy/blob/master/util/compress/brotli.go#L55>)
+
+```go
+func UnmarshallBrotli[T any](data []byte, v T) error
+```
 
 # thumbnail
 

@@ -103,7 +103,48 @@ func (app *App) handleEvents(event interface{}) {
 			message = "Unknown stream error"
 		}
 		app.log.Errorf("error: %s", message)
-	case *events.CallOffer, *events.CallTerminate, *events.CallRelayLatency, *events.CallAccept, *events.UnknownCallEvent:
+	case *events.CallOffer, *events.CallOfferNotice:
+		var (
+			callId string
+			caller string
+		)
+
+		if val, ok := v.(*events.CallOffer); ok {
+			callId = val.CallID
+			caller = val.CallCreator.ToNonAD().String()
+		} else if val, ok := v.(*events.CallOfferNotice); ok {
+			callId = val.CallID
+			caller = val.From.ToNonAD().String()
+		}
+
+		if app.options.AutoRejectCall {
+			err := app.client.DangerousInternals().SendNode(waBinary.Node{
+				Tag: "call",
+				Attrs: waBinary.Attrs{
+					"id":   whatsmeow.GenerateMessageID(),
+					"from": app.client.Store.ID.ToNonAD().String(),
+					"to":   caller,
+				},
+				Content: []waBinary.Node{
+					{
+						Tag: "reject",
+						Attrs: waBinary.Attrs{
+							"call-id":      callId,
+							"call-creator": caller,
+							"count":        "0",
+						},
+						Content: nil,
+					},
+				},
+			})
+			if err != nil {
+				app.log.Errorf("failed to reject call: %v\n", err)
+				return
+			}
+		}
+	//case *events.CallOfferNotice:
+
+	case *events.CallTerminate, *events.CallRelayLatency, *events.CallAccept, *events.UnknownCallEvent:
 		// ignore
 	case *events.AppState:
 		// Ignore
