@@ -221,7 +221,6 @@ func (app *App) initializeClient() error {
 						app.log.Infof("QR Generated!")
 					} else if evt.Event == "success" {
 						app.log.Infof("QR Scanned!")
-						app.ctx.Store("appClient", app.client)
 					} else {
 						app.log.Infof("QR channel result: %s", evt.Event)
 					}
@@ -262,6 +261,8 @@ func (app *App) initializeClient() error {
 			}
 		}
 	}
+
+	app.ctx.Store("appClient", app.client)
 
 	return nil
 }

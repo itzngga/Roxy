@@ -2,7 +2,7 @@ package core
 
 import (
 	"context"
-	"github.com/itzngga/Roxy/util/gzip"
+	"github.com/itzngga/Roxy/util/compress"
 	waProto "go.mau.fi/whatsmeow/binary/proto"
 	waTypes "go.mau.fi/whatsmeow/types"
 	"go.mau.fi/whatsmeow/types/events"
@@ -45,7 +45,7 @@ func (app *App) handleHistorySync(evt *waProto.HistorySync) {
 			return messages[i].Info.Timestamp.Before(messages[j].Info.Timestamp)
 		})
 
-		result, err := gzip.MarshallGzip(messages)
+		result, err := compress.MarshallBrotli(messages)
 		if err != nil {
 			return
 		}
@@ -84,7 +84,7 @@ func (app *App) handleHistorySync(evt *waProto.HistorySync) {
 				return messages[i].Info.Timestamp.Before(messages[j].Info.Timestamp)
 			})
 
-			result, err := gzip.MarshallGzip(messages)
+			result, err := compress.MarshallBrotli(messages)
 			if err != nil {
 				continue
 			}
@@ -116,7 +116,7 @@ func (app *App) upsertMessages(jid waTypes.JID, message []*events.Message) {
 			return chats[i].Info.Timestamp.Before(chats[j].Info.Timestamp)
 		})
 
-		result, err := gzip.MarshallGzip(chats)
+		result, err := compress.MarshallBrotli(chats)
 		if err != nil {
 			return
 		}
@@ -130,7 +130,7 @@ func (app *App) upsertMessages(jid waTypes.JID, message []*events.Message) {
 			return message[i].Info.Timestamp.Before(message[j].Info.Timestamp)
 		})
 
-		result, err := gzip.MarshallGzip(message)
+		result, err := compress.MarshallBrotli(message)
 		if err != nil {
 			return
 		}
@@ -162,7 +162,7 @@ func (app *App) getAllChats() []*events.Message {
 		}
 
 		var message = make([]*events.Message, 0)
-		err = gzip.UnmarshallGzip(rawMessage, &message)
+		err = compress.UnmarshallBrotli(rawMessage, &message)
 		if err != nil {
 			continue
 		}
@@ -197,7 +197,7 @@ func (app *App) getChatInJID(jid waTypes.JID) []*events.Message {
 	}()
 
 	var message = make([]*events.Message, 0)
-	err = gzip.UnmarshallGzip(rawMessage, &message)
+	err = compress.UnmarshallBrotli(rawMessage, &message)
 	if err != nil {
 		return nil
 	}
@@ -221,7 +221,7 @@ func (app *App) getStatusMessages() []*events.Message {
 	}()
 
 	var message = make([]*events.Message, 0)
-	err = gzip.UnmarshallGzip(rawMessage, &message)
+	err = compress.UnmarshallBrotli(rawMessage, &message)
 	if err != nil {
 		return nil
 	}
@@ -241,7 +241,7 @@ func (app *App) findMessageByID(jid waTypes.JID, id string) *events.Message {
 	}
 
 	var message = make([]*events.Message, 0)
-	err = gzip.UnmarshallGzip(rawMessage, &message)
+	err = compress.UnmarshallBrotli(rawMessage, &message)
 	if err != nil {
 		return nil
 	}
