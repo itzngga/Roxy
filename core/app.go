@@ -241,9 +241,8 @@ func (app *App) initializeClient() error {
 	}
 
 	waBinary.IndentXML = true
-	store.SetOSInfo("GoRoxy", [3]uint32{2, 2318, 11})
-	store.DeviceProps.PlatformType = waProto.DeviceProps_CHROME.Enum()
-	store.DeviceProps.RequireFullSync = types.Bool(false)
+	store.SetOSInfo("GoRoxy", store.GetWAVersion())
+	store.DeviceProps.PlatformType = waProto.DeviceProps_CATALINA.Enum()
 
 	app.client = whatsmeow.NewClient(device, waLog.Stdout("WhatsMeow", "ERROR", true))
 	app.client.AddEventHandler(app.handleEvents)
