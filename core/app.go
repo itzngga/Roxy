@@ -142,8 +142,6 @@ func (app *App) handleEvents(event interface{}) {
 				return
 			}
 		}
-	//case *events.CallOfferNotice:
-
 	case *events.CallTerminate, *events.CallRelayLatency, *events.CallAccept, *events.UnknownCallEvent:
 		// ignore
 	case *events.AppState:
@@ -289,7 +287,7 @@ func (app *App) initializeClient() error {
 			return errors.New("error: you must specify host number when using pair code login options")
 		}
 
-		pairCode, err := app.client.PairPhone(app.options.HostNumber, true)
+		pairCode, err := app.client.PairPhone(app.options.HostNumber, true, whatsmeow.PairClientElectron, "Roxy (MacOS)")
 		if err != nil {
 			return err
 		}
