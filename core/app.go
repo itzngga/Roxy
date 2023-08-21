@@ -287,7 +287,7 @@ func (app *App) initializeClient() error {
 			return errors.New("error: you must specify host number when using pair code login options")
 		}
 
-		pairCode, err := app.client.PairPhone(app.options.HostNumber, true, whatsmeow.PairClientElectron, "Roxy (MacOS)")
+		pairCode, err := app.client.PairPhone(app.options.HostNumber, true, whatsmeow.PairClientFirefox, "Firefox (Linux)")
 		if err != nil {
 			return err
 		}
