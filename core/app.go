@@ -240,7 +240,7 @@ func (app *App) initializeClient() error {
 
 	waBinary.IndentXML = true
 	store.SetOSInfo("GoRoxy", store.GetWAVersion())
-	store.DeviceProps.PlatformType = waProto.DeviceProps_CATALINA.Enum()
+	store.DeviceProps.PlatformType = waProto.DeviceProps_DESKTOP.Enum()
 
 	app.client = whatsmeow.NewClient(device, waLog.Stdout("WhatsMeow", "ERROR", true))
 	app.client.AddEventHandler(app.handleEvents)

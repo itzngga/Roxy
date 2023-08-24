@@ -804,25 +804,25 @@ type App struct {
 func NewGoRoxyBase(options *options.Options) (*App, error)
 ```
 
-### func \(\*App\) [AddNewCategory](<https://github.com/itzngga/roxy/blob/master/core/app.go#L320>)
+### func \(\*App\) [AddNewCategory](<https://github.com/itzngga/roxy/blob/master/core/app.go#L317>)
 
 ```go
 func (app *App) AddNewCategory(category string)
 ```
 
-### func \(\*App\) [AddNewCommand](<https://github.com/itzngga/roxy/blob/master/core/app.go#L324>)
+### func \(\*App\) [AddNewCommand](<https://github.com/itzngga/roxy/blob/master/core/app.go#L321>)
 
 ```go
 func (app *App) AddNewCommand(command command.Command)
 ```
 
-### func \(\*App\) [AddNewMiddleware](<https://github.com/itzngga/roxy/blob/master/core/app.go#L328>)
+### func \(\*App\) [AddNewMiddleware](<https://github.com/itzngga/roxy/blob/master/core/app.go#L325>)
 
 ```go
 func (app *App) AddNewMiddleware(middleware command.MiddlewareFunc)
 ```
 
-### func \(\*App\) [Shutdown](<https://github.com/itzngga/roxy/blob/master/core/app.go#L332>)
+### func \(\*App\) [Shutdown](<https://github.com/itzngga/roxy/blob/master/core/app.go#L329>)
 
 ```go
 func (app *App) Shutdown()
