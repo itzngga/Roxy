@@ -7,13 +7,13 @@ require (
 	github.com/andybalholm/brotli v1.0.5
 	github.com/gabriel-vasile/mimetype v1.4.2
 	github.com/goccy/go-json v0.10.2
-	github.com/google/uuid v1.3.0
+	github.com/google/uuid v1.3.1
 	github.com/mattn/go-sqlite3 v1.14.17
 	github.com/mdp/qrterminal/v3 v3.1.1
 	github.com/rainu/go-command-chain v0.4.0
 	github.com/sajari/fuzzy v1.0.0
 	github.com/zhangyunhao116/skipmap v0.10.1
-	go.mau.fi/whatsmeow v0.0.0-20230817083005-1c185f033d88
+	go.mau.fi/whatsmeow v0.0.0-20230824151650-6da2abde6b7c
 	google.golang.org/protobuf v1.31.0
 )
 
