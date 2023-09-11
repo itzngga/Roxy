@@ -179,6 +179,7 @@ func (muxer *Muxer) globalMiddlewareProcessing(c *whatsmeow.Client, evt *events.
 			Number:       number,
 			Locals:       muxer.Locals,
 			QuestionChan: muxer.QuestionChan,
+			Ctx:          muxer.ctx,
 		}
 
 		midAreOk := true

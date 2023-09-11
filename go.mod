@@ -13,7 +13,7 @@ require (
 	github.com/rainu/go-command-chain v0.4.0
 	github.com/sajari/fuzzy v1.0.0
 	github.com/zhangyunhao116/skipmap v0.10.1
-	go.mau.fi/whatsmeow v0.0.0-20230822220829-306e300b4687
+	go.mau.fi/whatsmeow v0.0.0-20230909185302-97dbf9e6289d
 	google.golang.org/protobuf v1.31.0
 )
 
@@ -23,7 +23,7 @@ require (
 	github.com/gorilla/websocket v1.5.0 // indirect
 	github.com/zhangyunhao116/fastrand v0.3.0 // indirect
 	go.mau.fi/libsignal v0.1.0 // indirect
-	go.mau.fi/util v0.0.0-20230805171708-199bf3eec776 // indirect
+	go.mau.fi/util v0.0.0-20230906155759-14bad39a8718 // indirect
 	golang.org/x/crypto v0.12.0 // indirect
 	golang.org/x/net v0.10.0 // indirect
 	rsc.io/qr v0.2.0 // indirect
