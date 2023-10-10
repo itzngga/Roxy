@@ -37,6 +37,7 @@ type Muxer struct {
 	Locals          *skipmap.StringMap[string]
 	SuggestionModel *fuzzy.Model
 	ctx             *skipmap.StringMap[types.RoxyContext]
+	commandParser   func(str string) (prefix string, cmd string, ok bool)
 }
 
 func NewMuxer(ctx *skipmap.StringMap[types.RoxyContext], log waLog.Logger, options *options.Options) *Muxer {
@@ -53,16 +54,16 @@ func NewMuxer(ctx *skipmap.StringMap[types.RoxyContext], log waLog.Logger, optio
 		MessageTimeout:       options.SendMessageTimeout,
 		Options:              options,
 		Log:                  log,
+		commandParser:        util.ParseCmd,
 	}
 	muxer.extendContext(ctx)
 	muxer.handleQuestionStateChan()
-	muxer.addAllEmbed()
-
-	if options.CommandSuggestion {
-		muxer.generateSuggestionModel()
-	}
 
 	return muxer
+}
+
+func (muxer *Muxer) AddCommandParser(runFunc func(str string) (prefix string, cmd string, ok bool)) {
+	muxer.commandParser = runFunc
 }
 
 func (muxer *Muxer) Clean() {
@@ -102,7 +103,7 @@ func (muxer *Muxer) handleQuestionStateChan() {
 	})
 }
 
-func (muxer *Muxer) addAllEmbed() {
+func (muxer *Muxer) addEmbedCommands() {
 	categories := embed.Categories.Get()
 	for _, cat := range categories {
 		muxer.Categories.Store(cat, cat)
@@ -119,6 +120,10 @@ func (muxer *Muxer) addAllEmbed() {
 	globalMiddleware := embed.GlobalMiddlewares.Get()
 	for _, mid := range globalMiddleware {
 		muxer.AddGlobalMiddleware(mid)
+	}
+
+	if muxer.Options.CommandSuggestion {
+		muxer.GenerateSuggestionModel()
 	}
 }
 
@@ -267,7 +272,7 @@ func (muxer *Muxer) RunCommand(c *whatsmeow.Client, evt *events.Message) {
 		return
 	}
 
-	prefix, cmd, isCmd := util.ParseCmd(parsed)
+	prefix, cmd, isCmd := muxer.commandParser(parsed)
 	cmdLoad, isAvailable := muxer.Commands.Load(cmd)
 	if muxer.Options.CommandSuggestion && isCmd && !isAvailable {
 		muxer.suggestCommand(evt, prefix, cmd)

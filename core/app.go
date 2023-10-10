@@ -54,6 +54,8 @@ func NewGoRoxyBase(options *options.Options) (*App, error) {
 		app.muxer = NewMuxer(app.ctx, stdLog, options)
 	}
 
+	app.muxer.addEmbedCommands()
+
 	return app, nil
 }
 

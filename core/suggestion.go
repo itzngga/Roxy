@@ -14,7 +14,7 @@ import (
 	"time"
 )
 
-func (muxer *Muxer) generateSuggestionModel() {
+func (muxer *Muxer) GenerateSuggestionModel() {
 	model := fuzzy.NewModel()
 	model.SetThreshold(1)
 	model.SetDepth(5)
