@@ -152,6 +152,38 @@ func (muxer *Muxer) AddCommand(cmd *command.Command) {
 	muxer.Commands.Store(cmd.Name, cmd)
 }
 
+func (muxer *Muxer) GetActiveCommand() []*command.Command {
+	var cmd = make([]*command.Command, 0)
+	muxer.Commands.Range(func(key string, value *command.Command) bool {
+		// filter alias commands
+		if key == value.Name {
+			cmd = append(cmd, value)
+		}
+		return true
+	})
+
+	return cmd
+}
+
+func (muxer *Muxer) GetActiveGlobalMiddleware() []command.MiddlewareFunc {
+	var middleware = make([]command.MiddlewareFunc, 0)
+	muxer.GlobalMiddlewares.Range(func(key string, value command.MiddlewareFunc) bool {
+		middleware = append(middleware, value)
+		return true
+	})
+
+	return middleware
+}
+func (muxer *Muxer) GetActiveMiddleware() []command.MiddlewareFunc {
+	var middleware = make([]command.MiddlewareFunc, 0)
+	muxer.Middlewares.Range(func(key string, value command.MiddlewareFunc) bool {
+		middleware = append(middleware, value)
+		return true
+	})
+
+	return middleware
+}
+
 func (muxer *Muxer) getCachedCommandResponse(cmd string) *waProto.Message {
 	cache, ok := muxer.CommandResponseCache.Load(cmd)
 	if ok {
