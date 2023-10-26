@@ -239,6 +239,9 @@ func (muxer *Muxer) handleQuestionState(c *whatsmeow.Client, evt *events.Message
 		muxer.QuestionState.Delete(number)
 		return
 	} else {
+		if questionState.WithEmojiReact {
+			util.SendEmojiMessage(c, evt, questionState.EmojiReact)
+		}
 		muxer.getPool().Submit(func() {
 			jids := []waTypes.MessageID{
 				evt.Info.ID,
@@ -254,9 +257,6 @@ func (muxer *Muxer) handleQuestionState(c *whatsmeow.Client, evt *events.Message
 					questionState.Questions[i].SetAnswer(result)
 				} else {
 					questionState.Questions[i].SetAnswer(parsedMsg)
-				}
-				if questionState.WithEmojiReact {
-					util.SendEmojiMessage(c, evt, questionState.EmojiReact)
 				}
 				continue
 			} else if question.Question != questionState.ActiveQuestion && question.GetAnswer() == "" {

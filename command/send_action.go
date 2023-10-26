@@ -6,6 +6,7 @@ import (
 	"time"
 )
 
+// SendReadPresence send read status in current chat
 func (runFunc *RunFuncContext) SendReadPresence() {
 	jids := []waTypes.MessageID{
 		runFunc.MessageInfo.ID,
@@ -14,6 +15,7 @@ func (runFunc *RunFuncContext) SendReadPresence() {
 	return
 }
 
+// SendTypingPresence send typing action in current chat
 func (runFunc *RunFuncContext) SendTypingPresence(duration time.Duration) {
 	go func() {
 		chat := runFunc.MessageInfo.Chat

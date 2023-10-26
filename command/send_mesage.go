@@ -12,6 +12,7 @@ import (
 	"time"
 )
 
+// RevokeMessage revoke message from given jid and client message id
 func (runFunc *RunFuncContext) RevokeMessage(jid waTypes.JID, messageId waTypes.MessageID) {
 	ctx, cancel := context.WithTimeout(context.Background(), runFunc.Options.SendMessageTimeout)
 	defer cancel()
@@ -23,6 +24,7 @@ func (runFunc *RunFuncContext) RevokeMessage(jid waTypes.JID, messageId waTypes.
 	return
 }
 
+// ByteToMessage convert byte to whatsmeow message object
 func (runFunc *RunFuncContext) ByteToMessage(value []byte, withReply bool, caption string) *waProto.Message {
 	var message *waProto.Message
 	mimetypeString := mimetype.Detect(value)
@@ -70,6 +72,7 @@ func (runFunc *RunFuncContext) ByteToMessage(value []byte, withReply bool, capti
 	return message
 }
 
+// SendReplyMessage send reply message in current chat
 func (runFunc *RunFuncContext) SendReplyMessage(obj any) {
 	var message *waProto.Message
 	switch value := obj.(type) {
@@ -174,6 +177,7 @@ func (runFunc *RunFuncContext) SendReplyMessage(obj any) {
 	}
 }
 
+// GenerateReplyMessage generate reply message to whatsmeow message object
 func (runFunc *RunFuncContext) GenerateReplyMessage(obj any) *waProto.Message {
 	var message *waProto.Message
 	switch value := obj.(type) {
@@ -366,6 +370,7 @@ func (runFunc *RunFuncContext) SendMessage(obj any) {
 	return
 }
 
+// EditMessageText edit current text message to given text
 func (runFunc *RunFuncContext) EditMessageText(to string) error {
 	msgKey := &waProto.MessageKey{
 		RemoteJid: types.String(runFunc.MessageInfo.Chat.String()),
@@ -399,6 +404,7 @@ func (runFunc *RunFuncContext) EditMessageText(to string) error {
 	return nil
 }
 
+// SendEmoji send emoji to current text message
 func (runFunc *RunFuncContext) SendEmoji(emoji string) {
 	util.SendEmojiMessage(runFunc.Client, runFunc.MessageEvent, emoji)
 	return

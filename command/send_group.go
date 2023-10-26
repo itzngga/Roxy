@@ -7,16 +7,19 @@ import (
 	waTypes "go.mau.fi/whatsmeow/types"
 )
 
+// FindGroupByJid find group by jid from cache
 func (runFunc *RunFuncContext) FindGroupByJid(groupJid waTypes.JID) (group *waTypes.GroupInfo, err error) {
 	FindGroupByJid := types.GetContext[types.FindGroupByJid](runFunc.Ctx, "FindGroupByJid")
 	return FindGroupByJid(groupJid)
 }
 
+// GetAllGroups get all groups from cache
 func (runFunc *RunFuncContext) GetAllGroups() (group []*waTypes.GroupInfo, err error) {
 	GetAllGroups := types.GetContext[types.GetAllGroups](runFunc.Ctx, "GetAllGroups")
 	return GetAllGroups()
 }
 
+// IsGroupAdmin check is target jid are group admin
 func (runFunc *RunFuncContext) IsGroupAdmin(jid any) (bool, error) {
 	jids, err := util.ParseUserJid(jid)
 	if err != nil {
@@ -45,6 +48,7 @@ func (runFunc *RunFuncContext) IsGroupAdmin(jid any) (bool, error) {
 	return isAdmin, nil
 }
 
+// IsClientGroupAdmin check if client is a group admin
 func (runFunc *RunFuncContext) IsClientGroupAdmin() (bool, error) {
 	if runFunc.MessageInfo.Chat.Server != waTypes.GroupServer {
 		return false, fmt.Errorf("error: chat is not a group")
@@ -72,6 +76,7 @@ func (runFunc *RunFuncContext) IsClientGroupAdmin() (bool, error) {
 	return isAdmin, nil
 }
 
+// SetGroupName set current group name
 func (runFunc *RunFuncContext) SetGroupName(name string) error {
 	if runFunc.MessageInfo.Chat.Server != waTypes.GroupServer {
 		return fmt.Errorf("error: chat is not a group")
@@ -86,6 +91,7 @@ func (runFunc *RunFuncContext) SetGroupName(name string) error {
 	return err
 }
 
+// SetGroupPhoto set current group photo
 func (runFunc *RunFuncContext) SetGroupPhoto(data []byte) error {
 	if runFunc.MessageInfo.Chat.Server != waTypes.GroupServer {
 		return fmt.Errorf("error: chat is not a group")
@@ -100,6 +106,7 @@ func (runFunc *RunFuncContext) SetGroupPhoto(data []byte) error {
 	return err
 }
 
+// SetGroupAnnounce set group announce info
 func (runFunc *RunFuncContext) SetGroupAnnounce(announce bool) error {
 	if runFunc.MessageInfo.Chat.Server != waTypes.GroupServer {
 		return fmt.Errorf("error: chat is not a group")
@@ -114,6 +121,7 @@ func (runFunc *RunFuncContext) SetGroupAnnounce(announce bool) error {
 	return err
 }
 
+// SetGroupLocked set current group to locked
 func (runFunc *RunFuncContext) SetGroupLocked(locked bool) error {
 	if runFunc.MessageInfo.Chat.Server != waTypes.GroupServer {
 		return fmt.Errorf("error: chat is not a group")

@@ -12,6 +12,7 @@ import (
 	"os"
 )
 
+// UploadImageMessageFromPath upload a image from given path
 func (runFunc *RunFuncContext) UploadImageMessageFromPath(path, caption string) (*waProto.ImageMessage, error) {
 	imageBuff, err := os.Open(path)
 	if err != nil {
@@ -63,6 +64,7 @@ func (runFunc *RunFuncContext) UploadImageMessageFromPath(path, caption string) 
 	}, nil
 }
 
+// UploadImageMessageFromBytes upload image from given bytes
 func (runFunc *RunFuncContext) UploadImageMessageFromBytes(bytes []byte, caption string) (*waProto.ImageMessage, error) {
 	mimetypeString := mimetype.Detect(bytes)
 
@@ -103,6 +105,7 @@ func (runFunc *RunFuncContext) UploadImageMessageFromBytes(bytes []byte, caption
 	}, nil
 }
 
+// UploadVideoMessageFromPath upload video from given path
 func (runFunc *RunFuncContext) UploadVideoMessageFromPath(path, caption string) (*waProto.VideoMessage, error) {
 	videoBuff, err := os.Open(path)
 	if err != nil {
@@ -153,6 +156,7 @@ func (runFunc *RunFuncContext) UploadVideoMessageFromPath(path, caption string) 
 	}, nil
 }
 
+// UploadVideoMessageFromBytes upload video from given bytes
 func (runFunc *RunFuncContext) UploadVideoMessageFromBytes(bytes []byte, caption string) (*waProto.VideoMessage, error) {
 	mimetypeString := mimetype.Detect(bytes)
 
@@ -193,6 +197,7 @@ func (runFunc *RunFuncContext) UploadVideoMessageFromBytes(bytes []byte, caption
 	}, nil
 }
 
+// UploadStickerMessageFromPath upload sticker from given path
 func (runFunc *RunFuncContext) UploadStickerMessageFromPath(path string) (*waProto.StickerMessage, error) {
 	stickerBuff, err := os.Open(path)
 	if err != nil {
@@ -225,6 +230,7 @@ func (runFunc *RunFuncContext) UploadStickerMessageFromPath(path string) (*waPro
 	}, nil
 }
 
+// UploadStickerMessageFromBytes upload sticker from given bytes
 func (runFunc *RunFuncContext) UploadStickerMessageFromBytes(bytes []byte) (*waProto.StickerMessage, error) {
 	resp, err := runFunc.Client.Upload(context.Background(), bytes, whatsmeow.MediaImage)
 	if err != nil {
@@ -249,6 +255,7 @@ func (runFunc *RunFuncContext) UploadStickerMessageFromBytes(bytes []byte) (*waP
 	}, nil
 }
 
+// UploadDocumentMessageFromPath upload document from given path
 func (runFunc *RunFuncContext) UploadDocumentMessageFromPath(path, title string) (*waProto.DocumentMessage, error) {
 	documentBuff, err := os.Open(path)
 	if err != nil {
@@ -284,6 +291,7 @@ func (runFunc *RunFuncContext) UploadDocumentMessageFromPath(path, title string)
 	}, nil
 }
 
+// UploadDocumentMessageFromBytes upload document from given bytes
 func (runFunc *RunFuncContext) UploadDocumentMessageFromBytes(bytes []byte, title, filename string) (*waProto.DocumentMessage, error) {
 	mimetypeString := mimetype.Detect(bytes)
 
@@ -311,6 +319,7 @@ func (runFunc *RunFuncContext) UploadDocumentMessageFromBytes(bytes []byte, titl
 	}, nil
 }
 
+// UploadAudioMessageFromPath upload audio message from given path
 func (runFunc *RunFuncContext) UploadAudioMessageFromPath(path string) (*waProto.AudioMessage, error) {
 	audioBuff, err := os.Open(path)
 	if err != nil {
@@ -345,6 +354,7 @@ func (runFunc *RunFuncContext) UploadAudioMessageFromPath(path string) (*waProto
 	}, nil
 }
 
+// UploadAudioMessageFromBytes upload audio from given bytes
 func (runFunc *RunFuncContext) UploadAudioMessageFromBytes(bytes []byte) (*waProto.AudioMessage, error) {
 	mimetypeString := mimetype.Detect(bytes)
 

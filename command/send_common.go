@@ -10,6 +10,7 @@ import (
 	"strings"
 )
 
+// SetUserStatus set client status
 func (runFunc *RunFuncContext) SetUserStatus(status string) error {
 	if status == "" {
 		return errors.New("error: failed to blank status string")
@@ -23,7 +24,8 @@ func (runFunc *RunFuncContext) SetUserStatus(status string) error {
 	return nil
 }
 
-func (runFunc *RunFuncContext) JoinInviteLink(link string) error {
+// JoinGroupInviteLink join a group invite link
+func (runFunc *RunFuncContext) JoinGroupInviteLink(link string) error {
 	if link == "" {
 		return errors.New("error: blank link string")
 	}
@@ -39,6 +41,7 @@ func (runFunc *RunFuncContext) JoinInviteLink(link string) error {
 	return nil
 }
 
+// GetGroupInfoFromInviteLink get group info from invite link
 func (runFunc *RunFuncContext) GetGroupInfoFromInviteLink(link string) (*waTypes.GroupInfo, error) {
 	if link == "" {
 		return nil, errors.New("error: blank link string")
@@ -54,13 +57,14 @@ func (runFunc *RunFuncContext) GetGroupInfoFromInviteLink(link string) (*waTypes
 	return groupInfo, nil
 }
 
-func (runFunc *RunFuncContext) GetGroupInviteLink(jid any, reset bool) (string, error) {
+// GetGroupInviteLink get current group invite link
+func (runFunc *RunFuncContext) GetGroupInviteLink(jid any) (string, error) {
 	jids, err := util.ParseGroupJid(jid)
 	if err != nil {
 		return "", err
 	}
 
-	link, err := runFunc.Client.GetGroupInviteLink(jids, reset)
+	link, err := runFunc.Client.GetGroupInviteLink(jids, false)
 	if err != nil {
 		return "", fmt.Errorf("error: failed to get group invite link : %v\n", err)
 	}
@@ -68,6 +72,7 @@ func (runFunc *RunFuncContext) GetGroupInviteLink(jid any, reset bool) (string, 
 	return "https://chat.whatsapp.com/" + link, nil
 }
 
+// GetJoinedGroups get client joined group from cache
 func (runFunc *RunFuncContext) GetJoinedGroups() ([]*waTypes.GroupInfo, error) {
 	groups, err := runFunc.Client.GetJoinedGroups()
 	if err != nil {
@@ -76,6 +81,7 @@ func (runFunc *RunFuncContext) GetJoinedGroups() ([]*waTypes.GroupInfo, error) {
 	return groups, nil
 }
 
+// GetGroupInfo get group info from cache
 func (runFunc *RunFuncContext) GetGroupInfo(jid any) (*waTypes.GroupInfo, error) {
 	jids, err := util.ParseGroupJid(jid)
 	if err != nil {
@@ -91,7 +97,8 @@ func (runFunc *RunFuncContext) GetGroupInfo(jid any) (*waTypes.GroupInfo, error)
 	return group, nil
 }
 
-func (runFunc *RunFuncContext) GetProfilePicture(jid any) (string, error) {
+// GetGroupProfilePicture get group profile picture
+func (runFunc *RunFuncContext) GetGroupProfilePicture(jid any) (string, error) {
 	jids, err := util.ParseAllJid(jid)
 	if err != nil {
 		return "", err
@@ -104,6 +111,7 @@ func (runFunc *RunFuncContext) GetProfilePicture(jid any) (string, error) {
 	return pic.URL, nil
 }
 
+// UpdateClientProfilePicture update client profile picture
 func (runFunc *RunFuncContext) UpdateClientProfilePicture(data []byte) error {
 	_, err := runFunc.Client.SetGroupPhoto(waTypes.JID{}, data)
 	if err != nil {
@@ -113,7 +121,8 @@ func (runFunc *RunFuncContext) UpdateClientProfilePicture(data []byte) error {
 	return nil
 }
 
-func (runFunc *RunFuncContext) UpdateProfilePicture(jid any, data []byte) error {
+// UpdateGroupProfilePicture update group profile picture
+func (runFunc *RunFuncContext) UpdateGroupProfilePicture(jid any, data []byte) error {
 	val, ok := jid.(string)
 	if ok && val == "" {
 		_, err := runFunc.Client.SetGroupPhoto(waTypes.JID{}, data)
@@ -169,7 +178,8 @@ func (runFunc *RunFuncContext) UpdateProfilePicture(jid any, data []byte) error 
 	}
 }
 
-func (runFunc *RunFuncContext) GetUser(jid any) (result waTypes.UserInfo, err error) {
+// GetUserInfo get contact user info from cache
+func (runFunc *RunFuncContext) GetUserInfo(jid any) (result waTypes.UserInfo, err error) {
 	jids, err := util.ParseUserJid(jid)
 	if err != nil {
 		return result, err
