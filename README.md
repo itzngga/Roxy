@@ -102,6 +102,9 @@ if err != nil {
 }
 ```
 
+# Example
+currently available example project in [Lara](https://github.com/itzngga/Lara)
+
 # Add a Command
 create a simple command with:
 ### command/hello_world.go
@@ -173,8 +176,6 @@ var ocr = &command.Command{
 
 # Documentation
 [DOC](https://github.com/itzngga/Roxy/tree/master/DOC.md)
-# Example
-[Example](https://github.com/itzngga/Roxy/tree/master/examples)
 # License
 [GNU](https://github.com/itzngga/Roxy/blob/master/LICENSE)
 

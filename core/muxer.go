@@ -205,18 +205,21 @@ func (muxer *Muxer) setCacheCommandResponse(cmd string, response *waProto.Messag
 func (muxer *Muxer) globalMiddlewareProcessing(c *whatsmeow.Client, evt *events.Message, number string) bool {
 	if muxer.GlobalMiddlewares.Len() >= 1 {
 		param := &command.RunFuncContext{
-			Client:       c,
-			WaLog:        muxer.Log,
-			Options:      muxer.Options,
-			MessageEvent: evt,
-			MessageInfo:  &evt.Info,
-			ClientJID:    c.Store.ID,
-			Message:      evt.Message,
-			FromMe:       evt.Info.IsFromMe,
-			Number:       number,
-			Locals:       muxer.Locals,
-			QuestionChan: muxer.QuestionChan,
-			Ctx:          muxer.ctx,
+			Client:        c,
+			WaLog:         muxer.Log,
+			Options:       muxer.Options,
+			MessageEvent:  evt,
+			MessageInfo:   &evt.Info,
+			ClientJID:     c.Store.ID,
+			Message:       evt.Message,
+			FromMe:        evt.Info.IsFromMe,
+			MessageChat:   evt.Info.Chat,
+			MessageSender: evt.Info.Sender,
+			PushName:      evt.Info.PushName,
+			Number:        number,
+			Locals:        muxer.Locals,
+			QuestionChan:  muxer.QuestionChan,
+			Ctx:           muxer.ctx,
 		}
 
 		midAreOk := true
@@ -357,6 +360,9 @@ func (muxer *Muxer) RunCommand(c *whatsmeow.Client, evt *events.Message) {
 			Number:         number,
 			Locals:         muxer.Locals,
 			QuestionChan:   muxer.QuestionChan,
+			MessageChat:    evt.Info.Chat,
+			MessageSender:  evt.Info.Sender,
+			PushName:       evt.Info.PushName,
 			Prefix:         prefix,
 			Arguments:      args,
 			Ctx:            muxer.ctx,

@@ -27,6 +27,9 @@ type RunFuncContext struct {
 	Message        *waProto.Message
 	Client         *whatsmeow.Client
 	QuestionChan   chan *QuestionState
+	MessageChat    waTypes.JID
+	MessageSender  waTypes.JID
+	PushName       string
 	MessageInfo    *waTypes.MessageInfo
 	Locals         *skipmap.StringMap[string]
 	Ctx            *skipmap.StringMap[types.RoxyContext]
