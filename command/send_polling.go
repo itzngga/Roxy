@@ -19,6 +19,7 @@ type PollingState struct {
 	PollSelectable int
 	PollingTimeout *time.Duration
 	RunFuncCtx     *RunFuncContext
+	PollWithRevoke bool
 	PollingResult  []string
 	ResultChan     chan bool
 }
@@ -60,6 +61,11 @@ func (p *PollingState) SetSelectableOption(count int) *PollingState {
 	return p
 }
 
+func (p *PollingState) WithRevoke() *PollingState {
+	p.PollWithRevoke = true
+	return p
+}
+
 func (p *PollingState) sendPollMessage() {
 	var options []string
 	for _, option := range p.PollOptions {
@@ -76,8 +82,12 @@ func (p *PollingState) sendPollMessage() {
 
 func (p *PollingState) Exec() []string {
 	p.sendPollMessage()
+	if p.PollWithRevoke {
+		defer func() {
+			p.RunFuncCtx.RevokeMessage(p.RunFuncCtx.MessageChat, p.PollId)
+		}()
+	}
 	p.RunFuncCtx.PollingChan <- p
-	defer close(p.ResultChan)
 
 	_ = <-p.ResultChan
 	result := util.RemoveDuplicate(p.PollingResult)
