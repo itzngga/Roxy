@@ -9,6 +9,18 @@ import (
 	"strings"
 )
 
+func RemoveDuplicate[T string | int](sliceList []T) []T {
+	allKeys := make(map[T]bool)
+	list := []T{}
+	for _, item := range sliceList {
+		if _, value := allKeys[item]; !value {
+			allKeys[item] = true
+			list = append(list, item)
+		}
+	}
+	return list
+}
+
 func CreateUid() string {
 	id := uuid.New().String()
 	return id[:len(id)*1/4]

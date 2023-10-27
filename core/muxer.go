@@ -1,6 +1,7 @@
 package core
 
 import (
+	"bytes"
 	"context"
 	"fmt"
 	"github.com/alitto/pond"
@@ -31,9 +32,11 @@ type Muxer struct {
 	Commands             *skipmap.StringMap[*command.Command]
 	CommandResponseCache *skipmap.StringMap[*waProto.Message]
 	QuestionState        *skipmap.StringMap[*command.QuestionState]
+	PollingState         *skipmap.StringMap[*command.PollingState]
 	GroupCache           *skipmap.StringMap[[]*waTypes.GroupInfo]
 
 	QuestionChan    chan *command.QuestionState
+	PollingChan     chan *command.PollingState
 	Locals          *skipmap.StringMap[string]
 	SuggestionModel *fuzzy.Model
 	ctx             *skipmap.StringMap[types.RoxyContext]
@@ -48,9 +51,11 @@ func NewMuxer(ctx *skipmap.StringMap[types.RoxyContext], log waLog.Logger, optio
 		Middlewares:          skipmap.NewString[command.MiddlewareFunc](),
 		CommandResponseCache: skipmap.NewString[*waProto.Message](),
 		QuestionState:        skipmap.NewString[*command.QuestionState](),
+		PollingState:         skipmap.NewString[*command.PollingState](),
 		Categories:           skipmap.NewString[string](),
 		GroupCache:           skipmap.NewString[[]*waTypes.GroupInfo](),
 		QuestionChan:         make(chan *command.QuestionState),
+		PollingChan:          make(chan *command.PollingState),
 		MessageTimeout:       options.SendMessageTimeout,
 		Options:              options,
 		Log:                  log,
@@ -58,6 +63,7 @@ func NewMuxer(ctx *skipmap.StringMap[types.RoxyContext], log waLog.Logger, optio
 	}
 	muxer.extendContext(ctx)
 	muxer.handleQuestionStateChan()
+	muxer.handlePollingStateChan()
 
 	return muxer
 }
@@ -82,6 +88,31 @@ func (muxer *Muxer) Clean() {
 	muxer.Locals.Range(func(key string, middleware string) bool {
 		muxer.Locals.Delete(key)
 		return true
+	})
+}
+
+func (muxer *Muxer) handlePollingStateChan() {
+	muxer.getPool().Submit(func() {
+		for message := range muxer.PollingChan {
+			muxer.PollingState.Store(message.PollId, message)
+			if message.PollingTimeout != nil {
+				go func() {
+					timeout := time.NewTimer(*message.PollingTimeout)
+					<-timeout.C
+					message.ResultChan <- true
+					timeout.Stop()
+					muxer.PollingState.Delete(message.PollId)
+				}()
+			} else {
+				go func() {
+					timeout := time.NewTimer(time.Second * 10)
+					<-timeout.C
+					message.ResultChan <- true
+					timeout.Stop()
+					muxer.PollingState.Delete(message.PollId)
+				}()
+			}
+		}
 	})
 }
 
@@ -219,6 +250,7 @@ func (muxer *Muxer) globalMiddlewareProcessing(c *whatsmeow.Client, evt *events.
 			Number:        number,
 			Locals:        muxer.Locals,
 			QuestionChan:  muxer.QuestionChan,
+			PollingChan:   muxer.PollingChan,
 			Ctx:           muxer.ctx,
 		}
 
@@ -234,6 +266,35 @@ func (muxer *Muxer) globalMiddlewareProcessing(c *whatsmeow.Client, evt *events.
 	}
 
 	return true
+}
+
+func (muxer *Muxer) handlePollingState(c *whatsmeow.Client, evt *events.Message) {
+	if evt.Message.PollUpdateMessage.PollCreationMessageKey == nil && evt.Message.PollUpdateMessage.PollCreationMessageKey.Id == nil {
+		return
+	}
+
+	pollingState, ok := muxer.PollingState.Load(*evt.Message.PollUpdateMessage.PollCreationMessageKey.Id)
+	if ok {
+		pollMessage, err := c.DecryptPollVote(evt)
+		if err != nil {
+			return
+		}
+
+		var result []string
+		for _, selectedOption := range pollMessage.SelectedOptions {
+			for _, option := range pollingState.PollOptions {
+				if bytes.Equal(selectedOption, option.Hashed) {
+					result = append(result, option.Options)
+					break
+				}
+			}
+		}
+
+		pollingState.PollingResult = append(pollingState.PollingResult, result...)
+		if pollingState.PollingTimeout == nil {
+			pollingState.ResultChan <- true
+		}
+	}
 }
 
 func (muxer *Muxer) handleQuestionState(c *whatsmeow.Client, evt *events.Message, number, parsedMsg string) {
@@ -290,6 +351,11 @@ func (muxer *Muxer) RunCommand(c *whatsmeow.Client, evt *events.Message) {
 		return
 	}
 	if muxer.Options.OnlyFromSelf && !evt.Info.IsFromMe {
+		return
+	}
+
+	if evt.Message.GetPollUpdateMessage() != nil {
+		muxer.handlePollingState(c, evt)
 		return
 	}
 
@@ -360,6 +426,7 @@ func (muxer *Muxer) RunCommand(c *whatsmeow.Client, evt *events.Message) {
 			Number:         number,
 			Locals:         muxer.Locals,
 			QuestionChan:   muxer.QuestionChan,
+			PollingChan:    muxer.PollingChan,
 			MessageChat:    evt.Info.Chat,
 			MessageSender:  evt.Info.Sender,
 			PushName:       evt.Info.PushName,

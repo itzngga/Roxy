@@ -27,6 +27,7 @@ type RunFuncContext struct {
 	Message        *waProto.Message
 	Client         *whatsmeow.Client
 	QuestionChan   chan *QuestionState
+	PollingChan    chan *PollingState
 	MessageChat    waTypes.JID
 	MessageSender  waTypes.JID
 	PushName       string
