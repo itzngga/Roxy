@@ -105,7 +105,7 @@ func (muxer *Muxer) handlePollingStateChan() {
 				}()
 			} else {
 				go func() {
-					timeout := time.NewTimer(time.Second * 10)
+					timeout := time.NewTimer(time.Minute * 10)
 					<-timeout.C
 					message.ResultChan <- true
 					timeout.Stop()
@@ -293,6 +293,7 @@ func (muxer *Muxer) handlePollingState(c *whatsmeow.Client, evt *events.Message)
 		pollingState.PollingResult = append(pollingState.PollingResult, result...)
 		if pollingState.PollingTimeout == nil {
 			pollingState.ResultChan <- true
+			muxer.PollingState.Delete(pollingState.PollId)
 		}
 	}
 }

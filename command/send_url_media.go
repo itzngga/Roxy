@@ -5,6 +5,16 @@ import (
 	waProto "go.mau.fi/whatsmeow/binary/proto"
 )
 
+// UploadMediaFromUrl upload media detected from mimetype
+func (runFunc *RunFuncContext) UploadMediaFromUrl(url string, vars map[string]string) (any, error) {
+	bytes, err := util.DoHTTPRequest("GET", url)
+	if err != nil {
+		return nil, err
+	}
+
+	return runFunc.UploadBytesMedia(bytes, vars)
+}
+
 // UploadImageFromUrl upload image from given url
 func (runFunc *RunFuncContext) UploadImageFromUrl(url, caption string) (*waProto.ImageMessage, error) {
 	bytes, err := util.DoHTTPRequest("GET", url)

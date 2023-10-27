@@ -3,6 +3,7 @@ package command
 import (
 	"bufio"
 	"context"
+	"errors"
 	"github.com/gabriel-vasile/mimetype"
 	"github.com/itzngga/Roxy/types"
 	"github.com/itzngga/Roxy/util"
@@ -11,6 +12,56 @@ import (
 	waProto "go.mau.fi/whatsmeow/binary/proto"
 	"os"
 )
+
+var imageExtensions = []string{".png", ".jpg", ".webp", ".gif", ".bmp", ".ico", ".svg"}
+var videoExtensions = []string{".mp4", ".mov", ".mpeg", ".webp", ".3gp", ".avi", ".mkv"}
+var audioExtensions = []string{".mp3", ".ogg", ".m4a", ".wav", ".flac"}
+
+// UploadBytesMedia upload bytes media based from mimetype
+func (runFunc *RunFuncContext) UploadBytesMedia(bytes []byte, vars map[string]string) (any, error) {
+	mimetypeString := mimetype.Detect(bytes)
+	extension := mimetypeString.Extension()
+
+	for _, imageExtension := range imageExtensions {
+		if extension == imageExtension {
+			caption, ok := vars["caption"]
+			if !ok {
+				return nil, errors.New("error: missing caption in vars map")
+			}
+
+			return runFunc.UploadImageMessageFromBytes(bytes, caption)
+		}
+	}
+
+	for _, videoExtension := range videoExtensions {
+		if extension == videoExtension {
+			caption, ok := vars["caption"]
+			if !ok {
+				return nil, errors.New("error: missing caption in vars map")
+			}
+
+			return runFunc.UploadVideoMessageFromBytes(bytes, caption)
+		}
+	}
+
+	for _, audioExtension := range audioExtensions {
+		if extension == audioExtension {
+			return runFunc.UploadAudioMessageFromBytes(bytes)
+		}
+	}
+
+	title, ok := vars["title"]
+	if !ok {
+		return nil, errors.New("error: missing title in vars map")
+	}
+
+	filename, ok := vars["filename"]
+	if !ok {
+		return nil, errors.New("error: missing filename in vars map")
+	}
+
+	return runFunc.UploadDocumentMessageFromBytes(bytes, title, filename)
+}
 
 // UploadImageMessageFromPath upload a image from given path
 func (runFunc *RunFuncContext) UploadImageMessageFromPath(path, caption string) (*waProto.ImageMessage, error) {
