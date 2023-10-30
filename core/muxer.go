@@ -355,6 +355,10 @@ func (muxer *Muxer) RunCommand(c *whatsmeow.Client, evt *events.Message) {
 		return
 	}
 
+	if evt.Info.ID == "status@broadcast" {
+		return
+	}
+
 	if evt.Message.GetPollUpdateMessage() != nil {
 		muxer.handlePollingState(c, evt)
 		return
