@@ -56,8 +56,17 @@ func UnmarshallBrotli[T any](data []byte, v T) error {
 	var dataReader = bytes.NewReader(data)
 	br := brotli.NewReader(dataReader)
 
+	var flateDecoded bytes.Buffer
+	_, err := io.Copy(&flateDecoded, br)
+	if err != nil {
+		return err
+	}
+
+	dataReader = bytes.NewReader(flateDecoded.Bytes())
+	flateReader := flate.NewReader(dataReader)
+
 	var decoded bytes.Buffer
-	_, err := io.Copy(&decoded, br)
+	_, err = io.Copy(&decoded, flateReader)
 	if err != nil {
 		return err
 	}
@@ -70,7 +79,9 @@ func UnmarshallBrotli[T any](data []byte, v T) error {
 	defer func() {
 		br = nil
 		dataReader = nil
+		flateReader.Close()
 		decoded.Reset()
+		flateDecoded.Reset()
 		data = nil
 	}()
 
