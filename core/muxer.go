@@ -3,7 +3,6 @@ package core
 import (
 	"bytes"
 	"context"
-	"fmt"
 	"github.com/alitto/pond"
 	"github.com/google/uuid"
 	"github.com/itzngga/Roxy/command"
@@ -43,7 +42,7 @@ type Muxer struct {
 	commandParser   func(str string) (prefix string, cmd string, ok bool)
 }
 
-func NewMuxer(ctx *skipmap.StringMap[types.RoxyContext], log waLog.Logger, options *options.Options) *Muxer {
+func NewMuxer(ctx *skipmap.StringMap[types.RoxyContext], log waLog.Logger, options *options.Options, addEmbed bool) *Muxer {
 	muxer := &Muxer{
 		Locals:               skipmap.NewString[string](),
 		Commands:             skipmap.NewString[*command.Command](),
@@ -61,9 +60,14 @@ func NewMuxer(ctx *skipmap.StringMap[types.RoxyContext], log waLog.Logger, optio
 		Log:                  log,
 		commandParser:        util.ParseCmd,
 	}
+
 	muxer.extendContext(ctx)
-	muxer.handleQuestionStateChan()
-	muxer.handlePollingStateChan()
+	go muxer.handleQuestionStateChannel()
+	go muxer.handlePollingStateChannel()
+
+	if addEmbed {
+		muxer.addEmbedCommands()
+	}
 
 	return muxer
 }
@@ -91,47 +95,43 @@ func (muxer *Muxer) Clean() {
 	})
 }
 
-func (muxer *Muxer) handlePollingStateChan() {
-	muxer.getPool().Submit(func() {
-		for message := range muxer.PollingChan {
-			muxer.PollingState.Store(message.PollId, message)
-			if message.PollingTimeout != nil {
-				go func() {
-					timeout := time.NewTimer(*message.PollingTimeout)
-					<-timeout.C
-					message.ResultChan <- true
-					timeout.Stop()
-					muxer.PollingState.Delete(message.PollId)
-				}()
-			} else {
-				go func() {
-					timeout := time.NewTimer(time.Minute * 10)
-					<-timeout.C
-					message.ResultChan <- true
-					timeout.Stop()
-					muxer.PollingState.Delete(message.PollId)
-				}()
-			}
+func (muxer *Muxer) handlePollingStateChannel() {
+	for message := range muxer.PollingChan {
+		muxer.PollingState.Store(message.PollId, message)
+		if message.PollingTimeout != nil {
+			go func() {
+				timeout := time.NewTimer(*message.PollingTimeout)
+				<-timeout.C
+				message.ResultChan <- true
+				timeout.Stop()
+				muxer.PollingState.Delete(message.PollId)
+			}()
+		} else {
+			go func() {
+				timeout := time.NewTimer(time.Minute * 10)
+				<-timeout.C
+				message.ResultChan <- true
+				timeout.Stop()
+				muxer.PollingState.Delete(message.PollId)
+			}()
 		}
-	})
+	}
 }
 
-func (muxer *Muxer) handleQuestionStateChan() {
-	muxer.getPool().Submit(func() {
-		for message := range muxer.QuestionChan {
-			muxer.QuestionState.Delete(message.RunFuncCtx.Number)
-			for _, question := range message.Questions {
-				if question.GetAnswer() == "" {
-					message.ActiveQuestion = question.Question
-					muxer.QuestionState.Store(message.RunFuncCtx.Number, message)
-					if question.Question != "" {
-						message.RunFuncCtx.SendReplyMessage(question.Question)
-					}
-					break
+func (muxer *Muxer) handleQuestionStateChannel() {
+	for message := range muxer.QuestionChan {
+		muxer.QuestionState.Delete(message.RunFuncCtx.Number)
+		for _, question := range message.Questions {
+			if question.GetAnswer() == "" {
+				message.ActiveQuestion = question.Question
+				muxer.QuestionState.Store(message.RunFuncCtx.Number, message)
+				if question.Question != "" {
+					message.RunFuncCtx.SendReplyMessage(question.Question)
 				}
+				break
 			}
 		}
-	})
+	}
 }
 
 func (muxer *Muxer) addEmbedCommands() {
@@ -366,12 +366,10 @@ func (muxer *Muxer) RunCommand(c *whatsmeow.Client, evt *events.Message) {
 
 	number := evt.Info.Sender.ToNonAD().String()
 	parsed := util.ParseMessageText(evt)
-	if !evt.Info.IsFromMe {
-		_, ok := muxer.QuestionState.Load(number)
-		if ok {
-			muxer.handleQuestionState(c, evt, number, parsed)
-			return
-		}
+	_, ok := muxer.QuestionState.Load(number)
+	if ok {
+		muxer.handleQuestionState(c, evt, number, parsed)
+		return
 	}
 
 	if midOk := muxer.globalMiddlewareProcessing(c, evt, number); !midOk {
@@ -472,7 +470,8 @@ func (muxer *Muxer) RunCommand(c *whatsmeow.Client, evt *events.Message) {
 
 			_, err := c.SendMessage(ctx, evt.Info.Chat, msg)
 			if err != nil {
-				fmt.Println("[SEND MESSAGE ERR]\n", err)
+				muxer.Log.Errorf("error: v", err)
+				return
 			}
 			if cmdLoad.Cache {
 				muxer.setCacheCommandResponse(parsed, msg)

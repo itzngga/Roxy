@@ -2,7 +2,6 @@ package thumbnail
 
 import (
 	"bytes"
-	"fmt"
 	cmdchain "github.com/rainu/go-command-chain"
 	"os"
 )
@@ -20,7 +19,6 @@ func CreateImageThumbnail(data []byte) []byte {
 		WithInjections(reader).Finalize().
 		WithError(os.Stdout).WithOutput(writer).Run()
 	if err != nil {
-		fmt.Println(err)
 		return nil
 	}
 
@@ -44,7 +42,6 @@ func CreateVideoThumbnail(data []byte) []byte {
 		WithInjections(reader).Finalize().
 		WithError(os.Stdout).WithOutput(writer).Run()
 	if err != nil {
-		fmt.Println(err)
 		return nil
 	}
 

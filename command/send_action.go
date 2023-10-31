@@ -1,7 +1,6 @@
 package command
 
 import (
-	"fmt"
 	waTypes "go.mau.fi/whatsmeow/types"
 	"time"
 )
@@ -21,12 +20,14 @@ func (runFunc *RunFuncContext) SendTypingPresence(duration time.Duration) {
 		chat := runFunc.MessageInfo.Chat
 		err := runFunc.Client.SubscribePresence(chat)
 		if err != nil {
-			fmt.Println(err)
+			runFunc.Client.Log.Errorf("error: v", err)
+			return
 		}
 
 		err = runFunc.Client.SendChatPresence(chat, "composing", "")
 		if err != nil {
-			fmt.Println(err)
+			runFunc.Client.Log.Errorf("error: v", err)
+			return
 		}
 
 		if duration != 0 {
@@ -37,7 +38,8 @@ func (runFunc *RunFuncContext) SendTypingPresence(duration time.Duration) {
 
 		err = runFunc.Client.SendChatPresence(chat, "paused", "")
 		if err != nil {
-			fmt.Println(err)
+			runFunc.Client.Log.Errorf("error: v", err)
+			return
 		}
 	}()
 
