@@ -3,6 +3,7 @@ package core
 import (
 	"bytes"
 	"context"
+	"fmt"
 	"github.com/alitto/pond"
 	"github.com/google/uuid"
 	"github.com/itzngga/Roxy/command"
@@ -17,6 +18,7 @@ import (
 	waTypes "go.mau.fi/whatsmeow/types"
 	"go.mau.fi/whatsmeow/types/events"
 	waLog "go.mau.fi/whatsmeow/util/log"
+	"google.golang.org/protobuf/proto"
 	"strings"
 	"time"
 )
@@ -39,10 +41,11 @@ type Muxer struct {
 	Locals          *skipmap.StringMap[string]
 	SuggestionModel *fuzzy.Model
 	ctx             *skipmap.StringMap[types.RoxyContext]
+	clientJID       waTypes.JID
 	commandParser   func(str string) (prefix string, cmd string, ok bool)
 }
 
-func NewMuxer(ctx *skipmap.StringMap[types.RoxyContext], log waLog.Logger, options *options.Options, addEmbed bool) *Muxer {
+func NewMuxer(ctx *skipmap.StringMap[types.RoxyContext], log waLog.Logger, options *options.Options, clientJID waTypes.JID) *Muxer {
 	muxer := &Muxer{
 		Locals:               skipmap.NewString[string](),
 		Commands:             skipmap.NewString[*command.Command](),
@@ -59,15 +62,12 @@ func NewMuxer(ctx *skipmap.StringMap[types.RoxyContext], log waLog.Logger, optio
 		Options:              options,
 		Log:                  log,
 		commandParser:        util.ParseCmd,
+		clientJID:            clientJID,
 	}
 
 	muxer.extendContext(ctx)
 	go muxer.handleQuestionStateChannel()
 	go muxer.handlePollingStateChannel()
-
-	if addEmbed {
-		muxer.addEmbedCommands()
-	}
 
 	return muxer
 }
@@ -241,7 +241,7 @@ func (muxer *Muxer) globalMiddlewareProcessing(c *whatsmeow.Client, evt *events.
 			Options:       muxer.Options,
 			MessageEvent:  evt,
 			MessageInfo:   &evt.Info,
-			ClientJID:     c.Store.ID,
+			ClientJID:     &muxer.clientJID,
 			Message:       evt.Message,
 			FromMe:        evt.Info.IsFromMe,
 			MessageChat:   evt.Info.Chat,
@@ -305,7 +305,7 @@ func (muxer *Muxer) handleQuestionState(c *whatsmeow.Client, evt *events.Message
 		return
 	} else {
 		if questionState.WithEmojiReact {
-			util.SendEmojiMessage(c, evt, questionState.EmojiReact)
+			muxer.SendEmojiMessage(evt, questionState.EmojiReact)
 		}
 		muxer.getPool().Submit(func() {
 			jids := []waTypes.MessageID{
@@ -421,7 +421,7 @@ func (muxer *Muxer) RunCommand(c *whatsmeow.Client, evt *events.Message) {
 			Options:        muxer.Options,
 			MessageEvent:   evt,
 			MessageInfo:    &evt.Info,
-			ClientJID:      c.Store.ID,
+			ClientJID:      &muxer.clientJID,
 			Message:        evt.Message,
 			FromMe:         evt.Info.IsFromMe,
 			CurrentCommand: cmdLoad,
@@ -487,6 +487,7 @@ func (muxer *Muxer) getPool() *pond.WorkerPool {
 func (muxer *Muxer) getCurrentClient() *whatsmeow.Client {
 	return types.GetContext[*whatsmeow.Client](muxer.ctx, "appClient")
 }
+
 func (muxer *Muxer) extendContext(appCtx *skipmap.StringMap[types.RoxyContext]) {
 	// muxer context
 	appCtx.Store("FindGroupByJid", types.FindGroupByJid(muxer.findGroupByJid))
@@ -495,6 +496,42 @@ func (muxer *Muxer) extendContext(appCtx *skipmap.StringMap[types.RoxyContext]) 
 	appCtx.Store("UNCacheOneGroup", types.UNCacheOneGroup(muxer.unCacheOneGroup))
 	appCtx.Store("IsClientGroupAdmin", types.IsClientGroupAdmin(muxer.isClientGroupAdmin))
 	appCtx.Store("IsGroupAdmin", types.IsGroupAdmin(muxer.isGroupAdmin))
-
+	appCtx.Store("currentJID", muxer.clientJID)
+	appCtx.Store("sendEmojiMessage", types.SendEmojiMessage(muxer.SendEmojiMessage))
 	muxer.ctx = appCtx
+}
+
+func (muxer *Muxer) SendEmojiMessage(event *events.Message, emoji string) {
+	id := event.Info.ID
+	chat := event.Info.Chat
+	sender := event.Info.Sender
+	key := &waProto.MessageKey{
+		FromMe:    proto.Bool(true),
+		Id:        proto.String(id),
+		RemoteJid: proto.String(chat.String()),
+	}
+
+	if !sender.IsEmpty() && sender.User != muxer.clientJID.ToNonAD().String() {
+		key.FromMe = proto.Bool(false)
+		key.Participant = proto.String(sender.ToNonAD().String())
+	}
+
+	message := &waProto.Message{
+		ReactionMessage: &waProto.ReactionMessage{
+			Key:               key,
+			Text:              proto.String(emoji),
+			SenderTimestampMs: proto.Int64(time.Now().UnixMilli()),
+		},
+	}
+
+	ctx, cancel := context.WithTimeout(context.Background(), time.Second*15)
+	defer cancel()
+
+	_, err := muxer.getCurrentClient().SendMessage(ctx, event.Info.Chat, message)
+	if err != nil {
+		fmt.Printf("error: sending message: %v\n", err)
+		return
+	}
+
+	return
 }

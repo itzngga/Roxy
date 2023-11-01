@@ -61,7 +61,7 @@ func (runFunc *RunFuncContext) IsClientGroupAdmin() (bool, error) {
 
 	var isAdmin bool
 	for _, participant := range group.Participants {
-		if participant.JID.ToNonAD() == runFunc.Client.Store.ID.ToNonAD() {
+		if participant.JID.ToNonAD() == runFunc.ClientJID.ToNonAD() {
 			if participant.IsSuperAdmin {
 				isAdmin = true
 				break

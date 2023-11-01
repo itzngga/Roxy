@@ -33,8 +33,10 @@ type App struct {
 	sqlDB        *sql.DB
 	pairCodeChan chan bool
 	startTime    time.Time
+	device       *store.Device
 	client       *whatsmeow.Client
 	ctx          *skipmap.StringMap[types.RoxyContext]
+	clientJID    waTypes.JID
 }
 
 func NewGoRoxyBase(options *options.Options) (*App, error) {
@@ -51,7 +53,7 @@ func NewGoRoxyBase(options *options.Options) (*App, error) {
 	}
 	if app.client != nil {
 		app.generateContext()
-		app.muxer = NewMuxer(app.ctx, stdLog, options, true)
+		app.muxer = NewMuxer(app.ctx, stdLog, options, *app.device.ID)
 	}
 
 	return app, nil
@@ -60,7 +62,7 @@ func NewGoRoxyBase(options *options.Options) (*App, error) {
 func (app *App) handleEvents(event interface{}) {
 	switch v := event.(type) {
 	case *events.LoggedOut:
-		app.log.Warnf("%s client logged out", app.client.Store.ID)
+		app.log.Warnf("%s client logged out", app.clientJID)
 		app.client.Store.Delete()
 
 		newApp, err := NewGoRoxyBase(app.options)
@@ -68,6 +70,8 @@ func (app *App) handleEvents(event interface{}) {
 			panic(err)
 		}
 		*app = *newApp
+	case *events.PairSuccess:
+		app.clientJID = v.ID
 	case *events.Connected:
 		app.startTime = time.Now()
 		if len(app.client.Store.PushName) == 0 {
@@ -122,7 +126,7 @@ func (app *App) handleEvents(event interface{}) {
 				Tag: "call",
 				Attrs: waBinary.Attrs{
 					"id":   whatsmeow.GenerateMessageID(),
-					"from": app.client.Store.ID.ToNonAD().String(),
+					"from": app.clientJID.ToNonAD().String(),
 					"to":   caller,
 				},
 				Content: []waBinary.Node{
@@ -237,6 +241,7 @@ func (app *App) initializeClient() error {
 			app.log.Errorf("get device error %v", err)
 		}
 	}
+	app.device = device
 
 	waBinary.IndentXML = true
 	store.SetOSInfo("GoRoxy", store.GetWAVersion())

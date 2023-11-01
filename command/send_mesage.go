@@ -406,6 +406,7 @@ func (runFunc *RunFuncContext) EditMessageText(to string) error {
 
 // SendEmoji send emoji to current text message
 func (runFunc *RunFuncContext) SendEmoji(emoji string) {
-	util.SendEmojiMessage(runFunc.Client, runFunc.MessageEvent, emoji)
+	SendEmojiMessage := types.GetContext[types.SendEmojiMessage](runFunc.Ctx, "sendEmojiMessage")
+	SendEmojiMessage(runFunc.MessageEvent, emoji)
 	return
 }

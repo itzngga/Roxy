@@ -151,7 +151,7 @@ func (runFunc *RunFuncContext) UpdateGroupProfilePicture(jid any, data []byte) e
 
 		var isAdmin bool
 		for _, participant := range group.Participants {
-			if participant.JID.ToNonAD() == runFunc.Client.Store.ID.ToNonAD() {
+			if participant.JID.ToNonAD() == runFunc.ClientJID.ToNonAD() {
 				if participant.IsSuperAdmin {
 					isAdmin = true
 					break
@@ -164,7 +164,7 @@ func (runFunc *RunFuncContext) UpdateGroupProfilePicture(jid any, data []byte) e
 		}
 
 		if !isAdmin {
-			return fmt.Errorf("error: client is not admin : %v", runFunc.Client.Store.ID.ToNonAD().String())
+			return fmt.Errorf("error: client is not admin : %v", runFunc.ClientJID.ToNonAD().String())
 		}
 
 		_, err = runFunc.Client.SetGroupPhoto(jids, data)

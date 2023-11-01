@@ -28,7 +28,7 @@ const UPDATE_MESSAGES_IN_CHAT = `UPDATE whatsmeow_chats SET messages = $1 WHERE 
 const DELETE_ALL_CHATS = `DELETE FROM whatsmeow_chats WHERE our_jid = $1`
 
 func (app *App) handleHistorySync(evt *waProto.HistorySync) {
-	var currentJID = app.client.Store.ID.String()
+	var currentJID = app.clientJID.String()
 	// store status messages
 	if len(evt.StatusV3Messages) >= 1 {
 		var messages = make([]*events.Message, 0)
@@ -121,7 +121,7 @@ func (app *App) upsertMessages(jid waTypes.JID, message []*events.Message) {
 			return
 		}
 
-		_, err = app.sqlDB.Exec(UPSERT_CHATS, app.client.Store.ID.String(), jid.ToNonAD().String(), result)
+		_, err = app.sqlDB.Exec(UPSERT_CHATS, app.clientJID.String(), jid.ToNonAD().String(), result)
 		if err != nil {
 			return
 		}
@@ -135,7 +135,7 @@ func (app *App) upsertMessages(jid waTypes.JID, message []*events.Message) {
 			return
 		}
 
-		_, err = app.sqlDB.Exec(INSERT_CHATS, app.client.Store.ID.String(), jid.ToNonAD().String(), result)
+		_, err = app.sqlDB.Exec(INSERT_CHATS, app.clientJID.String(), jid.ToNonAD().String(), result)
 		if err != nil {
 			return
 		}
@@ -146,7 +146,7 @@ func (app *App) getAllChats() []*events.Message {
 	ctx, cancel := context.WithTimeout(context.Background(), time.Second*15)
 	defer cancel()
 
-	var currentJID = app.client.Store.ID.String()
+	var currentJID = app.clientJID.String()
 	rows, err := app.sqlDB.QueryContext(ctx, SELECT_ALL_CHATS, currentJID)
 	if err != nil {
 		return nil
@@ -186,7 +186,7 @@ func (app *App) getChatInJID(jid waTypes.JID) []*events.Message {
 	defer cancel()
 
 	var rawMessage []byte
-	row := app.sqlDB.QueryRowContext(ctx, SELECT_CHATS_BY_JID, app.client.Store.ID.String(), jid.ToNonAD().String())
+	row := app.sqlDB.QueryRowContext(ctx, SELECT_CHATS_BY_JID, app.clientJID.String(), jid.ToNonAD().String())
 	err := row.Scan(&rawMessage)
 	if err != nil {
 		return nil
@@ -210,7 +210,7 @@ func (app *App) getStatusMessages() []*events.Message {
 	defer cancel()
 
 	var rawMessage []byte
-	row := app.sqlDB.QueryRowContext(ctx, SELECT_CHATS_BY_JID, app.client.Store.ID.String(), waTypes.StatusBroadcastJID.String())
+	row := app.sqlDB.QueryRowContext(ctx, SELECT_CHATS_BY_JID, app.clientJID.String(), waTypes.StatusBroadcastJID.String())
 	err := row.Scan(&rawMessage)
 	if err != nil {
 		return nil
@@ -234,7 +234,7 @@ func (app *App) findMessageByID(jid waTypes.JID, id string) *events.Message {
 	defer cancel()
 
 	var rawMessage []byte
-	row := app.sqlDB.QueryRowContext(ctx, SELECT_CHATS_BY_JID, app.client.Store.ID.String(), jid.ToNonAD().String())
+	row := app.sqlDB.QueryRowContext(ctx, SELECT_CHATS_BY_JID, app.clientJID.String(), jid.ToNonAD().String())
 	err := row.Scan(&rawMessage)
 	if err != nil {
 		return nil
