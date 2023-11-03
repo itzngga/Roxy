@@ -2,8 +2,6 @@ package core
 
 import (
 	"bytes"
-	"context"
-	"fmt"
 	"github.com/alitto/pond"
 	"github.com/google/uuid"
 	"github.com/itzngga/Roxy/command"
@@ -465,16 +463,13 @@ func (muxer *Muxer) RunCommand(c *whatsmeow.Client, evt *events.Message) {
 			msg = cmdLoad.RunFunc(params)
 		}
 		if msg != nil {
-			ctx, cancel := context.WithTimeout(context.Background(), muxer.Options.SendMessageTimeout)
-			defer cancel()
-
-			_, err := c.SendMessage(ctx, evt.Info.Chat, msg)
-			if err != nil {
-				muxer.Log.Errorf("error: v", err)
+			SendMessage := types.GetContext[types.SendMessage](muxer.ctx, "sendMessage")
+			_, err := SendMessage(evt.Info.Chat, msg)
+			if err == nil {
+				if cmdLoad.Cache {
+					muxer.setCacheCommandResponse(parsed, msg)
+				}
 				return
-			}
-			if cmdLoad.Cache {
-				muxer.setCacheCommandResponse(parsed, msg)
 			}
 		}
 	}
@@ -524,14 +519,8 @@ func (muxer *Muxer) SendEmojiMessage(event *events.Message, emoji string) {
 		},
 	}
 
-	ctx, cancel := context.WithTimeout(context.Background(), time.Second*15)
-	defer cancel()
-
-	_, err := muxer.getCurrentClient().SendMessage(ctx, event.Info.Chat, message)
-	if err != nil {
-		fmt.Printf("error: sending message: %v\n", err)
-		return
-	}
+	SendMessage := types.GetContext[types.SendMessage](muxer.ctx, "sendMessage")
+	_, _ = SendMessage(event.Info.Chat, message)
 
 	return
 }

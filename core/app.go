@@ -309,6 +309,18 @@ func (app *App) initializeClient() error {
 	return nil
 }
 
+func (app *App) sendMessageCallback(to waTypes.JID, message *waProto.Message, extra ...whatsmeow.SendRequestExtra) (whatsmeow.SendResponse, error) {
+	ctx, cancel := context.WithTimeout(context.Background(), app.options.SendMessageTimeout)
+	defer cancel()
+
+	response, err := app.client.SendMessage(ctx, to, message, extra...)
+	if err != nil {
+		app.log.Errorf("send message error: %v", err)
+	}
+
+	return response, err
+}
+
 func (app *App) generateContext() {
 	app.ctx = skipmap.NewString[types.RoxyContext]()
 	app.ctx.Store("UpsertMessages", types.UpsertMessages(app.upsertMessages))
@@ -317,6 +329,7 @@ func (app *App) generateContext() {
 	app.ctx.Store("GetStatusMessages", types.GetStatusMessages(app.getStatusMessages))
 	app.ctx.Store("FindMessageByID", types.FindMessageByID(app.findMessageByID))
 	app.ctx.Store("workerPool", app.pool)
+	app.ctx.Store("sendMessage", types.SendMessage(app.sendMessageCallback))
 }
 
 func (app *App) AddNewCategory(category string) {

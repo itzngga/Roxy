@@ -1,17 +1,13 @@
 package core
 
 import (
-	"context"
-	"fmt"
 	"github.com/itzngga/Roxy/command"
 	"github.com/itzngga/Roxy/types"
 	"github.com/itzngga/Roxy/util"
 	"github.com/sajari/fuzzy"
-	"go.mau.fi/whatsmeow"
 	waProto "go.mau.fi/whatsmeow/binary/proto"
 	"go.mau.fi/whatsmeow/types/events"
 	"strings"
-	"time"
 )
 
 func (muxer *Muxer) GenerateSuggestionModel() {
@@ -51,15 +47,8 @@ func (muxer *Muxer) suggestCommand(event *events.Message, prefix, command string
 		},
 	}
 
-	ctx, cancel := context.WithTimeout(context.Background(), time.Second*15)
-	defer cancel()
-
-	var client = types.GetContext[*whatsmeow.Client](muxer.ctx, "appClient")
-	_, err := client.SendMessage(ctx, event.Info.Chat, message)
-	if err != nil {
-		fmt.Printf("error: sending message: %v\n", err)
-		return
-	}
+	SendMessage := types.GetContext[types.SendMessage](muxer.ctx, "sendMessage")
+	_, _ = SendMessage(event.Info.Chat, message)
 
 	return
 

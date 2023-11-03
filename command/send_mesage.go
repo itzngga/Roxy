@@ -1,7 +1,6 @@
 package command
 
 import (
-	"context"
 	"fmt"
 	"github.com/gabriel-vasile/mimetype"
 	"github.com/itzngga/Roxy/types"
@@ -9,18 +8,12 @@ import (
 	waProto "go.mau.fi/whatsmeow/binary/proto"
 	waTypes "go.mau.fi/whatsmeow/types"
 	"strings"
-	"time"
 )
 
 // RevokeMessage revoke message from given jid and client message id
 func (runFunc *RunFuncContext) RevokeMessage(jid waTypes.JID, messageId waTypes.MessageID) {
-	ctx, cancel := context.WithTimeout(context.Background(), runFunc.Options.SendMessageTimeout)
-	defer cancel()
-
-	_, err := runFunc.Client.SendMessage(ctx, jid, runFunc.Client.BuildRevoke(jid, waTypes.EmptyJID, messageId))
-	if err != nil {
-		fmt.Printf("error: revoking message: %v\n", err)
-	}
+	SendMessage := types.GetContext[types.SendMessage](runFunc.Ctx, "sendMessage")
+	_, _ = SendMessage(jid, runFunc.Client.BuildRevoke(jid, waTypes.EmptyJID, messageId))
 	return
 }
 
@@ -168,13 +161,9 @@ func (runFunc *RunFuncContext) SendReplyMessage(obj any) {
 		value.ContextInfo = util.WithReply(runFunc.MessageEvent)
 	}
 
-	ctx, cancel := context.WithTimeout(context.Background(), runFunc.Options.SendMessageTimeout)
-	defer cancel()
-
-	_, err := runFunc.Client.SendMessage(ctx, runFunc.MessageEvent.Info.Chat, message)
-	if err != nil {
-		fmt.Printf("error: sending message: %v\n", err)
-	}
+	SendMessage := types.GetContext[types.SendMessage](runFunc.Ctx, "sendMessage")
+	_, _ = SendMessage(runFunc.MessageEvent.Info.Chat, message)
+	return
 }
 
 // GenerateReplyMessage generate reply message to whatsmeow message object
@@ -358,15 +347,8 @@ func (runFunc *RunFuncContext) SendMessage(obj any) {
 		}
 	}
 
-	ctx, cancel := context.WithTimeout(context.Background(), runFunc.Options.SendMessageTimeout)
-	defer cancel()
-
-	_, err := runFunc.Client.SendMessage(ctx, runFunc.MessageEvent.Info.Chat, message)
-	if err != nil {
-		fmt.Printf("error: sending message: %v\n", err)
-		return
-	}
-
+	SendMessage := types.GetContext[types.SendMessage](runFunc.Ctx, "sendMessage")
+	_, _ = SendMessage(runFunc.MessageEvent.Info.Chat, message)
 	return
 }
 
@@ -393,15 +375,9 @@ func (runFunc *RunFuncContext) EditMessageText(to string) error {
 		},
 	}
 
-	ctx, cancel := context.WithTimeout(context.Background(), time.Second*runFunc.Options.SendMessageTimeout)
-	defer cancel()
-
-	_, err := runFunc.Client.SendMessage(ctx, runFunc.MessageEvent.Info.Chat, message)
-	if err != nil {
-		return fmt.Errorf("error: sending message: %v\n", err)
-	}
-
-	return nil
+	SendMessage := types.GetContext[types.SendMessage](runFunc.Ctx, "sendMessage")
+	_, err := SendMessage(runFunc.MessageEvent.Info.Chat, message)
+	return err
 }
 
 // SendEmoji send emoji to current text message

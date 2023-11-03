@@ -1,7 +1,7 @@
 package command
 
 import (
-	"context"
+	"github.com/itzngga/Roxy/types"
 	"github.com/itzngga/Roxy/util"
 	"go.mau.fi/whatsmeow"
 	"time"
@@ -73,10 +73,8 @@ func (p *PollingState) sendPollMessage() {
 	}
 
 	message := p.RunFuncCtx.Client.BuildPollCreation(p.PollName, options, p.PollSelectable)
-	ctx, cancel := context.WithTimeout(context.Background(), time.Second*p.RunFuncCtx.Options.SendMessageTimeout)
-	defer cancel()
-
-	response, _ := p.RunFuncCtx.Client.SendMessage(ctx, p.RunFuncCtx.MessageChat, message)
+	SendMessage := types.GetContext[types.SendMessage](p.RunFuncCtx.Ctx, "sendMessage")
+	response, _ := SendMessage(p.RunFuncCtx.MessageChat, message)
 	p.PollId = response.ID
 }
 
