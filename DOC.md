@@ -67,7 +67,7 @@ var GlobalMiddlewares types.Embed[context.MiddlewareFunc]
 var Middlewares types.Embed[context.MiddlewareFunc]
 ```
 
-## type [App](<https://github.com/itzngga/roxy/blob/master/app.go#L24-L35>)
+## type [App](<https://github.com/itzngga/roxy/blob/master/app.go#L25-L36>)
 
 ```go
 type App struct {
@@ -75,91 +75,91 @@ type App struct {
 }
 ```
 
-### func [NewRoxyBase](<https://github.com/itzngga/roxy/blob/master/app.go#L37>)
+### func [NewRoxyBase](<https://github.com/itzngga/roxy/blob/master/app.go#L38>)
 
 ```go
 func NewRoxyBase(options *options.Options) (*App, error)
 ```
 
-### func \(\*App\) [AddNewCategory](<https://github.com/itzngga/roxy/blob/master/app.go#L252>)
+### func \(\*App\) [AddNewCategory](<https://github.com/itzngga/roxy/blob/master/app.go#L261>)
 
 ```go
 func (app *App) AddNewCategory(category string)
 ```
 
-### func \(\*App\) [AddNewCommand](<https://github.com/itzngga/roxy/blob/master/app.go#L256>)
+### func \(\*App\) [AddNewCommand](<https://github.com/itzngga/roxy/blob/master/app.go#L265>)
 
 ```go
 func (app *App) AddNewCommand(command Command)
 ```
 
-### func \(\*App\) [AddNewMiddleware](<https://github.com/itzngga/roxy/blob/master/app.go#L260>)
+### func \(\*App\) [AddNewMiddleware](<https://github.com/itzngga/roxy/blob/master/app.go#L269>)
 
 ```go
 func (app *App) AddNewMiddleware(middleware context.MiddlewareFunc)
 ```
 
-### func \(\*App\) [Client](<https://github.com/itzngga/roxy/blob/master/app.go#L244>)
+### func \(\*App\) [Client](<https://github.com/itzngga/roxy/blob/master/app.go#L253>)
 
 ```go
 func (app *App) Client() *whatsmeow.Client
 ```
 
-### func \(\*App\) [ClientJID](<https://github.com/itzngga/roxy/blob/master/app.go#L248>)
+### func \(\*App\) [ClientJID](<https://github.com/itzngga/roxy/blob/master/app.go#L257>)
 
 ```go
 func (app *App) ClientJID() waTypes.JID
 ```
 
-### func \(\*App\) [FindMessageByID](<https://github.com/itzngga/roxy/blob/master/app.go#L299>)
+### func \(\*App\) [FindMessageByID](<https://github.com/itzngga/roxy/blob/master/app.go#L308>)
 
 ```go
 func (app *App) FindMessageByID(jid waTypes.JID, id string) *events.Message
 ```
 
-### func \(\*App\) [GetAllChats](<https://github.com/itzngga/roxy/blob/master/app.go#L287>)
+### func \(\*App\) [GetAllChats](<https://github.com/itzngga/roxy/blob/master/app.go#L296>)
 
 ```go
 func (app *App) GetAllChats() []*events.Message
 ```
 
-### func \(\*App\) [GetChatInJID](<https://github.com/itzngga/roxy/blob/master/app.go#L291>)
+### func \(\*App\) [GetChatInJID](<https://github.com/itzngga/roxy/blob/master/app.go#L300>)
 
 ```go
 func (app *App) GetChatInJID(jid waTypes.JID) []*events.Message
 ```
 
-### func \(\*App\) [GetStatusMessages](<https://github.com/itzngga/roxy/blob/master/app.go#L295>)
+### func \(\*App\) [GetStatusMessages](<https://github.com/itzngga/roxy/blob/master/app.go#L304>)
 
 ```go
 func (app *App) GetStatusMessages() []*events.Message
 ```
 
-### func \(\*App\) [HandleEvents](<https://github.com/itzngga/roxy/blob/master/app.go#L131>)
+### func \(\*App\) [HandleEvents](<https://github.com/itzngga/roxy/blob/master/app.go#L132>)
 
 ```go
 func (app *App) HandleEvents(event interface{})
 ```
 
-### func \(\*App\) [InitializeClient](<https://github.com/itzngga/roxy/blob/master/app.go#L60>)
+### func \(\*App\) [InitializeClient](<https://github.com/itzngga/roxy/blob/master/app.go#L61>)
 
 ```go
 func (app *App) InitializeClient() error
 ```
 
-### func \(\*App\) [SendMessage](<https://github.com/itzngga/roxy/blob/master/app.go#L270>)
+### func \(\*App\) [SendMessage](<https://github.com/itzngga/roxy/blob/master/app.go#L279>)
 
 ```go
 func (app *App) SendMessage(to waTypes.JID, message *waProto.Message, extra ...whatsmeow.SendRequestExtra) (whatsmeow.SendResponse, error)
 ```
 
-### func \(\*App\) [Shutdown](<https://github.com/itzngga/roxy/blob/master/app.go#L264>)
+### func \(\*App\) [Shutdown](<https://github.com/itzngga/roxy/blob/master/app.go#L273>)
 
 ```go
 func (app *App) Shutdown()
 ```
 
-### func \(\*App\) [UpsertMessages](<https://github.com/itzngga/roxy/blob/master/app.go#L282>)
+### func \(\*App\) [UpsertMessages](<https://github.com/itzngga/roxy/blob/master/app.go#L291>)
 
 ```go
 func (app *App) UpsertMessages(jid waTypes.JID, message []*events.Message)
@@ -1615,9 +1615,11 @@ import "github.com/itzngga/Roxy/options"
 - [func WithAutoRejectCall() func(*Options)](<#func-withautorejectcall>)
 - [func WithCmdCacheTimeout(respCacheTimeout time.Duration) func(*Options)](<#func-withcmdcachetimeout>)
 - [func WithCommandLog(cmdLog bool) func(*Options)](<#func-withcommandlog>)
+- [func WithDebugMessage() func(*Options)](<#func-withdebugmessage>)
 - [func WithHistorySync() func(*Options)](<#func-withhistorysync>)
 - [func WithHostNumber(hostNumber string) func(*Options)](<#func-withhostnumber>)
 - [func WithLogLevel(logLevel string) func(*Options)](<#func-withloglevel>)
+- [func WithOSInfo(osInfo string) func(*Options)](<#func-withosinfo>)
 - [func WithOnlyFromSelf(onlyFromSelf bool) func(*Options)](<#func-withonlyfromself>)
 - [func WithPairCodeLogin() func(*Options)](<#func-withpaircodelogin>)
 - [func WithPostgresDSN(pgDsn *PostgresDSN) func(*Options)](<#func-withpostgresdsn>)
@@ -1645,103 +1647,115 @@ import "github.com/itzngga/Roxy/options"
   - [func (dsn *PostgresDSN) Validate() error](<#func-postgresdsn-validate>)
 
 
-## func [WithAllowFromGroup](<https://github.com/itzngga/roxy/blob/master/options/options.go#L139>)
+## func [WithAllowFromGroup](<https://github.com/itzngga/roxy/blob/master/options/options.go#L140>)
 
 ```go
 func WithAllowFromGroup(onlyFromGroup bool) func(*Options)
 ```
 
-## func [WithAllowFromPrivate](<https://github.com/itzngga/roxy/blob/master/options/options.go#L133>)
+## func [WithAllowFromPrivate](<https://github.com/itzngga/roxy/blob/master/options/options.go#L134>)
 
 ```go
 func WithAllowFromPrivate(onlyFromPrivate bool) func(*Options)
 ```
 
-## func [WithAutoRejectCall](<https://github.com/itzngga/roxy/blob/master/options/options.go#L169>)
+## func [WithAutoRejectCall](<https://github.com/itzngga/roxy/blob/master/options/options.go#L170>)
 
 ```go
 func WithAutoRejectCall() func(*Options)
 ```
 
-## func [WithCmdCacheTimeout](<https://github.com/itzngga/roxy/blob/master/options/options.go#L121>)
+## func [WithCmdCacheTimeout](<https://github.com/itzngga/roxy/blob/master/options/options.go#L122>)
 
 ```go
 func WithCmdCacheTimeout(respCacheTimeout time.Duration) func(*Options)
 ```
 
-## func [WithCommandLog](<https://github.com/itzngga/roxy/blob/master/options/options.go#L115>)
+## func [WithCommandLog](<https://github.com/itzngga/roxy/blob/master/options/options.go#L116>)
 
 ```go
 func WithCommandLog(cmdLog bool) func(*Options)
 ```
 
-## func [WithHistorySync](<https://github.com/itzngga/roxy/blob/master/options/options.go#L163>)
+## func [WithDebugMessage](<https://github.com/itzngga/roxy/blob/master/options/options.go#L182>)
+
+```go
+func WithDebugMessage() func(*Options)
+```
+
+## func [WithHistorySync](<https://github.com/itzngga/roxy/blob/master/options/options.go#L164>)
 
 ```go
 func WithHistorySync() func(*Options)
 ```
 
-## func [WithHostNumber](<https://github.com/itzngga/roxy/blob/master/options/options.go#L79>)
+## func [WithHostNumber](<https://github.com/itzngga/roxy/blob/master/options/options.go#L80>)
 
 ```go
 func WithHostNumber(hostNumber string) func(*Options)
 ```
 
-## func [WithLogLevel](<https://github.com/itzngga/roxy/blob/master/options/options.go#L91>)
+## func [WithLogLevel](<https://github.com/itzngga/roxy/blob/master/options/options.go#L92>)
 
 ```go
 func WithLogLevel(logLevel string) func(*Options)
 ```
 
-## func [WithOnlyFromSelf](<https://github.com/itzngga/roxy/blob/master/options/options.go#L145>)
+## func [WithOSInfo](<https://github.com/itzngga/roxy/blob/master/options/options.go#L176>)
+
+```go
+func WithOSInfo(osInfo string) func(*Options)
+```
+
+## func [WithOnlyFromSelf](<https://github.com/itzngga/roxy/blob/master/options/options.go#L146>)
 
 ```go
 func WithOnlyFromSelf(onlyFromSelf bool) func(*Options)
 ```
 
-## func [WithPairCodeLogin](<https://github.com/itzngga/roxy/blob/master/options/options.go#L157>)
+## func [WithPairCodeLogin](<https://github.com/itzngga/roxy/blob/master/options/options.go#L158>)
 
 ```go
 func WithPairCodeLogin() func(*Options)
 ```
 
-## func [WithPostgresDSN](<https://github.com/itzngga/roxy/blob/master/options/options.go#L97>)
+## func [WithPostgresDSN](<https://github.com/itzngga/roxy/blob/master/options/options.go#L98>)
 
 ```go
 func WithPostgresDSN(pgDsn *PostgresDSN) func(*Options)
 ```
 
-## func [WithScanQRLogin](<https://github.com/itzngga/roxy/blob/master/options/options.go#L151>)
+## func [WithScanQRLogin](<https://github.com/itzngga/roxy/blob/master/options/options.go#L152>)
 
 ```go
 func WithScanQRLogin() func(*Options)
 ```
 
-## func [WithSendMsgTimeout](<https://github.com/itzngga/roxy/blob/master/options/options.go#L127>)
+## func [WithSendMsgTimeout](<https://github.com/itzngga/roxy/blob/master/options/options.go#L128>)
 
 ```go
 func WithSendMsgTimeout(sendMsgTimeout time.Duration) func(*Options)
 ```
 
-## func [WithSqlDB](<https://github.com/itzngga/roxy/blob/master/options/options.go#L109>)
+## func [WithSqlDB](<https://github.com/itzngga/roxy/blob/master/options/options.go#L110>)
 
 ```go
 func WithSqlDB(sqlDB *sql.DB) func(*Options)
 ```
 
-## func [WithSqliteFile](<https://github.com/itzngga/roxy/blob/master/options/options.go#L103>)
+## func [WithSqliteFile](<https://github.com/itzngga/roxy/blob/master/options/options.go#L104>)
 
 ```go
 func WithSqliteFile(sqliteFile string) func(*Options)
 ```
 
-## func [WithStoreMode](<https://github.com/itzngga/roxy/blob/master/options/options.go#L85>)
+## func [WithStoreMode](<https://github.com/itzngga/roxy/blob/master/options/options.go#L86>)
 
 ```go
 func WithStoreMode(storeMode string) func(*Options)
 ```
 
-## type [LoginOptions](<https://github.com/itzngga/roxy/blob/master/options/options.go#L11>)
+## type [LoginOptions](<https://github.com/itzngga/roxy/blob/master/options/options.go#L10>)
 
 ```go
 type LoginOptions int8
@@ -1754,7 +1768,7 @@ const (
 )
 ```
 
-## type [Options](<https://github.com/itzngga/roxy/blob/master/options/options.go#L18-L62>)
+## type [Options](<https://github.com/itzngga/roxy/blob/master/options/options.go#L17-L63>)
 
 ```go
 type Options struct {
@@ -1770,7 +1784,7 @@ type Options struct {
     // This PostgresDsn Must add when StoreMode equal to "postgres"
     PostgresDsn *PostgresDSN
 
-    // This SqliteFile Generate "ROXY.sqlDB" when it null
+    // This SqliteFile Generate "ROXY.DB" when it null
     SqliteFile string
 
     // WithSqlDB wrap with sql.DB interface
@@ -1799,22 +1813,24 @@ type Options struct {
     OnlyFromSelf bool
     // CommandSuggestion allow command suggestion
     CommandSuggestion bool
+    // DebugMessage debug incoming message to console
+    DebugMessage bool
 }
 ```
 
-### func [New](<https://github.com/itzngga/roxy/blob/master/options/options.go#L64>)
+### func [New](<https://github.com/itzngga/roxy/blob/master/options/options.go#L65>)
 
 ```go
 func New(options ...func(*Options)) (*Options, error)
 ```
 
-### func [NewDefaultOptions](<https://github.com/itzngga/roxy/blob/master/options/options.go#L175>)
+### func [NewDefaultOptions](<https://github.com/itzngga/roxy/blob/master/options/options.go#L188>)
 
 ```go
 func NewDefaultOptions() *Options
 ```
 
-### func \(\*Options\) [Validate](<https://github.com/itzngga/roxy/blob/master/options/options.go#L192>)
+### func \(\*Options\) [Validate](<https://github.com/itzngga/roxy/blob/master/options/options.go#L206>)
 
 ```go
 func (o *Options) Validate() error

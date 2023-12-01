@@ -11,6 +11,7 @@ import (
 	waTypes "github.com/go-whatsapp/whatsmeow/types"
 	"github.com/go-whatsapp/whatsmeow/types/events"
 	waLog "github.com/go-whatsapp/whatsmeow/util/log"
+	"github.com/goccy/go-json"
 	"github.com/itzngga/Roxy/container"
 	"github.com/itzngga/Roxy/context"
 	"github.com/itzngga/Roxy/options"
@@ -78,7 +79,7 @@ func (app *App) InitializeClient() error {
 	app.client = whatsmeow.NewClient(app.device, waLog.Stdout("WhatsMeow", "ERROR", true))
 	app.client.EnableAutoReconnect = true
 	app.client.AutoTrustIdentity = true
-	app.client.AutomaticMessageRerequestFromPhone = true
+	//app.client.AutomaticMessageRerequestFromPhone = true
 	app.client.AddEventHandler(app.HandleEvents)
 
 	if !app.container.NewDevice {
@@ -161,10 +162,18 @@ func (app *App) HandleEvents(event interface{}) {
 				return
 			}
 		}()
-		if app.options.HistorySync {
-			app.container.HandleMessageUpdates(v)
-			return
-		}
+		go func() {
+			if app.options.DebugMessage {
+				enc := json.NewEncoder(os.Stdout)
+				enc.SetIndent("", "    ")
+				enc.Encode(v)
+			}
+			if app.options.HistorySync {
+				app.container.HandleMessageUpdates(v)
+				return
+			}
+		}()
+
 	case *events.StreamError:
 		var message string
 		if v.Code != "" {

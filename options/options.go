@@ -3,7 +3,6 @@ package options
 import (
 	"database/sql"
 	"errors"
-	"fmt"
 	waTypes "github.com/go-whatsapp/whatsmeow/types"
 	"time"
 )
@@ -28,7 +27,7 @@ type Options struct {
 	// This PostgresDsn Must add when StoreMode equal to "postgres"
 	PostgresDsn *PostgresDSN
 
-	// This SqliteFile Generate "ROXY.sqlDB" when it null
+	// This SqliteFile Generate "ROXY.DB" when it null
 	SqliteFile string
 
 	// WithSqlDB wrap with sql.DB interface
@@ -59,6 +58,8 @@ type Options struct {
 	OnlyFromSelf bool
 	// CommandSuggestion allow command suggestion
 	CommandSuggestion bool
+	// DebugMessage debug incoming message to console
+	DebugMessage bool
 }
 
 func New(options ...func(*Options)) (*Options, error) {
@@ -172,6 +173,18 @@ func WithAutoRejectCall() func(*Options) {
 	}
 }
 
+func WithOSInfo(osInfo string) func(*Options) {
+	return func(options *Options) {
+		options.OSInfo = osInfo
+	}
+}
+
+func WithDebugMessage() func(*Options) {
+	return func(options *Options) {
+		options.DebugMessage = true
+	}
+}
+
 func NewDefaultOptions() *Options {
 	return &Options{
 		StoreMode:                   "sqlite",
@@ -180,10 +193,11 @@ func NewDefaultOptions() *Options {
 		AllowFromGroup:              true,
 		AllowFromPrivate:            true,
 		CommandSuggestion:           true,
-		HistorySync:                 true,
+		HistorySync:                 false,
 		AutoRejectCall:              false,
 		LoginOptions:                SCAN_QR,
 		OSInfo:                      "Roxy",
+		DebugMessage:                false,
 		SendMessageTimeout:          time.Second * 30,
 		CommandResponseCacheTimeout: time.Minute * 15,
 	}
@@ -201,12 +215,12 @@ func (o *Options) Validate() error {
 		if err != nil {
 			return errors.New("error: invalid host number")
 		}
-
-		fmt.Println(o.HostNumber)
 	}
+
 	if o.LogLevel == "" {
 		o.LogLevel = "INFO"
 	}
+
 	if o.LogLevel != "INFO" && o.LogLevel != "ERROR" && o.LogLevel != "WARM" && o.LogLevel != "DEBUG" {
 		return errors.New("error: invalid log level")
 	}
@@ -216,7 +230,7 @@ func (o *Options) Validate() error {
 	}
 
 	if o.WithSqlDB == nil && o.StoreMode == "sqlite" && o.SqliteFile == "" {
-		o.SqliteFile = "GoRoxy.sqlDB"
+		o.SqliteFile = "ROXY.DB"
 	}
 
 	if o.WithSqlDB == nil && o.SqliteFile == "" && o.PostgresDsn == nil {

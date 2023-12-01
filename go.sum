@@ -10,8 +10,6 @@ github.com/gabriel-vasile/mimetype v1.4.3 h1:in2uUcidCuFcDKtdcBxlR0rJ1+fsokWf+uq
 github.com/gabriel-vasile/mimetype v1.4.3/go.mod h1:d8uq/6HKRL6CGdk+aubisF/M5GcPfT7nKyLpA0lbSSk=
 github.com/go-whatsapp/go-util v0.1.0 h1:ZBR4W5QsLYa8aCx2NDZoxn/npUz9PoSInC0Obt7JTqU=
 github.com/go-whatsapp/go-util v0.1.0/go.mod h1:nhLIsNlwzHVaQJO+yNHuKa9Ho+CRuXC8ZNetWjPYav8=
-github.com/go-whatsapp/whatsmeow v0.0.0-20231117095713-e3c89b5adea6 h1:5q4lCs8fmka7vdlo0uhLqFsgThf6XWQzg88PRYOg5BI=
-github.com/go-whatsapp/whatsmeow v0.0.0-20231117095713-e3c89b5adea6/go.mod h1:4sYh9HZWV9YbcQlXu1zsFw3sc9HcJeK+bhIoeb4Jf88=
 github.com/go-whatsapp/whatsmeow v0.0.0-20231201062205-9bc5aa7e730e h1:WYK9s5ktPlCHyR9yjPkJWmdTxKSkegboNartiz0a8hc=
 github.com/go-whatsapp/whatsmeow v0.0.0-20231201062205-9bc5aa7e730e/go.mod h1:cn0Y1DWG4bIT4jd2zd1beQZzz/h1L7tg2O5ceQDDqHU=
 github.com/goccy/go-json v0.10.2 h1:CrxCmQqYDkv1z7lO7Wbh2HN93uovUHgrECaO5ZrCXAU=
@@ -32,8 +30,6 @@ github.com/pmezard/go-difflib v1.0.0 h1:4DBwDE0NGyQoBHbLQYPwSUPoCMWR5BEzIk/f1lZb
 github.com/pmezard/go-difflib v1.0.0/go.mod h1:iKH77koFhYxTK1pcRnkKkqfTogsbg7gZNVY4sRDYZ/4=
 github.com/puzpuzpuz/xsync v1.5.2 h1:yRAP4wqSOZG+/4pxJ08fPTwrfL0IzE/LKQ/cw509qGY=
 github.com/puzpuzpuz/xsync v1.5.2/go.mod h1:K98BYhX3k1dQ2M63t1YNVDanbwUPmBCAhNmVrrxfiGg=
-github.com/puzpuzpuz/xsync/v3 v3.0.1 h1:yhTYnDJlgIYp/3Bb14b43VfUPrk/QNJ1HrLYEZ8r2AE=
-github.com/puzpuzpuz/xsync/v3 v3.0.1/go.mod h1:VjzYrABPabuM4KyBh1Ftq6u8nhwY5tBPKP9jpmh0nnA=
 github.com/puzpuzpuz/xsync/v3 v3.0.2 h1:3yESHrRFYr6xzkz61LLkvNiPFXxJEAABanTQpKbAaew=
 github.com/puzpuzpuz/xsync/v3 v3.0.2/go.mod h1:VjzYrABPabuM4KyBh1Ftq6u8nhwY5tBPKP9jpmh0nnA=
 github.com/rainu/go-command-chain v0.4.0 h1:qgrNbNsqkTfJHdwGzVuGPPK+p+XSnGAhAT/8x1A8SLE=

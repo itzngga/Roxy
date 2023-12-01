@@ -97,7 +97,7 @@ func NewContainer(options *options.Options) (*Container, error) {
 		container.storeContainer = sqlDB
 
 		return container, nil
-	} else if container.storeMode == "postgresql" {
+	} else if container.storeMode == "postgres" {
 		db, err := sql.Open("postgres", options.PostgresDsn.GenerateDSN())
 		if err != nil {
 			return nil, fmt.Errorf("failed to open database: %w", err)

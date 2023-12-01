@@ -4,6 +4,9 @@ import (
 	roxy "github.com/itzngga/Roxy"
 	_ "github.com/itzngga/Roxy/examples/cmd"
 	"github.com/itzngga/Roxy/options"
+
+	_ "github.com/mattn/go-sqlite3"
+
 	"log"
 
 	"os"
@@ -12,17 +15,7 @@ import (
 )
 
 func main() {
-	pg := options.NewPostgresDSN()
-	pg.SetHost("localhost")
-	pg.SetPort("4321")
-	pg.SetUsername("postgres")
-	pg.SetPassword("root123")
-	pg.SetTimeZone("Asia/Jakarta")
-
 	opt := options.NewDefaultOptions()
-	opt.StoreMode = "postgres"
-	opt.PostgresDsn = pg
-
 	app, err := roxy.NewRoxyBase(opt)
 	if err != nil {
 		log.Fatal(err)

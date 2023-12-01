@@ -61,24 +61,51 @@ if err != nil {
 #### custom
 ```go
 type Options struct {
-	// HostNumber will use the first available device when null
-	HostNumber string
-
-	// StoreMode can be "postgres" or "sqlite"
-	StoreMode string
-
-	// LogLevel: "INFO", "ERROR", "WARN", "DEBUG"
-	LogLevel string
-
-	// This PostgresDsn Must add when StoreMode equal to "postgres"
-	PostgresDsn PostgresDSN
-
-	// This SqliteFile Generate "ROXY.DB" when it null
-	SqliteFile string
-
-	WithCommandLog              bool
-	CommandResponseCacheTimeout time.Duration
-	SendMessageTimeout          time.Duration
+    // HostNumber will use the first available device when null
+    HostNumber string
+    
+    // StoreMode can be "postgres" or "sqlite"
+    StoreMode string
+    
+    // LogLevel: "INFO", "ERROR", "WARN", "DEBUG"
+    LogLevel string
+    
+    // This PostgresDsn Must add when StoreMode equal to "postgres"
+    PostgresDsn *PostgresDSN
+    
+    // This SqliteFile Generate "ROXY.DB" when it null
+    SqliteFile string
+    
+    // WithSqlDB wrap with sql.DB interface
+    WithSqlDB *sql.DB
+    
+    WithCommandLog              bool
+    CommandResponseCacheTimeout time.Duration
+    SendMessageTimeout          time.Duration
+    
+    // OSInfo system name in client
+    OSInfo string
+    
+    // LoginOptions constant of ScanQR or PairCode
+    LoginOptions LoginOptions
+    
+    // HistorySync is used to synchronize message history
+    HistorySync bool
+    // AutoRejectCall allow to auto reject incoming calls
+    AutoRejectCall bool
+    
+    // Bot General Settings
+    
+    // AllowFromPrivate allow messages from private
+    AllowFromPrivate bool
+    // AllowFromGroup allow message from groups
+    AllowFromGroup bool
+    // OnlyFromSelf allow only from self messages
+    OnlyFromSelf bool
+    // CommandSuggestion allow command suggestion
+    CommandSuggestion bool
+    // DebugMessage debug incoming message to console
+    DebugMessage bool
 }
 ```
 ### PostgresSQL
@@ -95,38 +122,77 @@ if err != nil {
 ```
 #### default parser
 ```go
-pg := options.NewPostgresDSN()
-pg.SetHost("localhost")
-pg.SetPort("4321")
-pg.SetUsername("postgres")
-pg.SetPassword("root123")
-pg.SetTimeZone("Asia/Jakarta")
+package main
 
-opt := options.NewDefaultOptions()
-opt.StoreMode = "postgres"
-opt.PostgresDsn = pg
+import (
+	roxy "github.com/itzngga/Roxy"
+	_ "github.com/itzngga/Roxy/examples/cmd"
+	"github.com/itzngga/Roxy/options"
 
-app, err := roxy.NewRoxyBase(opt)
-if err != nil {
-log.Fatal(err)
+	_ "github.com/lib/pq"
+	"log"
+
+	"os"
+	"os/signal"
+	"syscall"
+)
+
+func main() {
+	pg := options.NewPostgresDSN()
+	pg.SetHost("localhost")
+	pg.SetPort("4321")
+	pg.SetUsername("postgres")
+	pg.SetPassword("root123")
+	pg.SetDatabase("roxy")
+	pg.SetTimeZone("Asia/Jakarta")
+
+	opt := options.NewDefaultOptions()
+	opt.StoreMode = "postgres"
+	opt.PostgresDsn = pg
+
+	app, err := roxy.NewRoxyBase(opt)
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	c := make(chan os.Signal)
+	signal.Notify(c, os.Interrupt, syscall.SIGTERM)
+	<-c
+	app.Shutdown()
 }
-
-c := make(chan os.Signal)
-signal.Notify(c, os.Interrupt, syscall.SIGTERM)
-<-c
-app.Shutdown()
 ```
 
 ### Sqlite
 ```go
-opt := options.NewDefaultOptions()
-opt.StoreMode = "sqlite"
-opt.SqliteFile = "ROXY.DB"
+package main
 
-app, err := roxy.NewRoxyBase(opt)
-if err != nil {
-    log.Fatal(err)
+import (
+	roxy "github.com/itzngga/Roxy"
+	_ "github.com/itzngga/Roxy/examples/cmd"
+	"github.com/itzngga/Roxy/options"
+
+	_ "github.com/mattn/go-sqlite3"
+
+	"log"
+
+	"os"
+	"os/signal"
+	"syscall"
+)
+
+func main() {
+	opt := options.NewDefaultOptions()
+	app, err := roxy.NewRoxyBase(opt)
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	c := make(chan os.Signal)
+	signal.Notify(c, os.Interrupt, syscall.SIGTERM)
+	<-c
+	app.Shutdown()
 }
+
 ```
 
 # Example
