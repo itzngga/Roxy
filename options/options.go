@@ -3,7 +3,8 @@ package options
 import (
 	"database/sql"
 	"errors"
-	"github.com/itzngga/Roxy/util"
+	"fmt"
+	waTypes "github.com/go-whatsapp/whatsmeow/types"
 	"time"
 )
 
@@ -36,6 +37,9 @@ type Options struct {
 	WithCommandLog              bool
 	CommandResponseCacheTimeout time.Duration
 	SendMessageTimeout          time.Duration
+
+	// OSInfo system name in client
+	OSInfo string
 
 	// LoginOptions constant of ScanQR or PairCode
 	LoginOptions LoginOptions
@@ -179,25 +183,31 @@ func NewDefaultOptions() *Options {
 		HistorySync:                 true,
 		AutoRejectCall:              false,
 		LoginOptions:                SCAN_QR,
+		OSInfo:                      "Roxy",
 		SendMessageTimeout:          time.Second * 30,
 		CommandResponseCacheTimeout: time.Minute * 15,
 	}
 }
 
 func (o *Options) Validate() error {
-	if !util.StringIsOnSlice(o.StoreMode, []string{"postgres", "sqlite"}) {
+	if o.StoreMode != "postgres" && o.StoreMode != "sqlite" {
 		return errors.New("error: invalid store mode")
 	}
 	if o.HostNumber != "" {
-		_, ok := util.ParseJID(o.HostNumber)
-		if !ok {
+		if o.HostNumber[:2] == "08" {
+			o.HostNumber = "628" + o.HostNumber[2:]
+		}
+		_, err := waTypes.ParseJID(o.HostNumber)
+		if err != nil {
 			return errors.New("error: invalid host number")
 		}
+
+		fmt.Println(o.HostNumber)
 	}
 	if o.LogLevel == "" {
 		o.LogLevel = "INFO"
 	}
-	if !util.StringIsOnSlice(o.LogLevel, []string{"INFO", "ERROR", "WARN", "DEBUG"}) {
+	if o.LogLevel != "INFO" && o.LogLevel != "ERROR" && o.LogLevel != "WARM" && o.LogLevel != "DEBUG" {
 		return errors.New("error: invalid log level")
 	}
 
@@ -226,6 +236,10 @@ func (o *Options) Validate() error {
 
 	if o.LoginOptions == PAIR_CODE && o.HostNumber == "" {
 		return errors.New("error: you must specify host number when using pair code login options")
+	}
+
+	if o.OSInfo == "" {
+		o.OSInfo = "Roxy"
 	}
 
 	return nil

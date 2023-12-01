@@ -1,9 +1,9 @@
-package command
+package context
 
 import (
 	"encoding/json"
+	waProto "github.com/go-whatsapp/whatsmeow/binary/proto"
 	"github.com/itzngga/Roxy/util"
-	waProto "go.mau.fi/whatsmeow/binary/proto"
 	"strings"
 )
 
@@ -21,7 +21,7 @@ type QuestionState struct {
 	WithEmojiReact bool
 	EmojiReact     string
 	Separator      string
-	RunFuncCtx     *RunFuncContext
+	Ctx            *Ctx
 	ActiveQuestion string
 	Questions      []*Questions
 	ResultChan     chan bool
@@ -72,9 +72,20 @@ func (q *Questions) GetAnswer() string {
 }
 
 // NewUserQuestion New user question engine
-func NewUserQuestion(ctx *RunFuncContext) *QuestionState {
+func (context *Ctx) NewUserQuestion() *QuestionState {
 	question := &QuestionState{
-		RunFuncCtx: ctx,
+		Ctx:        context,
+		ResultChan: make(chan bool),
+		Separator:  " | ",
+	}
+
+	return question
+}
+
+// NewUserQuestion New user question engine
+func NewUserQuestion(context *Ctx) *QuestionState {
+	question := &QuestionState{
+		Ctx:        context,
 		ResultChan: make(chan bool),
 		Separator:  " | ",
 	}
@@ -191,14 +202,14 @@ func (state *QuestionState) NoAskCaptureMediaQuestion(answer **waProto.Message) 
 
 // ExecWithParser Run question engine with argument parser
 func (state *QuestionState) ExecWithParser() {
-	questions := strings.Split(strings.Join(state.RunFuncCtx.Arguments, " "), state.Separator)
+	questions := strings.Split(strings.Join(state.Ctx.Arguments(), " "), state.Separator)
 	if questions[0] != "" && len(state.Questions) == len(questions) {
 		for i, _ := range state.Questions {
 			state.Questions[i].SetAnswer(questions[i])
 		}
 		return
 	} else {
-		state.RunFuncCtx.QuestionChan <- state
+		state.Ctx.questionChan <- state
 		defer close(state.ResultChan)
 
 		_ = <-state.ResultChan
@@ -236,7 +247,7 @@ func (state *QuestionState) WithEmoji(emoji string) *QuestionState {
 
 // Exec Run question engine without argument parser
 func (state *QuestionState) Exec() {
-	state.RunFuncCtx.QuestionChan <- state
+	state.Ctx.questionChan <- state
 	defer close(state.ResultChan)
 
 	_ = <-state.ResultChan

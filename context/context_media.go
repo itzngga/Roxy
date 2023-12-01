@@ -1,16 +1,17 @@
-package command
+package context
 
 import (
 	"bufio"
-	"context"
 	"errors"
 	"github.com/gabriel-vasile/mimetype"
-	"github.com/itzngga/Roxy/types"
+	"github.com/go-whatsapp/whatsmeow"
+	waProto "github.com/go-whatsapp/whatsmeow/binary/proto"
 	"github.com/itzngga/Roxy/util"
 	"github.com/itzngga/Roxy/util/thumbnail"
-	"go.mau.fi/whatsmeow"
-	waProto "go.mau.fi/whatsmeow/binary/proto"
+	"google.golang.org/protobuf/proto"
 	"os"
+
+	context2 "context"
 )
 
 var imageExtensions = []string{".png", ".jpg", ".webp", ".gif", ".bmp", ".ico", ".svg"}
@@ -18,7 +19,7 @@ var videoExtensions = []string{".mp4", ".mov", ".mpeg", ".webp", ".3gp", ".avi",
 var audioExtensions = []string{".mp3", ".ogg", ".m4a", ".wav", ".flac"}
 
 // UploadBytesMedia upload bytes media based from mimetype
-func (runFunc *RunFuncContext) UploadBytesMedia(bytes []byte, vars map[string]string) (any, error) {
+func (context *Ctx) UploadBytesMedia(bytes []byte, vars map[string]string) (any, error) {
 	mimetypeString := mimetype.Detect(bytes)
 	extension := mimetypeString.Extension()
 
@@ -29,7 +30,7 @@ func (runFunc *RunFuncContext) UploadBytesMedia(bytes []byte, vars map[string]st
 				return nil, errors.New("error: missing caption in vars map")
 			}
 
-			return runFunc.UploadImageMessageFromBytes(bytes, caption)
+			return context.UploadImageMessageFromBytes(bytes, caption)
 		}
 	}
 
@@ -40,13 +41,13 @@ func (runFunc *RunFuncContext) UploadBytesMedia(bytes []byte, vars map[string]st
 				return nil, errors.New("error: missing caption in vars map")
 			}
 
-			return runFunc.UploadVideoMessageFromBytes(bytes, caption)
+			return context.UploadVideoMessageFromBytes(bytes, caption)
 		}
 	}
 
 	for _, audioExtension := range audioExtensions {
 		if extension == audioExtension {
-			return runFunc.UploadAudioMessageFromBytes(bytes)
+			return context.UploadAudioMessageFromBytes(bytes)
 		}
 	}
 
@@ -60,11 +61,11 @@ func (runFunc *RunFuncContext) UploadBytesMedia(bytes []byte, vars map[string]st
 		return nil, errors.New("error: missing filename in vars map")
 	}
 
-	return runFunc.UploadDocumentMessageFromBytes(bytes, title, filename)
+	return context.UploadDocumentMessageFromBytes(bytes, title, filename)
 }
 
 // UploadImageMessageFromPath upload a image from given path
-func (runFunc *RunFuncContext) UploadImageMessageFromPath(path, caption string) (*waProto.ImageMessage, error) {
+func (context *Ctx) UploadImageMessageFromPath(path, caption string) (*waProto.ImageMessage, error) {
 	imageBuff, err := os.Open(path)
 	if err != nil {
 		return nil, err
@@ -82,12 +83,12 @@ func (runFunc *RunFuncContext) UploadImageMessageFromPath(path, caption string) 
 
 	thumbnailByte := thumbnail.CreateVideoThumbnail(imageBytes)
 
-	resp, err := runFunc.Client.Upload(context.Background(), imageBytes, whatsmeow.MediaImage)
+	resp, err := context.Client().Upload(context2.Background(), imageBytes, whatsmeow.MediaImage)
 	if err != nil {
 		return nil, err
 	}
 
-	thumbnail, err := runFunc.Client.Upload(context.Background(), thumbnailByte, whatsmeow.MediaImage)
+	thumbnail, err := context.Client().Upload(context2.Background(), thumbnailByte, whatsmeow.MediaImage)
 	if err != nil {
 		return nil, err
 	}
@@ -97,9 +98,9 @@ func (runFunc *RunFuncContext) UploadImageMessageFromPath(path, caption string) 
 	}()
 
 	return &waProto.ImageMessage{
-		Caption: types.String(caption),
+		Caption: proto.String(caption),
 
-		Mimetype: types.String(mimetypeString.String()),
+		Mimetype: proto.String(mimetypeString.String()),
 
 		ThumbnailDirectPath: &thumbnail.DirectPath,
 		ThumbnailSha256:     thumbnail.FileSHA256,
@@ -116,17 +117,17 @@ func (runFunc *RunFuncContext) UploadImageMessageFromPath(path, caption string) 
 }
 
 // UploadImageMessageFromBytes upload image from given bytes
-func (runFunc *RunFuncContext) UploadImageMessageFromBytes(bytes []byte, caption string) (*waProto.ImageMessage, error) {
+func (context *Ctx) UploadImageMessageFromBytes(bytes []byte, caption string) (*waProto.ImageMessage, error) {
 	mimetypeString := mimetype.Detect(bytes)
 
 	thumbnailByte := thumbnail.CreateImageThumbnail(bytes)
 
-	resp, err := runFunc.Client.Upload(context.Background(), bytes, whatsmeow.MediaImage)
+	resp, err := context.Client().Upload(context2.Background(), bytes, whatsmeow.MediaImage)
 	if err != nil {
 		return nil, err
 	}
 
-	thumbnail, err := runFunc.Client.Upload(context.Background(), thumbnailByte, whatsmeow.MediaImage)
+	thumbnail, err := context.Client().Upload(context2.Background(), thumbnailByte, whatsmeow.MediaImage)
 	if err != nil {
 		return nil, err
 	}
@@ -137,10 +138,10 @@ func (runFunc *RunFuncContext) UploadImageMessageFromBytes(bytes []byte, caption
 	}()
 
 	return &waProto.ImageMessage{
-		ContextInfo: util.WithReply(runFunc.MessageEvent),
+		ContextInfo: util.WithReply(context.MessageEvent()),
 
-		Caption:  types.String(caption),
-		Mimetype: types.String(mimetypeString.String()),
+		Caption:  proto.String(caption),
+		Mimetype: proto.String(mimetypeString.String()),
 
 		ThumbnailDirectPath: &thumbnail.DirectPath,
 		ThumbnailSha256:     thumbnail.FileSHA256,
@@ -157,7 +158,7 @@ func (runFunc *RunFuncContext) UploadImageMessageFromBytes(bytes []byte, caption
 }
 
 // UploadVideoMessageFromPath upload video from given path
-func (runFunc *RunFuncContext) UploadVideoMessageFromPath(path, caption string) (*waProto.VideoMessage, error) {
+func (context *Ctx) UploadVideoMessageFromPath(path, caption string) (*waProto.VideoMessage, error) {
 	videoBuff, err := os.Open(path)
 	if err != nil {
 		return nil, err
@@ -175,12 +176,12 @@ func (runFunc *RunFuncContext) UploadVideoMessageFromPath(path, caption string) 
 
 	thumbnailByte := thumbnail.CreateVideoThumbnail(videoBytes)
 
-	resp, err := runFunc.Client.Upload(context.Background(), videoBytes, whatsmeow.MediaVideo)
+	resp, err := context.Client().Upload(context2.Background(), videoBytes, whatsmeow.MediaVideo)
 	if err != nil {
 		return nil, err
 	}
 
-	thumbnail, err := runFunc.Client.Upload(context.Background(), thumbnailByte, whatsmeow.MediaImage)
+	thumbnail, err := context.Client().Upload(context2.Background(), thumbnailByte, whatsmeow.MediaImage)
 	if err != nil {
 		return nil, err
 	}
@@ -190,8 +191,8 @@ func (runFunc *RunFuncContext) UploadVideoMessageFromPath(path, caption string) 
 	}()
 
 	return &waProto.VideoMessage{
-		Caption:  types.String(caption),
-		Mimetype: types.String(mimetypeString.String()),
+		Caption:  proto.String(caption),
+		Mimetype: proto.String(mimetypeString.String()),
 
 		ThumbnailDirectPath: &thumbnail.DirectPath,
 		ThumbnailSha256:     thumbnail.FileSHA256,
@@ -208,17 +209,17 @@ func (runFunc *RunFuncContext) UploadVideoMessageFromPath(path, caption string) 
 }
 
 // UploadVideoMessageFromBytes upload video from given bytes
-func (runFunc *RunFuncContext) UploadVideoMessageFromBytes(bytes []byte, caption string) (*waProto.VideoMessage, error) {
+func (context *Ctx) UploadVideoMessageFromBytes(bytes []byte, caption string) (*waProto.VideoMessage, error) {
 	mimetypeString := mimetype.Detect(bytes)
 
 	thumbnailByte := thumbnail.CreateVideoThumbnail(bytes)
 
-	resp, err := runFunc.Client.Upload(context.Background(), bytes, whatsmeow.MediaVideo)
+	resp, err := context.Client().Upload(context2.Background(), bytes, whatsmeow.MediaVideo)
 	if err != nil {
 		return nil, err
 	}
 
-	thumbnail, err := runFunc.Client.Upload(context.Background(), thumbnailByte, whatsmeow.MediaImage)
+	thumbnail, err := context.Client().Upload(context2.Background(), thumbnailByte, whatsmeow.MediaImage)
 	if err != nil {
 		return nil, err
 	}
@@ -229,10 +230,10 @@ func (runFunc *RunFuncContext) UploadVideoMessageFromBytes(bytes []byte, caption
 	}()
 
 	return &waProto.VideoMessage{
-		ContextInfo: util.WithReply(runFunc.MessageEvent),
+		ContextInfo: util.WithReply(context.MessageEvent()),
 
-		Caption:  types.String(caption),
-		Mimetype: types.String(mimetypeString.String()),
+		Caption:  proto.String(caption),
+		Mimetype: proto.String(mimetypeString.String()),
 
 		ThumbnailDirectPath: &thumbnail.DirectPath,
 		ThumbnailSha256:     thumbnail.FileSHA256,
@@ -249,7 +250,7 @@ func (runFunc *RunFuncContext) UploadVideoMessageFromBytes(bytes []byte, caption
 }
 
 // UploadStickerMessageFromPath upload sticker from given path
-func (runFunc *RunFuncContext) UploadStickerMessageFromPath(path string) (*waProto.StickerMessage, error) {
+func (context *Ctx) UploadStickerMessageFromPath(path string) (*waProto.StickerMessage, error) {
 	stickerBuff, err := os.Open(path)
 	if err != nil {
 		return nil, err
@@ -263,14 +264,14 @@ func (runFunc *RunFuncContext) UploadStickerMessageFromPath(path string) (*waPro
 	stickerBuffer := bufio.NewReader(stickerBuff)
 	_, err = stickerBuffer.Read(stickerBytes)
 
-	resp, err := runFunc.Client.Upload(context.Background(), stickerBytes, whatsmeow.MediaImage)
+	resp, err := context.Client().Upload(context2.Background(), stickerBytes, whatsmeow.MediaImage)
 
 	if err != nil {
 		return nil, err
 	}
 
 	return &waProto.StickerMessage{
-		Mimetype: types.String("image/webp"),
+		Mimetype: proto.String("image/webp"),
 
 		Url:           &resp.URL,
 		DirectPath:    &resp.DirectPath,
@@ -282,8 +283,8 @@ func (runFunc *RunFuncContext) UploadStickerMessageFromPath(path string) (*waPro
 }
 
 // UploadStickerMessageFromBytes upload sticker from given bytes
-func (runFunc *RunFuncContext) UploadStickerMessageFromBytes(bytes []byte) (*waProto.StickerMessage, error) {
-	resp, err := runFunc.Client.Upload(context.Background(), bytes, whatsmeow.MediaImage)
+func (context *Ctx) UploadStickerMessageFromBytes(bytes []byte) (*waProto.StickerMessage, error) {
+	resp, err := context.Client().Upload(context2.Background(), bytes, whatsmeow.MediaImage)
 	if err != nil {
 		return nil, err
 	}
@@ -293,9 +294,9 @@ func (runFunc *RunFuncContext) UploadStickerMessageFromBytes(bytes []byte) (*waP
 	}()
 
 	return &waProto.StickerMessage{
-		ContextInfo: util.WithReply(runFunc.MessageEvent),
+		ContextInfo: util.WithReply(context.MessageEvent()),
 
-		Mimetype: types.String("image/webp"),
+		Mimetype: proto.String("image/webp"),
 
 		Url:           &resp.URL,
 		DirectPath:    &resp.DirectPath,
@@ -307,7 +308,7 @@ func (runFunc *RunFuncContext) UploadStickerMessageFromBytes(bytes []byte) (*waP
 }
 
 // UploadDocumentMessageFromPath upload document from given path
-func (runFunc *RunFuncContext) UploadDocumentMessageFromPath(path, title string) (*waProto.DocumentMessage, error) {
+func (context *Ctx) UploadDocumentMessageFromPath(path, title string) (*waProto.DocumentMessage, error) {
 	documentBuff, err := os.Open(path)
 	if err != nil {
 		return nil, err
@@ -323,15 +324,15 @@ func (runFunc *RunFuncContext) UploadDocumentMessageFromPath(path, title string)
 
 	mimetypeString := mimetype.Detect(documentBytes)
 
-	resp, err := runFunc.Client.Upload(context.Background(), documentBytes, whatsmeow.MediaDocument)
+	resp, err := context.Client().Upload(context2.Background(), documentBytes, whatsmeow.MediaDocument)
 	if err != nil {
 		return nil, err
 	}
 
 	return &waProto.DocumentMessage{
-		Title:    types.String(title),
-		FileName: types.String(documentInfo.Name()),
-		Mimetype: types.String(mimetypeString.String()),
+		Title:    proto.String(title),
+		FileName: proto.String(documentInfo.Name()),
+		Mimetype: proto.String(mimetypeString.String()),
 
 		Url:           &resp.URL,
 		DirectPath:    &resp.DirectPath,
@@ -343,10 +344,10 @@ func (runFunc *RunFuncContext) UploadDocumentMessageFromPath(path, title string)
 }
 
 // UploadDocumentMessageFromBytes upload document from given bytes
-func (runFunc *RunFuncContext) UploadDocumentMessageFromBytes(bytes []byte, title, filename string) (*waProto.DocumentMessage, error) {
+func (context *Ctx) UploadDocumentMessageFromBytes(bytes []byte, title, filename string) (*waProto.DocumentMessage, error) {
 	mimetypeString := mimetype.Detect(bytes)
 
-	resp, err := runFunc.Client.Upload(context.Background(), bytes, whatsmeow.MediaDocument)
+	resp, err := context.Client().Upload(context2.Background(), bytes, whatsmeow.MediaDocument)
 
 	if err != nil {
 		return nil, err
@@ -357,9 +358,9 @@ func (runFunc *RunFuncContext) UploadDocumentMessageFromBytes(bytes []byte, titl
 	}()
 
 	return &waProto.DocumentMessage{
-		Title:    types.String(title),
-		FileName: types.String(filename),
-		Mimetype: types.String(mimetypeString.String()),
+		Title:    proto.String(title),
+		FileName: proto.String(filename),
+		Mimetype: proto.String(mimetypeString.String()),
 
 		Url:           &resp.URL,
 		DirectPath:    &resp.DirectPath,
@@ -371,7 +372,7 @@ func (runFunc *RunFuncContext) UploadDocumentMessageFromBytes(bytes []byte, titl
 }
 
 // UploadAudioMessageFromPath upload audio message from given path
-func (runFunc *RunFuncContext) UploadAudioMessageFromPath(path string) (*waProto.AudioMessage, error) {
+func (context *Ctx) UploadAudioMessageFromPath(path string) (*waProto.AudioMessage, error) {
 	audioBuff, err := os.Open(path)
 	if err != nil {
 		return nil, err
@@ -387,14 +388,14 @@ func (runFunc *RunFuncContext) UploadAudioMessageFromPath(path string) (*waProto
 
 	mimetypeString := mimetype.Detect(audioBytes)
 
-	resp, err := runFunc.Client.Upload(context.Background(), audioBytes, whatsmeow.MediaAudio)
+	resp, err := context.Client().Upload(context2.Background(), audioBytes, whatsmeow.MediaAudio)
 
 	if err != nil {
 		return nil, err
 	}
 
 	return &waProto.AudioMessage{
-		Mimetype: types.String(mimetypeString.String()),
+		Mimetype: proto.String(mimetypeString.String()),
 
 		Url:           &resp.URL,
 		DirectPath:    &resp.DirectPath,
@@ -406,10 +407,10 @@ func (runFunc *RunFuncContext) UploadAudioMessageFromPath(path string) (*waProto
 }
 
 // UploadAudioMessageFromBytes upload audio from given bytes
-func (runFunc *RunFuncContext) UploadAudioMessageFromBytes(bytes []byte) (*waProto.AudioMessage, error) {
+func (context *Ctx) UploadAudioMessageFromBytes(bytes []byte) (*waProto.AudioMessage, error) {
 	mimetypeString := mimetype.Detect(bytes)
 
-	resp, err := runFunc.Client.Upload(context.Background(), bytes, whatsmeow.MediaAudio)
+	resp, err := context.Client().Upload(context2.Background(), bytes, whatsmeow.MediaAudio)
 	if err != nil {
 		return nil, err
 	}
@@ -419,7 +420,7 @@ func (runFunc *RunFuncContext) UploadAudioMessageFromBytes(bytes []byte) (*waPro
 	}()
 
 	return &waProto.AudioMessage{
-		Mimetype: types.String(mimetypeString.String()),
+		Mimetype: proto.String(mimetypeString.String()),
 
 		Url:           &resp.URL,
 		DirectPath:    &resp.DirectPath,

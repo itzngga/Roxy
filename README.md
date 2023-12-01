@@ -27,7 +27,7 @@ import (
 	_ "github.com/itzngga/Roxy/examples/cmd"
 	"log"
 
-	"github.com/itzngga/Roxy/core"
+	"github.com/itzngga/Roxy"
 	"github.com/itzngga/Roxy/options"
 	_ "github.com/mattn/go-sqlite3"
 
@@ -37,7 +37,7 @@ import (
 )
 
 func main() {
-	app, err := core.NewGoRoxyBase(options.NewDefaultOptions())
+	app, err := roxy.NewRoxyBase(options.NewDefaultOptions())
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -53,7 +53,10 @@ func main() {
 # Config
 #### default
 ```go
-app := core.NewGoRoxyBase(options.NewDefaultOptions())
+app, err := roxy.NewRoxyBase(options.NewDefaultOptions())
+if err != nil {
+    log.Fatal(err)
+}
 ```
 #### custom
 ```go
@@ -79,15 +82,39 @@ type Options struct {
 }
 ```
 ### PostgresSQL
+#### from env
 ```go
 opt := options.NewDefaultOptions()
 opt.StoreMode = "postgres"
 opt.PostgresDsn = options.NewPostgresDSN().FromEnv()
 
-app, err := core.NewGoRoxyBase(opt)
+app, err := roxy.NewRoxyBase(opt)
 if err != nil {
     log.Fatal(err)
 }
+```
+#### default parser
+```go
+pg := options.NewPostgresDSN()
+pg.SetHost("localhost")
+pg.SetPort("4321")
+pg.SetUsername("postgres")
+pg.SetPassword("root123")
+pg.SetTimeZone("Asia/Jakarta")
+
+opt := options.NewDefaultOptions()
+opt.StoreMode = "postgres"
+opt.PostgresDsn = pg
+
+app, err := roxy.NewRoxyBase(opt)
+if err != nil {
+log.Fatal(err)
+}
+
+c := make(chan os.Signal)
+signal.Notify(c, os.Interrupt, syscall.SIGTERM)
+<-c
+app.Shutdown()
 ```
 
 ### Sqlite
@@ -96,7 +123,7 @@ opt := options.NewDefaultOptions()
 opt.StoreMode = "sqlite"
 opt.SqliteFile = "ROXY.DB"
 
-app, err := core.NewGoRoxyBase(opt)
+app, err := roxy.NewRoxyBase(opt)
 if err != nil {
     log.Fatal(err)
 }
@@ -113,26 +140,25 @@ package cmd
 
 import (
 	"fmt"
-	"github.com/itzngga/Roxy/command"
-	"github.com/itzngga/Roxy/embed"
-	waProto "go.mau.fi/whatsmeow/binary/proto"
+	waProto "github.com/go-whatsapp/whatsmeow/binary/proto"
+	"github.com/itzngga/Roxy"
+	"github.com/itzngga/Roxy/context"
 	"time"
 )
 
-var speed = &command.Command{
+func init() {
+	roxy.Commands.Add(speed)
+}
+
+var speed = &roxy.Command{
 	Name:        "speed",
 	Description: "Testing speed",
-	RunFunc: func(ctx *command.RunFuncContext) *waProto.Message {
+	RunFunc: func(ctx *context.Ctx) *waProto.Message {
 		t := time.Now()
 		ctx.SendReplyMessage("wait...")
 		return ctx.GenerateReplyMessage(fmt.Sprintf("Duration: %f seconds", time.Now().Sub(t).Seconds()))
 	},
 }
-
-func init() {
-	embed.Commands.Add(speed)
-}
-
 ```
 
 # Create Question State
@@ -142,24 +168,24 @@ package media
 
 import (
 	"github.com/itzngga/Leficious/src/cmd/constant"
-	"github.com/itzngga/Roxy/command"
-	"github.com/itzngga/Roxy/embed"
+	"github.com/itzngga/Roxy"
+	"github.com/itzngga/Roxy/context"
 	"github.com/itzngga/Roxy/util/cli"
-	waProto "go.mau.fi/whatsmeow/binary/proto"
+	waProto "github.com/go-whatsapp/whatsmeow/binary/proto"
 	"log"
 )
 
 func init() {
-	embed.Commands.Add(ocr)
+	roxy.Commands.Add(ocr)
 }
 
-var ocr = &command.Command{
+var ocr = &roxy.Command{
 	Name:        "ocr",
 	Category:    "media",
 	Description: "Scan text on images",
-	RunFunc: func(ctx *command.RunFuncContext) *waProto.Message {
+	context: func(ctx *context.Ctx) *waProto.Message {
 		var captured *waProto.Message
-		command.NewUserQuestion(ctx).
+		ctx.NewUserQuestion().
 			CaptureMediaQuestion("Please send/reply a media message", &captured).
 			Exec()
 

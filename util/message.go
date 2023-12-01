@@ -1,10 +1,10 @@
 package util
 
 import (
-	"github.com/itzngga/Roxy/types"
-	waProto "go.mau.fi/whatsmeow/binary/proto"
-	waTypes "go.mau.fi/whatsmeow/types"
-	"go.mau.fi/whatsmeow/types/events"
+	waProto "github.com/go-whatsapp/whatsmeow/binary/proto"
+	waTypes "github.com/go-whatsapp/whatsmeow/types"
+	"github.com/go-whatsapp/whatsmeow/types/events"
+	"google.golang.org/protobuf/proto"
 	"strings"
 )
 
@@ -152,7 +152,7 @@ func ParseQuotedBy(m *waProto.Message, str string) *waProto.Message {
 func WithReply(m *events.Message) *waProto.ContextInfo {
 	return &waProto.ContextInfo{
 		StanzaId:      &m.Info.ID,
-		Participant:   types.String(m.Info.MessageSource.Sender.String()),
+		Participant:   proto.String(m.Info.MessageSource.Sender.String()),
 		QuotedMessage: m.Message,
 	}
 }

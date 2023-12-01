@@ -2,8 +2,8 @@ package util
 
 import (
 	"fmt"
+	waTypes "github.com/go-whatsapp/whatsmeow/types"
 	"github.com/google/uuid"
-	waTypes "go.mau.fi/whatsmeow/types"
 	"net/url"
 	"strconv"
 	"strings"

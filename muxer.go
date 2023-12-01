@@ -1,77 +1,74 @@
-package core
+package roxy
 
 import (
 	"bytes"
-	"github.com/alitto/pond"
+	"github.com/go-whatsapp/whatsmeow"
+	waProto "github.com/go-whatsapp/whatsmeow/binary/proto"
+	waTypes "github.com/go-whatsapp/whatsmeow/types"
+	"github.com/go-whatsapp/whatsmeow/types/events"
+	waLog "github.com/go-whatsapp/whatsmeow/util/log"
 	"github.com/google/uuid"
-	"github.com/itzngga/Roxy/command"
-	"github.com/itzngga/Roxy/embed"
+	"github.com/itzngga/Roxy/context"
 	"github.com/itzngga/Roxy/options"
 	"github.com/itzngga/Roxy/types"
 	"github.com/itzngga/Roxy/util"
+	"github.com/puzpuzpuz/xsync"
 	"github.com/sajari/fuzzy"
-	"github.com/zhangyunhao116/skipmap"
-	"go.mau.fi/whatsmeow"
-	waProto "go.mau.fi/whatsmeow/binary/proto"
-	waTypes "go.mau.fi/whatsmeow/types"
-	"go.mau.fi/whatsmeow/types/events"
-	waLog "go.mau.fi/whatsmeow/util/log"
 	"google.golang.org/protobuf/proto"
 	"strings"
 	"time"
 )
 
 type Muxer struct {
-	Options              *options.Options
-	Log                  waLog.Logger
-	MessageTimeout       time.Duration
-	Categories           *skipmap.StringMap[string]
-	GlobalMiddlewares    *skipmap.StringMap[command.MiddlewareFunc]
-	Middlewares          *skipmap.StringMap[command.MiddlewareFunc]
-	Commands             *skipmap.StringMap[*command.Command]
-	CommandResponseCache *skipmap.StringMap[*waProto.Message]
-	QuestionState        *skipmap.StringMap[*command.QuestionState]
-	PollingState         *skipmap.StringMap[*command.PollingState]
-	GroupCache           *skipmap.StringMap[[]*waTypes.GroupInfo]
+	Options              *options.Options                             `json:"options,omitempty"`
+	Log                  waLog.Logger                                 `json:"log,omitempty"`
+	MessageTimeout       time.Duration                                `json:"message_timeout,omitempty"`
+	Categories           *xsync.MapOf[string, string]                 `json:"categories,omitempty"`
+	GlobalMiddlewares    *xsync.MapOf[string, context.MiddlewareFunc] `json:"global_middlewares,omitempty"`
+	Middlewares          *xsync.MapOf[string, context.MiddlewareFunc] `json:"middlewares,omitempty"`
+	Commands             *xsync.MapOf[string, *Command]               `json:"commands,omitempty"`
+	CommandResponseCache *xsync.MapOf[string, *waProto.Message]       `json:"command_response_cache,omitempty"`
+	QuestionState        *xsync.MapOf[string, *context.QuestionState] `json:"question_state,omitempty"`
+	PollingState         *xsync.MapOf[string, *context.PollingState]  `json:"polling_state,omitempty"`
+	GroupCache           *xsync.MapOf[string, []*waTypes.GroupInfo]   `json:"group_cache,omitempty"`
+	Locals               *xsync.MapOf[string, string]                 `json:"locals,omitempty"`
 
-	QuestionChan    chan *command.QuestionState
-	PollingChan     chan *command.PollingState
-	Locals          *skipmap.StringMap[string]
-	SuggestionModel *fuzzy.Model
-	ctx             *skipmap.StringMap[types.RoxyContext]
-	clientJID       waTypes.JID
-	commandParser   func(str string) (prefix string, cmd string, ok bool)
+	QuestionChan    chan *context.QuestionState                           `json:"question_chan,omitempty"`
+	PollingChan     chan *context.PollingState                            `json:"polling_chan,omitempty"`
+	SuggestionModel *fuzzy.Model                                          `json:"suggestion_model,omitempty"`
+	CommandParser   func(str string) (prefix string, cmd string, ok bool) `json:"command_parser,omitempty"`
+
+	types.AppMethods
 }
 
-func NewMuxer(ctx *skipmap.StringMap[types.RoxyContext], log waLog.Logger, options *options.Options, clientJID waTypes.JID) *Muxer {
+func NewMuxer(log waLog.Logger, options *options.Options, appMethods types.AppMethods) *Muxer {
 	muxer := &Muxer{
-		Locals:               skipmap.NewString[string](),
-		Commands:             skipmap.NewString[*command.Command](),
-		GlobalMiddlewares:    skipmap.NewString[command.MiddlewareFunc](),
-		Middlewares:          skipmap.NewString[command.MiddlewareFunc](),
-		CommandResponseCache: skipmap.NewString[*waProto.Message](),
-		QuestionState:        skipmap.NewString[*command.QuestionState](),
-		PollingState:         skipmap.NewString[*command.PollingState](),
-		Categories:           skipmap.NewString[string](),
-		GroupCache:           skipmap.NewString[[]*waTypes.GroupInfo](),
-		QuestionChan:         make(chan *command.QuestionState),
-		PollingChan:          make(chan *command.PollingState),
+		Locals:               xsync.NewMapOf[string](),
+		Commands:             xsync.NewMapOf[*Command](),
+		GlobalMiddlewares:    xsync.NewMapOf[context.MiddlewareFunc](),
+		Middlewares:          xsync.NewMapOf[context.MiddlewareFunc](),
+		CommandResponseCache: xsync.NewMapOf[*waProto.Message](),
+		QuestionState:        xsync.NewMapOf[*context.QuestionState](),
+		PollingState:         xsync.NewMapOf[*context.PollingState](),
+		Categories:           xsync.NewMapOf[string](),
+		GroupCache:           xsync.NewMapOf[[]*waTypes.GroupInfo](),
+		QuestionChan:         make(chan *context.QuestionState),
+		PollingChan:          make(chan *context.PollingState),
 		MessageTimeout:       options.SendMessageTimeout,
 		Options:              options,
 		Log:                  log,
-		commandParser:        util.ParseCmd,
-		clientJID:            clientJID,
+		CommandParser:        util.ParseCmd,
+		AppMethods:           appMethods,
 	}
 
-	muxer.extendContext(ctx)
 	go muxer.handleQuestionStateChannel()
 	go muxer.handlePollingStateChannel()
 
 	return muxer
 }
 
-func (muxer *Muxer) AddCommandParser(runFunc func(str string) (prefix string, cmd string, ok bool)) {
-	muxer.commandParser = runFunc
+func (muxer *Muxer) AddCommandParser(context func(str string) (prefix string, cmd string, ok bool)) {
+	muxer.CommandParser = context
 }
 
 func (muxer *Muxer) Clean() {
@@ -79,11 +76,11 @@ func (muxer *Muxer) Clean() {
 		muxer.Categories.Delete(key)
 		return true
 	})
-	muxer.Commands.Range(func(key string, cmd *command.Command) bool {
+	muxer.Commands.Range(func(key string, cmd *Command) bool {
 		muxer.Commands.Delete(key)
 		return true
 	})
-	muxer.Middlewares.Range(func(key string, middleware command.MiddlewareFunc) bool {
+	muxer.Middlewares.Range(func(key string, middleware context.MiddlewareFunc) bool {
 		muxer.Middlewares.Delete(key)
 		return true
 	})
@@ -118,13 +115,13 @@ func (muxer *Muxer) handlePollingStateChannel() {
 
 func (muxer *Muxer) handleQuestionStateChannel() {
 	for message := range muxer.QuestionChan {
-		muxer.QuestionState.Delete(message.RunFuncCtx.Number)
+		muxer.QuestionState.Delete(message.Ctx.Number())
 		for _, question := range message.Questions {
 			if question.GetAnswer() == "" {
 				message.ActiveQuestion = question.Question
-				muxer.QuestionState.Store(message.RunFuncCtx.Number, message)
+				muxer.QuestionState.Store(message.Ctx.Number(), message)
 				if question.Question != "" {
-					message.RunFuncCtx.SendReplyMessage(question.Question)
+					message.Ctx.SendReplyMessage(question.Question)
 				}
 				break
 			}
@@ -133,20 +130,20 @@ func (muxer *Muxer) handleQuestionStateChannel() {
 }
 
 func (muxer *Muxer) addEmbedCommands() {
-	categories := embed.Categories.Get()
+	categories := Categories.Get()
 	for _, cat := range categories {
 		muxer.Categories.Store(cat, cat)
 	}
-	commands := embed.Commands.Get()
+	commands := Commands.Get()
 	for _, cmd := range commands {
 		muxer.AddCommand(cmd)
 	}
-	middlewares := embed.Middlewares.Get()
+	middlewares := Middlewares.Get()
 	for _, mid := range middlewares {
 		muxer.AddMiddleware(mid)
 
 	}
-	globalMiddleware := embed.GlobalMiddlewares.Get()
+	globalMiddleware := GlobalMiddlewares.Get()
 	for _, mid := range globalMiddleware {
 		muxer.AddGlobalMiddleware(mid)
 	}
@@ -156,15 +153,15 @@ func (muxer *Muxer) addEmbedCommands() {
 	}
 }
 
-func (muxer *Muxer) AddGlobalMiddleware(middleware command.MiddlewareFunc) {
+func (muxer *Muxer) AddGlobalMiddleware(middleware context.MiddlewareFunc) {
 	muxer.GlobalMiddlewares.Store(uuid.New().String(), middleware)
 }
 
-func (muxer *Muxer) AddMiddleware(middleware command.MiddlewareFunc) {
+func (muxer *Muxer) AddMiddleware(middleware context.MiddlewareFunc) {
 	muxer.Middlewares.Store(uuid.New().String(), middleware)
 }
 
-func (muxer *Muxer) AddCommand(cmd *command.Command) {
+func (muxer *Muxer) AddCommand(cmd *Command) {
 	cmd.Validate()
 	_, ok := muxer.Commands.Load(cmd.Name)
 	if ok {
@@ -181,9 +178,9 @@ func (muxer *Muxer) AddCommand(cmd *command.Command) {
 	muxer.Commands.Store(cmd.Name, cmd)
 }
 
-func (muxer *Muxer) GetActiveCommand() []*command.Command {
-	var cmd = make([]*command.Command, 0)
-	muxer.Commands.Range(func(key string, value *command.Command) bool {
+func (muxer *Muxer) GetActiveCommand() []*Command {
+	var cmd = make([]*Command, 0)
+	muxer.Commands.Range(func(key string, value *Command) bool {
 		// filter alias commands
 		if key == value.Name {
 			cmd = append(cmd, value)
@@ -194,18 +191,18 @@ func (muxer *Muxer) GetActiveCommand() []*command.Command {
 	return cmd
 }
 
-func (muxer *Muxer) GetActiveGlobalMiddleware() []command.MiddlewareFunc {
-	var middleware = make([]command.MiddlewareFunc, 0)
-	muxer.GlobalMiddlewares.Range(func(key string, value command.MiddlewareFunc) bool {
+func (muxer *Muxer) GetActiveGlobalMiddleware() []context.MiddlewareFunc {
+	var middleware = make([]context.MiddlewareFunc, 0)
+	muxer.GlobalMiddlewares.Range(func(key string, value context.MiddlewareFunc) bool {
 		middleware = append(middleware, value)
 		return true
 	})
 
 	return middleware
 }
-func (muxer *Muxer) GetActiveMiddleware() []command.MiddlewareFunc {
-	var middleware = make([]command.MiddlewareFunc, 0)
-	muxer.Middlewares.Range(func(key string, value command.MiddlewareFunc) bool {
+func (muxer *Muxer) GetActiveMiddleware() []context.MiddlewareFunc {
+	var middleware = make([]context.MiddlewareFunc, 0)
+	muxer.Middlewares.Range(func(key string, value context.MiddlewareFunc) bool {
 		middleware = append(middleware, value)
 		return true
 	})
@@ -223,38 +220,28 @@ func (muxer *Muxer) getCachedCommandResponse(cmd string) *waProto.Message {
 
 func (muxer *Muxer) setCacheCommandResponse(cmd string, response *waProto.Message) {
 	muxer.CommandResponseCache.Store(cmd, response)
-	muxer.getPool().Submit(func() {
-		timeout := time.NewTimer(muxer.Options.CommandResponseCacheTimeout)
-		<-timeout.C
-		muxer.CommandResponseCache.Delete(cmd)
-		timeout.Stop()
-	})
+	timeout := time.NewTimer(muxer.Options.CommandResponseCacheTimeout)
+	<-timeout.C
+	muxer.CommandResponseCache.Delete(cmd)
+	timeout.Stop()
 }
 
-func (muxer *Muxer) globalMiddlewareProcessing(c *whatsmeow.Client, evt *events.Message, number string) bool {
-	if muxer.GlobalMiddlewares.Len() >= 1 {
-		param := &command.RunFuncContext{
-			Client:        c,
-			WaLog:         muxer.Log,
-			Options:       muxer.Options,
-			MessageEvent:  evt,
-			MessageInfo:   &evt.Info,
-			ClientJID:     &muxer.clientJID,
-			Message:       evt.Message,
-			FromMe:        evt.Info.IsFromMe,
-			MessageChat:   evt.Info.Chat,
-			MessageSender: evt.Info.Sender,
-			PushName:      evt.Info.PushName,
-			Number:        number,
-			Locals:        muxer.Locals,
-			QuestionChan:  muxer.QuestionChan,
-			PollingChan:   muxer.PollingChan,
-			Ctx:           muxer.ctx,
-		}
+func (muxer *Muxer) globalMiddlewareProcessing(c *whatsmeow.Client, evt *events.Message) bool {
+	if muxer.GlobalMiddlewares.Size() >= 1 {
+		ctx := context.NewCtx(muxer.Locals)
+		ctx.SetClient(c)
+		ctx.SetLogger(muxer.Log)
+		ctx.SetOptions(muxer.Options)
+		ctx.SetMessageEvent(evt)
+		ctx.SetClientJID(muxer.AppMethods.ClientJID())
+		ctx.SetClientMethods(muxer)
+		ctx.SetQuestionChan(muxer.QuestionChan)
+		ctx.SetPollingChan(muxer.PollingChan)
+		defer context.ReleaseCtx(ctx)
 
 		midAreOk := true
-		muxer.GlobalMiddlewares.Range(func(key string, value command.MiddlewareFunc) bool {
-			if !value(param) {
+		muxer.GlobalMiddlewares.Range(func(key string, value context.MiddlewareFunc) bool {
+			if !value(ctx) {
 				midAreOk = false
 				return false
 			}
@@ -305,12 +292,12 @@ func (muxer *Muxer) handleQuestionState(c *whatsmeow.Client, evt *events.Message
 		if questionState.WithEmojiReact {
 			muxer.SendEmojiMessage(evt, questionState.EmojiReact)
 		}
-		muxer.getPool().Submit(func() {
-			jids := []waTypes.MessageID{
-				evt.Info.ID,
-			}
-			c.MarkRead(jids, evt.Info.Timestamp, evt.Info.Chat, evt.Info.Sender)
-		})
+
+		jids := []waTypes.MessageID{
+			evt.Info.ID,
+		}
+		c.MarkRead(jids, evt.Info.Timestamp, evt.Info.Chat, evt.Info.Sender)
+
 		for i, question := range questionState.Questions {
 			if question.Question == questionState.ActiveQuestion && question.GetAnswer() == "" {
 				if questionState.Questions[i].Capture {
@@ -325,7 +312,7 @@ func (muxer *Muxer) handleQuestionState(c *whatsmeow.Client, evt *events.Message
 			} else if question.Question != questionState.ActiveQuestion && question.GetAnswer() == "" {
 				questionState.ActiveQuestion = question.Question
 				if question.Question != "" {
-					questionState.RunFuncCtx.SendReplyMessage(question.Question)
+					questionState.Ctx.SendReplyMessage(question.Question)
 				}
 				return
 			} else if question.Question == questionState.ActiveQuestion && question.GetAnswer() != "" {
@@ -370,14 +357,14 @@ func (muxer *Muxer) RunCommand(c *whatsmeow.Client, evt *events.Message) {
 		return
 	}
 
-	if midOk := muxer.globalMiddlewareProcessing(c, evt, number); !midOk {
+	if midOk := muxer.globalMiddlewareProcessing(c, evt); !midOk {
 		return
 	}
 
-	prefix, cmd, isCmd := muxer.commandParser(parsed)
+	prefix, cmd, isCmd := muxer.CommandParser(parsed)
 	cmdLoad, isAvailable := muxer.Commands.Load(cmd)
 	if muxer.Options.CommandSuggestion && isCmd && !isAvailable {
-		muxer.suggestCommand(evt, prefix, cmd)
+		muxer.SuggestCommand(evt, prefix, cmd)
 		return
 	}
 
@@ -393,52 +380,43 @@ func (muxer *Muxer) RunCommand(c *whatsmeow.Client, evt *events.Message) {
 			}
 		}
 		if cmdLoad.OnlyAdminGroup && evt.Info.IsGroup {
-			if ok, _ := muxer.isGroupAdmin(evt.Info.Chat, evt.Info.Sender); !ok {
+			if ok, _ := muxer.IsGroupAdmin(evt.Info.Chat, evt.Info.Sender); !ok {
 				return
 			}
 		}
 		if cmdLoad.OnlyIfBotAdmin && evt.Info.IsGroup {
-			if ok, _ := muxer.isClientGroupAdmin(evt.Info.Chat); !ok {
+			if ok, _ := muxer.IsClientGroupAdmin(evt.Info.Chat); !ok {
 				return
 			}
 		}
-		muxer.getPool().Submit(func() {
+
+		go func() {
 			if muxer.Options.WithCommandLog {
 				muxer.Log.Infof("[CMD] [%s] command > %s", number, cmdLoad.Name)
 			}
-			jids := []waTypes.MessageID{
-				evt.Info.ID,
+			err := c.MarkRead([]waTypes.MessageID{evt.Info.ID}, evt.Info.Timestamp, evt.Info.Chat, evt.Info.Sender)
+			if err != nil {
+				muxer.Log.Errorf("read message error: %v", err)
 			}
-			c.MarkRead(jids, evt.Info.Timestamp, evt.Info.Chat, evt.Info.Sender)
-		})
+		}()
 
-		var args = strings.Split(parsed, " ")[1:]
-		params := &command.RunFuncContext{
-			Client:         c,
-			WaLog:          muxer.Log,
-			Options:        muxer.Options,
-			MessageEvent:   evt,
-			MessageInfo:    &evt.Info,
-			ClientJID:      &muxer.clientJID,
-			Message:        evt.Message,
-			FromMe:         evt.Info.IsFromMe,
-			CurrentCommand: cmdLoad,
-			ParsedMsg:      parsed,
-			Number:         number,
-			Locals:         muxer.Locals,
-			QuestionChan:   muxer.QuestionChan,
-			PollingChan:    muxer.PollingChan,
-			MessageChat:    evt.Info.Chat,
-			MessageSender:  evt.Info.Sender,
-			PushName:       evt.Info.PushName,
-			Prefix:         prefix,
-			Arguments:      args,
-			Ctx:            muxer.ctx,
-		}
-		if muxer.Middlewares.Len() >= 1 {
+		ctx := context.NewCtx(muxer.Locals)
+		ctx.SetClient(c)
+		ctx.SetLogger(muxer.Log)
+		ctx.SetOptions(muxer.Options)
+		ctx.SetMessageEvent(evt)
+		ctx.SetClientJID(muxer.AppMethods.ClientJID())
+		ctx.SetParsedMsg(parsed)
+		ctx.SetPrefix(prefix)
+		ctx.SetClientMethods(muxer)
+		ctx.SetQuestionChan(muxer.QuestionChan)
+		ctx.SetPollingChan(muxer.PollingChan)
+		defer context.ReleaseCtx(ctx)
+
+		if muxer.Middlewares.Size() >= 1 {
 			var midAreOk = true
-			muxer.Middlewares.Range(func(key string, value command.MiddlewareFunc) bool {
-				if !value(params) {
+			muxer.Middlewares.Range(func(key string, value context.MiddlewareFunc) bool {
+				if !value(ctx) {
 					midAreOk = false
 					return false
 				}
@@ -449,7 +427,7 @@ func (muxer *Muxer) RunCommand(c *whatsmeow.Client, evt *events.Message) {
 			}
 		}
 		if cmdLoad.Middleware != nil {
-			if !cmdLoad.Middleware(params) {
+			if !cmdLoad.Middleware(ctx) {
 				return
 			}
 		}
@@ -457,14 +435,13 @@ func (muxer *Muxer) RunCommand(c *whatsmeow.Client, evt *events.Message) {
 		if cmdLoad.Cache {
 			msg = muxer.getCachedCommandResponse(parsed)
 			if msg == nil {
-				msg = cmdLoad.RunFunc(params)
+				msg = cmdLoad.RunFunc(ctx)
 			}
 		} else {
-			msg = cmdLoad.RunFunc(params)
+			msg = cmdLoad.RunFunc(ctx)
 		}
 		if msg != nil {
-			SendMessage := types.GetContext[types.SendMessage](muxer.ctx, "sendMessage")
-			_, err := SendMessage(evt.Info.Chat, msg)
+			_, err := muxer.AppMethods.SendMessage(evt.Info.Chat, msg)
 			if err == nil {
 				if cmdLoad.Cache {
 					muxer.setCacheCommandResponse(parsed, msg)
@@ -473,27 +450,6 @@ func (muxer *Muxer) RunCommand(c *whatsmeow.Client, evt *events.Message) {
 			}
 		}
 	}
-}
-
-func (muxer *Muxer) getPool() *pond.WorkerPool {
-	return types.GetContext[*pond.WorkerPool](muxer.ctx, "workerPool")
-}
-
-func (muxer *Muxer) getCurrentClient() *whatsmeow.Client {
-	return types.GetContext[*whatsmeow.Client](muxer.ctx, "appClient")
-}
-
-func (muxer *Muxer) extendContext(appCtx *skipmap.StringMap[types.RoxyContext]) {
-	// muxer context
-	appCtx.Store("FindGroupByJid", types.FindGroupByJid(muxer.findGroupByJid))
-	appCtx.Store("GetAllGroups", types.GetAllGroups(muxer.getAllGroups))
-	appCtx.Store("CacheAllGroup", types.CacheAllGroup(muxer.cacheAllGroup))
-	appCtx.Store("UNCacheOneGroup", types.UNCacheOneGroup(muxer.unCacheOneGroup))
-	appCtx.Store("IsClientGroupAdmin", types.IsClientGroupAdmin(muxer.isClientGroupAdmin))
-	appCtx.Store("IsGroupAdmin", types.IsGroupAdmin(muxer.isGroupAdmin))
-	appCtx.Store("currentJID", muxer.clientJID)
-	appCtx.Store("sendEmojiMessage", types.SendEmojiMessage(muxer.SendEmojiMessage))
-	muxer.ctx = appCtx
 }
 
 func (muxer *Muxer) SendEmojiMessage(event *events.Message, emoji string) {
@@ -506,7 +462,7 @@ func (muxer *Muxer) SendEmojiMessage(event *events.Message, emoji string) {
 		RemoteJid: proto.String(chat.String()),
 	}
 
-	if !sender.IsEmpty() && sender.User != muxer.clientJID.ToNonAD().String() {
+	if !sender.IsEmpty() && sender.User != muxer.AppMethods.ClientJID().ToNonAD().String() {
 		key.FromMe = proto.Bool(false)
 		key.Participant = proto.String(sender.ToNonAD().String())
 	}
@@ -519,8 +475,6 @@ func (muxer *Muxer) SendEmojiMessage(event *events.Message, emoji string) {
 		},
 	}
 
-	SendMessage := types.GetContext[types.SendMessage](muxer.ctx, "sendMessage")
-	_, _ = SendMessage(event.Info.Chat, message)
-
+	_, _ = muxer.AppMethods.SendMessage(event.Info.Chat, message)
 	return
 }
