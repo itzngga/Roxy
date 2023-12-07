@@ -14,12 +14,12 @@ func (context *Ctx) RemoveMemberFromGroup(jids []waTypes.JID) error {
 		return err
 	}
 
-	changes := map[waTypes.JID]whatsmeow.ParticipantChange{}
+	changes := make([]waTypes.JID, 0)
 	for _, jid := range jids {
-		changes[jid] = whatsmeow.ParticipantChangeRemove
+		changes = append(changes, jid)
 	}
 
-	_, err := context.Client().UpdateGroupParticipants(context.ChatJID(), changes)
+	_, err := context.Client().UpdateGroupParticipants(context.ChatJID(), changes, whatsmeow.ParticipantChangeRemove)
 	return err
 }
 
@@ -29,12 +29,12 @@ func (context *Ctx) AddMemberToGroup(jids []waTypes.JID) error {
 		return err
 	}
 
-	changes := map[waTypes.JID]whatsmeow.ParticipantChange{}
+	changes := make([]waTypes.JID, 0)
 	for _, jid := range jids {
-		changes[jid] = whatsmeow.ParticipantChangeAdd
+		changes = append(changes, jid)
 	}
 
-	_, err := context.Client().UpdateGroupParticipants(context.ChatJID(), changes)
+	_, err := context.Client().UpdateGroupParticipants(context.ChatJID(), changes, whatsmeow.ParticipantChangeAdd)
 	return err
 }
 
@@ -44,12 +44,12 @@ func (context *Ctx) PromoteMemberInGroup(jids []waTypes.JID) error {
 		return err
 	}
 
-	changes := map[waTypes.JID]whatsmeow.ParticipantChange{}
+	changes := make([]waTypes.JID, 0)
 	for _, jid := range jids {
-		changes[jid] = whatsmeow.ParticipantChangePromote
+		changes = append(changes, jid)
 	}
 
-	_, err := context.Client().UpdateGroupParticipants(context.ChatJID(), changes)
+	_, err := context.Client().UpdateGroupParticipants(context.ChatJID(), changes, whatsmeow.ParticipantChangePromote)
 	return err
 }
 
@@ -59,12 +59,12 @@ func (context *Ctx) DemoteMemberInGroup(jids []waTypes.JID) error {
 		return err
 	}
 
-	changes := map[waTypes.JID]whatsmeow.ParticipantChange{}
+	changes := make([]waTypes.JID, 0)
 	for _, jid := range jids {
-		changes[jid] = whatsmeow.ParticipantChangeDemote
+		changes = append(changes, jid)
 	}
 
-	_, err := context.Client().UpdateGroupParticipants(context.ChatJID(), changes)
+	_, err := context.Client().UpdateGroupParticipants(context.ChatJID(), changes, whatsmeow.ParticipantChangeDemote)
 	return err
 }
 

@@ -117,6 +117,12 @@ func NewContainer(options *options.Options) (*Container, error) {
 		if err != nil {
 			return nil, fmt.Errorf("failed to open database: %w", err)
 		}
+
+		_, err = db.Exec("PRAGMA journal_mode=WAL")
+		if err != nil {
+			return nil, fmt.Errorf("error sqlite: %w", err)
+		}
+
 		sqlite := sqlstore.NewWithDB(db, "sqlite3", waLog.Stdout("Database", "ERROR", true))
 		err = sqlite.Upgrade()
 		if err != nil {

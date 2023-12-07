@@ -22,6 +22,8 @@ func CreateImageThumbnail(data []byte) []byte {
 		return nil
 	}
 
+	reader = nil
+	writer = nil
 	return writer.Bytes()
 }
 
@@ -32,11 +34,9 @@ func CreateVideoThumbnail(data []byte) []byte {
 	err := cmdchain.Builder().
 		Join("ffmpeg", "-y", "-hide_banner", "-loglevel", "panic",
 			"-f", "mp4", "-i", "pipe:0",
-			"-ss", "00:00:00", "-t", "00:00:01",
-			"-vf", "'select=gt(scene\\,0.4)'",
-			"-frames:v", "5",
+			"-filter_complex", "'scale=72:72,select=between(t\\,10\\,20)*eq(pict_type\\,I)'",
+			"-update", "true",
 			"-fps_mode", "vfr",
-			"-vf", "scale=72:72",
 			"-f", "image2pipe",
 			"pipe:1").
 		WithInjections(reader).Finalize().
@@ -45,5 +45,7 @@ func CreateVideoThumbnail(data []byte) []byte {
 		return nil
 	}
 
+	reader = nil
+	writer = nil
 	return writer.Bytes()
 }
