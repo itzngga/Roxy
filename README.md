@@ -29,7 +29,6 @@ import (
 
 	"github.com/itzngga/Roxy"
 	"github.com/itzngga/Roxy/options"
-	_ "github.com/mattn/go-sqlite3"
 
 	"os"
 	"os/signal"
@@ -111,13 +110,49 @@ type Options struct {
 ### PostgresSQL
 #### from env
 ```go
-opt := options.NewDefaultOptions()
-opt.StoreMode = "postgres"
-opt.PostgresDsn = options.NewPostgresDSN().FromEnv()
+package main
 
-app, err := roxy.NewRoxyBase(opt)
-if err != nil {
-    log.Fatal(err)
+import (
+	roxy "github.com/itzngga/Roxy"
+	_ "github.com/itzngga/Roxy/examples/cmd"
+	"github.com/itzngga/Roxy/options"
+	"github.com/joho/godotenv"
+
+	"log"
+
+	"os"
+	"os/signal"
+	"syscall"
+)
+
+func init() {
+	err := godotenv.Load()
+	if err != nil {
+		panic(err)
+	}
+}
+
+func main() {
+	// Required ENV
+	// PG_HOST : postgresql host
+	// PG_PORT : postgresql port
+	// PG_USERNAME : postgresql username
+	// PG_PASSWORD : postgresql password
+	// PG_DATABASE : postgresql database
+
+	opt := options.NewDefaultOptions()
+	opt.StoreMode = "postgres"
+	opt.PostgresDsn = options.NewPostgresDSN().FromEnv()
+
+	app, err := roxy.NewRoxyBase(opt)
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	c := make(chan os.Signal)
+	signal.Notify(c, os.Interrupt, syscall.SIGTERM)
+	<-c
+	app.Shutdown()
 }
 ```
 #### default parser
@@ -129,7 +164,6 @@ import (
 	_ "github.com/itzngga/Roxy/examples/cmd"
 	"github.com/itzngga/Roxy/options"
 
-	_ "github.com/lib/pq"
 	"log"
 
 	"os"
@@ -144,7 +178,6 @@ func main() {
 	pg.SetUsername("postgres")
 	pg.SetPassword("root123")
 	pg.SetDatabase("roxy")
-	pg.SetTimeZone("Asia/Jakarta")
 
 	opt := options.NewDefaultOptions()
 	opt.StoreMode = "postgres"
@@ -171,10 +204,7 @@ import (
 	_ "github.com/itzngga/Roxy/examples/cmd"
 	"github.com/itzngga/Roxy/options"
 
-	_ "github.com/mattn/go-sqlite3"
-
 	"log"
-
 	"os"
 	"os/signal"
 	"syscall"
@@ -194,9 +224,6 @@ func main() {
 }
 
 ```
-
-# Example
-currently available example project in [Lara](https://github.com/itzngga/Lara)
 
 # Add a Command
 create a simple command with:
@@ -265,7 +292,8 @@ var ocr = &roxy.Command{
 	},
 }
 ```
-
+# Example
+currently available example project in [Lara](https://github.com/itzngga/Lara)
 # Documentation
 [DOC](https://github.com/itzngga/Roxy/tree/master/DOC.md)
 # License

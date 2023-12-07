@@ -9,6 +9,8 @@ import (
 	waTypes "github.com/go-whatsapp/whatsmeow/types"
 	waLog "github.com/go-whatsapp/whatsmeow/util/log"
 	"github.com/itzngga/Roxy/options"
+	"github.com/uptrace/bun/driver/pgdriver"
+	"github.com/uptrace/bun/driver/sqliteshim"
 	"sync"
 )
 
@@ -98,12 +100,9 @@ func NewContainer(options *options.Options) (*Container, error) {
 
 		return container, nil
 	} else if container.storeMode == "postgres" {
-		db, err := sql.Open("postgres", options.PostgresDsn.GenerateDSN())
-		if err != nil {
-			return nil, fmt.Errorf("failed to open database: %w", err)
-		}
+		db := sql.OpenDB(pgdriver.NewConnector(pgdriver.WithDSN(options.PostgresDsn.GenerateDSN())))
 		postgresql := sqlstore.NewWithDB(db, "postgres", waLog.Stdout("Database", "ERROR", true))
-		err = postgresql.Upgrade()
+		err := postgresql.Upgrade()
 		if err != nil {
 			return nil, err
 		}
@@ -114,7 +113,7 @@ func NewContainer(options *options.Options) (*Container, error) {
 
 		return container, nil
 	} else if container.storeMode == "sqlite" {
-		db, err := sql.Open("sqlite3", options.SqliteFile)
+		db, err := sql.Open(sqliteshim.ShimName, fmt.Sprintf("file:%s?_foreign_keys=on&cache=shared", options.SqliteFile))
 		if err != nil {
 			return nil, fmt.Errorf("failed to open database: %w", err)
 		}

@@ -18,8 +18,6 @@ import (
 	"github.com/mdp/qrterminal/v3"
 	"os"
 	"time"
-
-	_ "github.com/mattn/go-sqlite3"
 )
 
 type App struct {

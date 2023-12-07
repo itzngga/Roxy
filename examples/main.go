@@ -5,8 +5,6 @@ import (
 	_ "github.com/itzngga/Roxy/examples/cmd"
 	"github.com/itzngga/Roxy/options"
 
-	_ "github.com/mattn/go-sqlite3"
-
 	"log"
 
 	"os"
