@@ -27,9 +27,8 @@ import (
 	_ "github.com/itzngga/Roxy/examples/cmd"
 	"log"
 
-	"github.com/itzngga/Roxy/core"
+	"github.com/itzngga/Roxy"
 	"github.com/itzngga/Roxy/options"
-	_ "github.com/mattn/go-sqlite3"
 
 	"os"
 	"os/signal"
@@ -37,7 +36,7 @@ import (
 )
 
 func main() {
-	app, err := core.NewGoRoxyBase(options.NewDefaultOptions())
+	app, err := roxy.NewRoxyBase(options.NewDefaultOptions())
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -53,57 +52,178 @@ func main() {
 # Config
 #### default
 ```go
-app := core.NewGoRoxyBase(options.NewDefaultOptions())
+app, err := roxy.NewRoxyBase(options.NewDefaultOptions())
+if err != nil {
+    log.Fatal(err)
+}
 ```
 #### custom
 ```go
 type Options struct {
-	// HostNumber will use the first available device when null
-	HostNumber string
-
-	// StoreMode can be "postgres" or "sqlite"
-	StoreMode string
-
-	// LogLevel: "INFO", "ERROR", "WARN", "DEBUG"
-	LogLevel string
-
-	// This PostgresDsn Must add when StoreMode equal to "postgres"
-	PostgresDsn PostgresDSN
-
-	// This SqliteFile Generate "ROXY.DB" when it null
-	SqliteFile string
-
-	WithCommandLog              bool
-	CommandResponseCacheTimeout time.Duration
-	SendMessageTimeout          time.Duration
+    // HostNumber will use the first available device when null
+    HostNumber string
+    
+    // StoreMode can be "postgres" or "sqlite"
+    StoreMode string
+    
+    // LogLevel: "INFO", "ERROR", "WARN", "DEBUG"
+    LogLevel string
+    
+    // This PostgresDsn Must add when StoreMode equal to "postgres"
+    PostgresDsn *PostgresDSN
+    
+    // This SqliteFile Generate "ROXY.DB" when it null
+    SqliteFile string
+    
+    // WithSqlDB wrap with sql.DB interface
+    WithSqlDB *sql.DB
+    
+    WithCommandLog              bool
+    CommandResponseCacheTimeout time.Duration
+    SendMessageTimeout          time.Duration
+    
+    // OSInfo system name in client
+    OSInfo string
+    
+    // LoginOptions constant of ScanQR or PairCode
+    LoginOptions LoginOptions
+    
+    // HistorySync is used to synchronize message history
+    HistorySync bool
+    // AutoRejectCall allow to auto reject incoming calls
+    AutoRejectCall bool
+    
+    // Bot General Settings
+    
+    // AllowFromPrivate allow messages from private
+    AllowFromPrivate bool
+    // AllowFromGroup allow message from groups
+    AllowFromGroup bool
+    // OnlyFromSelf allow only from self messages
+    OnlyFromSelf bool
+    // CommandSuggestion allow command suggestion
+    CommandSuggestion bool
+    // DebugMessage debug incoming message to console
+    DebugMessage bool
 }
 ```
 ### PostgresSQL
+#### from env
 ```go
-opt := options.NewDefaultOptions()
-opt.StoreMode = "postgres"
-opt.PostgresDsn = options.NewPostgresDSN().FromEnv()
+package main
 
-app, err := core.NewGoRoxyBase(opt)
-if err != nil {
-    log.Fatal(err)
+import (
+	roxy "github.com/itzngga/Roxy"
+	_ "github.com/itzngga/Roxy/examples/cmd"
+	"github.com/itzngga/Roxy/options"
+	"github.com/joho/godotenv"
+
+	"log"
+
+	"os"
+	"os/signal"
+	"syscall"
+)
+
+func init() {
+	err := godotenv.Load()
+	if err != nil {
+		panic(err)
+	}
+}
+
+func main() {
+	// Required ENV
+	// PG_HOST : postgresql host
+	// PG_PORT : postgresql port
+	// PG_USERNAME : postgresql username
+	// PG_PASSWORD : postgresql password
+	// PG_DATABASE : postgresql database
+
+	opt := options.NewDefaultOptions()
+	opt.StoreMode = "postgres"
+	opt.PostgresDsn = options.NewPostgresDSN().FromEnv()
+
+	app, err := roxy.NewRoxyBase(opt)
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	c := make(chan os.Signal)
+	signal.Notify(c, os.Interrupt, syscall.SIGTERM)
+	<-c
+	app.Shutdown()
+}
+```
+#### default parser
+```go
+package main
+
+import (
+	roxy "github.com/itzngga/Roxy"
+	_ "github.com/itzngga/Roxy/examples/cmd"
+	"github.com/itzngga/Roxy/options"
+
+	"log"
+
+	"os"
+	"os/signal"
+	"syscall"
+)
+
+func main() {
+	pg := options.NewPostgresDSN()
+	pg.SetHost("localhost")
+	pg.SetPort("4321")
+	pg.SetUsername("postgres")
+	pg.SetPassword("root123")
+	pg.SetDatabase("roxy")
+
+	opt := options.NewDefaultOptions()
+	opt.StoreMode = "postgres"
+	opt.PostgresDsn = pg
+
+	app, err := roxy.NewRoxyBase(opt)
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	c := make(chan os.Signal)
+	signal.Notify(c, os.Interrupt, syscall.SIGTERM)
+	<-c
+	app.Shutdown()
 }
 ```
 
 ### Sqlite
 ```go
-opt := options.NewDefaultOptions()
-opt.StoreMode = "sqlite"
-opt.SqliteFile = "ROXY.DB"
+package main
 
-app, err := core.NewGoRoxyBase(opt)
-if err != nil {
-    log.Fatal(err)
+import (
+	roxy "github.com/itzngga/Roxy"
+	_ "github.com/itzngga/Roxy/examples/cmd"
+	"github.com/itzngga/Roxy/options"
+
+	"log"
+	"os"
+	"os/signal"
+	"syscall"
+)
+
+func main() {
+	opt := options.NewDefaultOptions()
+	app, err := roxy.NewRoxyBase(opt)
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	c := make(chan os.Signal)
+	signal.Notify(c, os.Interrupt, syscall.SIGTERM)
+	<-c
+	app.Shutdown()
 }
-```
 
-# Example
-currently available example project in [Lara](https://github.com/itzngga/Lara)
+```
 
 # Add a Command
 create a simple command with:
@@ -113,26 +233,25 @@ package cmd
 
 import (
 	"fmt"
-	"github.com/itzngga/Roxy/command"
-	"github.com/itzngga/Roxy/embed"
-	waProto "go.mau.fi/whatsmeow/binary/proto"
+	waProto "github.com/go-whatsapp/whatsmeow/binary/proto"
+	"github.com/itzngga/Roxy"
+	"github.com/itzngga/Roxy/context"
 	"time"
 )
 
-var speed = &command.Command{
+func init() {
+	roxy.Commands.Add(speed)
+}
+
+var speed = &roxy.Command{
 	Name:        "speed",
 	Description: "Testing speed",
-	RunFunc: func(ctx *command.RunFuncContext) *waProto.Message {
+	RunFunc: func(ctx *context.Ctx) *waProto.Message {
 		t := time.Now()
 		ctx.SendReplyMessage("wait...")
 		return ctx.GenerateReplyMessage(fmt.Sprintf("Duration: %f seconds", time.Now().Sub(t).Seconds()))
 	},
 }
-
-func init() {
-	embed.Commands.Add(speed)
-}
-
 ```
 
 # Create Question State
@@ -142,24 +261,24 @@ package media
 
 import (
 	"github.com/itzngga/Leficious/src/cmd/constant"
-	"github.com/itzngga/Roxy/command"
-	"github.com/itzngga/Roxy/embed"
+	"github.com/itzngga/Roxy"
+	"github.com/itzngga/Roxy/context"
 	"github.com/itzngga/Roxy/util/cli"
-	waProto "go.mau.fi/whatsmeow/binary/proto"
+	waProto "github.com/go-whatsapp/whatsmeow/binary/proto"
 	"log"
 )
 
 func init() {
-	embed.Commands.Add(ocr)
+	roxy.Commands.Add(ocr)
 }
 
-var ocr = &command.Command{
+var ocr = &roxy.Command{
 	Name:        "ocr",
 	Category:    "media",
 	Description: "Scan text on images",
-	RunFunc: func(ctx *command.RunFuncContext) *waProto.Message {
+	context: func(ctx *context.Ctx) *waProto.Message {
 		var captured *waProto.Message
-		command.NewUserQuestion(ctx).
+		ctx.NewUserQuestion().
 			CaptureMediaQuestion("Please send/reply a media message", &captured).
 			Exec()
 
@@ -173,7 +292,8 @@ var ocr = &command.Command{
 	},
 }
 ```
-
+# Example
+currently available example project in [Lara](https://github.com/itzngga/Lara)
 # Documentation
 [DOC](https://github.com/itzngga/Roxy/tree/master/DOC.md)
 # License

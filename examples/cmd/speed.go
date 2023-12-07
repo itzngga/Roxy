@@ -2,16 +2,16 @@ package cmd
 
 import (
 	"fmt"
-	"github.com/itzngga/Roxy/command"
-	"github.com/itzngga/Roxy/embed"
-	waProto "go.mau.fi/whatsmeow/binary/proto"
+	waProto "github.com/go-whatsapp/whatsmeow/binary/proto"
+	"github.com/itzngga/Roxy"
+	"github.com/itzngga/Roxy/context"
 	"time"
 )
 
-var speed = &command.Command{
+var speed = &roxy.Command{
 	Name:        "speed",
 	Description: "Testing speed",
-	RunFunc: func(ctx *command.RunFuncContext) *waProto.Message {
+	RunFunc: func(ctx *context.Ctx) *waProto.Message {
 		t := time.Now()
 		ctx.SendReplyMessage("wait...")
 		return ctx.GenerateReplyMessage(fmt.Sprintf("Duration: %f seconds", time.Now().Sub(t).Seconds()))
@@ -19,5 +19,5 @@ var speed = &command.Command{
 }
 
 func init() {
-	embed.Commands.Add(speed)
+	roxy.Commands.Add(speed)
 }

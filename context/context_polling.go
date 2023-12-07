@@ -1,9 +1,8 @@
-package command
+package context
 
 import (
-	"github.com/itzngga/Roxy/types"
+	"github.com/go-whatsapp/whatsmeow"
 	"github.com/itzngga/Roxy/util"
-	"go.mau.fi/whatsmeow"
 	"time"
 )
 
@@ -18,15 +17,22 @@ type PollingState struct {
 	PollOptions    []PollingOptions
 	PollSelectable int
 	PollingTimeout *time.Duration
-	RunFuncCtx     *RunFuncContext
+	Ctx            *Ctx
 	PollWithRevoke bool
 	PollingResult  []string
 	ResultChan     chan bool
 }
 
-func NewPollingState(ctx *RunFuncContext) *PollingState {
+func (context *Ctx) NewPollingState() *PollingState {
 	return &PollingState{
-		RunFuncCtx: ctx,
+		Ctx:        context,
+		ResultChan: make(chan bool),
+	}
+}
+
+func NewPollingState(context *Ctx) *PollingState {
+	return &PollingState{
+		Ctx:        context,
 		ResultChan: make(chan bool),
 	}
 }
@@ -72,9 +78,8 @@ func (p *PollingState) sendPollMessage() {
 		options = append(options, option.Options)
 	}
 
-	message := p.RunFuncCtx.Client.BuildPollCreation(p.PollName, options, p.PollSelectable)
-	SendMessage := types.GetContext[types.SendMessage](p.RunFuncCtx.Ctx, "sendMessage")
-	response, _ := SendMessage(p.RunFuncCtx.MessageChat, message)
+	message := p.Ctx.Client().BuildPollCreation(p.PollName, options, p.PollSelectable)
+	response, _ := p.Ctx.Methods().SendMessage(p.Ctx.ChatJID(), message)
 	p.PollId = response.ID
 }
 
@@ -82,10 +87,10 @@ func (p *PollingState) Exec() []string {
 	p.sendPollMessage()
 	if p.PollWithRevoke {
 		defer func() {
-			p.RunFuncCtx.RevokeMessage(p.RunFuncCtx.MessageChat, p.PollId)
+			p.Ctx.RevokeMessage(p.Ctx.ChatJID(), p.PollId)
 		}()
 	}
-	p.RunFuncCtx.PollingChan <- p
+	p.Ctx.pollingChan <- p
 
 	_ = <-p.ResultChan
 	result := util.RemoveDuplicate(p.PollingResult)

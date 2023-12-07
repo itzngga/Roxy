@@ -1,45 +1,45 @@
-package command
+package context
 
 import (
 	"bytes"
+	waProto "github.com/go-whatsapp/whatsmeow/binary/proto"
 	"github.com/itzngga/Roxy/util"
-	waProto "go.mau.fi/whatsmeow/binary/proto"
 	"io"
 	"os"
 )
 
 // Download message with get quoted message
-func (runFunc *RunFuncContext) Download(quoted bool) ([]byte, error) {
+func (context *Ctx) Download(quoted bool) ([]byte, error) {
 	var msg *waProto.Message
 	if quoted {
-		result := util.ParseQuotedMessage(runFunc.Message)
+		result := util.ParseQuotedMessage(context.Message())
 		if result != nil {
 			msg = result
 		} else {
-			msg = runFunc.Message
+			msg = context.Message()
 		}
 	} else {
-		msg = runFunc.Message
+		msg = context.Message()
 	}
 
-	return runFunc.Client.DownloadAny(msg)
+	return context.Client().DownloadAny(msg)
 }
 
 // DownloadToFile download message to file with quoted message
-func (runFunc *RunFuncContext) DownloadToFile(quoted bool, fileName string) (*os.File, error) {
+func (context *Ctx) DownloadToFile(quoted bool, fileName string) (*os.File, error) {
 	var msg *waProto.Message
 	if quoted {
-		result := util.ParseQuotedMessage(runFunc.Message)
+		result := util.ParseQuotedMessage(context.Message())
 		if result != nil {
 			msg = result
 		} else {
-			msg = runFunc.Message
+			msg = context.Message()
 		}
 	} else {
-		msg = runFunc.Message
+		msg = context.Message()
 	}
 
-	data, err := runFunc.Client.DownloadAny(msg)
+	data, err := context.Client().DownloadAny(msg)
 	if err != nil {
 		return nil, err
 	}
@@ -61,7 +61,7 @@ func (runFunc *RunFuncContext) DownloadToFile(quoted bool, fileName string) (*os
 }
 
 // DownloadMessage download with given message
-func (runFunc *RunFuncContext) DownloadMessage(message *waProto.Message, quoted bool) ([]byte, error) {
+func (context *Ctx) DownloadMessage(message *waProto.Message, quoted bool) ([]byte, error) {
 	var msg *waProto.Message
 	if quoted {
 		result := util.ParseQuotedMessage(message)
@@ -74,11 +74,11 @@ func (runFunc *RunFuncContext) DownloadMessage(message *waProto.Message, quoted 
 		msg = message
 	}
 
-	return runFunc.Client.DownloadAny(msg)
+	return context.Client().DownloadAny(msg)
 }
 
 // DownloadMessageToFile download with given message to file
-func (runFunc *RunFuncContext) DownloadMessageToFile(message *waProto.Message, quoted bool, fileName string) (*os.File, error) {
+func (context *Ctx) DownloadMessageToFile(message *waProto.Message, quoted bool, fileName string) (*os.File, error) {
 	var msg *waProto.Message
 	if quoted {
 		result := util.ParseQuotedMessage(message)
@@ -91,7 +91,7 @@ func (runFunc *RunFuncContext) DownloadMessageToFile(message *waProto.Message, q
 		msg = message
 	}
 
-	data, err := runFunc.Client.DownloadAny(msg)
+	data, err := context.Client().DownloadAny(msg)
 	if err != nil {
 		return nil, err
 	}
@@ -113,17 +113,17 @@ func (runFunc *RunFuncContext) DownloadMessageToFile(message *waProto.Message, q
 }
 
 // GetDownloadable get downloadable type
-func (runFunc *RunFuncContext) GetDownloadable(quoted bool) *waProto.Message {
+func (context *Ctx) GetDownloadable(quoted bool) *waProto.Message {
 	var msg *waProto.Message
 	if quoted {
-		result := util.ParseQuotedMessage(runFunc.Message)
+		result := util.ParseQuotedMessage(context.Message())
 		if result != nil {
 			msg = result
 		} else {
-			msg = runFunc.Message
+			msg = context.Message()
 		}
 	} else {
-		msg = runFunc.Message
+		msg = context.Message()
 	}
 
 	switch {
@@ -143,7 +143,7 @@ func (runFunc *RunFuncContext) GetDownloadable(quoted bool) *waProto.Message {
 }
 
 // GetDownloadableMessage get downloadable with given message
-func (runFunc *RunFuncContext) GetDownloadableMessage(message *waProto.Message, quoted bool) *waProto.Message {
+func (context *Ctx) GetDownloadableMessage(message *waProto.Message, quoted bool) *waProto.Message {
 	var msg *waProto.Message
 	if quoted {
 		result := util.ParseQuotedMessage(message)

@@ -1,13 +1,29 @@
-package command
+package roxy
 
 import (
 	"fmt"
-	waProto "go.mau.fi/whatsmeow/binary/proto"
+	"github.com/itzngga/Roxy/context"
+	"github.com/itzngga/Roxy/types"
 	"sort"
 )
 
-type MiddlewareFunc func(c *RunFuncContext) bool
-type RunFunc func(c *RunFuncContext) *waProto.Message
+var Commands types.Embed[*Command]
+var GlobalMiddlewares types.Embed[context.MiddlewareFunc]
+var Middlewares types.Embed[context.MiddlewareFunc]
+var Categories types.Embed[string]
+
+func init() {
+	cmd := types.NewEmbed[*Command]()
+	mid := types.NewEmbed[context.MiddlewareFunc]()
+	cat := types.NewEmbed[string]()
+	gMid := types.NewEmbed[context.MiddlewareFunc]()
+
+	Commands = &cmd
+	Middlewares = &mid
+	Categories = &cat
+	GlobalMiddlewares = &gMid
+}
+
 type Command struct {
 	Name        string
 	Aliases     []string
@@ -24,8 +40,8 @@ type Command struct {
 	OnlyIfBotAdmin   bool
 	AdditionalValues map[string]interface{}
 
-	Middleware MiddlewareFunc
-	RunFunc    RunFunc
+	RunFunc    context.RunFunc
+	Middleware context.MiddlewareFunc
 }
 
 func (c *Command) Validate() {
@@ -34,9 +50,6 @@ func (c *Command) Validate() {
 	}
 	if c.Description == "" {
 		c.Description = fmt.Sprintf("This is %s command description example", c.Name)
-	}
-	if c.RunFunc == nil {
-		panic("error: RunFunc cannot be empty")
 	}
 	if c.PrivateOnly && c.GroupOnly {
 		panic("error: invalid scope group/private?")

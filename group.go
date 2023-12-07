@@ -1,16 +1,16 @@
-package core
+package roxy
 
 import (
 	"fmt"
+	waTypes "github.com/go-whatsapp/whatsmeow/types"
+	"github.com/go-whatsapp/whatsmeow/types/events"
 	"github.com/itzngga/Roxy/util"
-	waTypes "go.mau.fi/whatsmeow/types"
-	"go.mau.fi/whatsmeow/types/events"
 )
 
-func (muxer *Muxer) findGroupByJid(groupJid waTypes.JID) (group *waTypes.GroupInfo, err error) {
+func (muxer *Muxer) FindGroupByJid(groupJid waTypes.JID) (group *waTypes.GroupInfo, err error) {
 	groups, ok := muxer.GroupCache.Load(groupJid.ToNonAD().String())
 	if !ok {
-		var client = muxer.getCurrentClient()
+		var client = muxer.AppMethods.Client()
 		groups, err = client.GetJoinedGroups()
 		if err != nil {
 			return nil, err
@@ -29,33 +29,33 @@ func (muxer *Muxer) findGroupByJid(groupJid waTypes.JID) (group *waTypes.GroupIn
 	return group, nil
 }
 
-func (muxer *Muxer) getAllGroups() (group []*waTypes.GroupInfo, err error) {
-	var client = muxer.getCurrentClient()
-	groups, ok := muxer.GroupCache.Load(muxer.clientJID.ToNonAD().String())
+func (muxer *Muxer) GetAllGroups() (group []*waTypes.GroupInfo, err error) {
+	var client = muxer.AppMethods.Client()
+	groups, ok := muxer.GroupCache.Load(muxer.AppMethods.ClientJID().ToNonAD().String())
 	if !ok {
 		groups, err = client.GetJoinedGroups()
 		if err != nil {
 			return nil, err
 		}
-		muxer.GroupCache.Store(muxer.clientJID.ToNonAD().String(), groups)
+		muxer.GroupCache.Store(muxer.AppMethods.ClientJID().ToNonAD().String(), groups)
 	}
 	return groups, nil
 }
 
-func (muxer *Muxer) cacheAllGroup() {
-	var client = muxer.getCurrentClient()
+func (muxer *Muxer) CacheAllGroup() {
+	var client = muxer.AppMethods.Client()
 
 	groups, err := client.GetJoinedGroups()
 	if err != nil {
 		return
 	}
-	muxer.GroupCache.Store(muxer.clientJID.ToNonAD().String(), groups)
+	muxer.GroupCache.Store(muxer.AppMethods.ClientJID().ToNonAD().String(), groups)
 }
 
-func (muxer *Muxer) unCacheOneGroup(info *events.GroupInfo, joined *events.JoinedGroup) {
+func (muxer *Muxer) UnCacheOneGroup(info *events.GroupInfo, joined *events.JoinedGroup) {
 	var err error
-	var client = muxer.getCurrentClient()
-	clientJID := muxer.clientJID.ToNonAD()
+	var client = muxer.AppMethods.Client()
+	clientJID := muxer.AppMethods.ClientJID().ToNonAD()
 	if info != nil {
 		groups, ok := muxer.GroupCache.Load(clientJID.String())
 		if !ok {
@@ -93,13 +93,13 @@ func (muxer *Muxer) unCacheOneGroup(info *events.GroupInfo, joined *events.Joine
 		}
 	}
 }
-func (muxer *Muxer) isGroupAdmin(chat waTypes.JID, jid any) (bool, error) {
+func (muxer *Muxer) IsGroupAdmin(chat waTypes.JID, jid any) (bool, error) {
 	jids, err := util.ParseUserJid(jid)
 	if err != nil {
 		return false, err
 	}
 
-	group, err := muxer.findGroupByJid(chat)
+	group, err := muxer.FindGroupByJid(chat)
 	if err != nil {
 		return false, err
 	}
@@ -121,19 +121,19 @@ func (muxer *Muxer) isGroupAdmin(chat waTypes.JID, jid any) (bool, error) {
 	return isAdmin, nil
 }
 
-func (muxer *Muxer) isClientGroupAdmin(chat waTypes.JID) (bool, error) {
+func (muxer *Muxer) IsClientGroupAdmin(chat waTypes.JID) (bool, error) {
 	if chat.Server != waTypes.GroupServer {
 		return false, fmt.Errorf("error: chat is not a group")
 	}
 
-	group, err := muxer.findGroupByJid(chat)
+	group, err := muxer.FindGroupByJid(chat)
 	if err != nil {
 		return false, err
 	}
 
 	var isAdmin bool
 	for _, participant := range group.Participants {
-		if participant.JID.ToNonAD() == muxer.clientJID.ToNonAD() {
+		if participant.JID.ToNonAD() == muxer.AppMethods.ClientJID().ToNonAD() {
 			if participant.IsSuperAdmin {
 				isAdmin = true
 				break

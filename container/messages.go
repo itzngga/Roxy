@@ -1,11 +1,13 @@
-package core
+package container
 
 import (
 	"context"
+	"errors"
+	"fmt"
+	waProto "github.com/go-whatsapp/whatsmeow/binary/proto"
+	waTypes "github.com/go-whatsapp/whatsmeow/types"
+	"github.com/go-whatsapp/whatsmeow/types/events"
 	"github.com/itzngga/Roxy/util/compress"
-	waProto "go.mau.fi/whatsmeow/binary/proto"
-	waTypes "go.mau.fi/whatsmeow/types"
-	"go.mau.fi/whatsmeow/types/events"
 	"sort"
 	"strings"
 	"time"
@@ -27,14 +29,25 @@ const SELECT_ALL_CHATS = `SELECT messages FROM whatsmeow_chats WHERE our_jid = $
 const UPDATE_MESSAGES_IN_CHAT = `UPDATE whatsmeow_chats SET messages = $1 WHERE our_jid = $1 AND chat_jid = $2`
 const DELETE_ALL_CHATS = `DELETE FROM whatsmeow_chats WHERE our_jid = $1`
 
-func (app *App) handleHistorySync(evt *waProto.HistorySync) {
-	var currentJID = app.clientJID.String()
+func (container *Container) InitializeTables() {
+	// create chats table
+	ctx, cancel := context.WithTimeout(context.Background(), time.Second*15)
+	defer cancel()
+
+	_, err := container.DB.ExecContext(ctx, CHATS_TABLE)
+	if err != nil {
+		return
+	}
+}
+
+func (container *Container) HandleHistorySync(evt *waProto.HistorySync) {
+	var currentJID = container.clientJID.String()
 	// store status messages
 	if len(evt.StatusV3Messages) >= 1 {
 		var messages = make([]*events.Message, 0)
 		for _, message := range evt.StatusV3Messages {
 			// convert the messages
-			msg, err := app.client.ParseWebMessage(waTypes.StatusBroadcastJID, message)
+			msg, err := container.ParseWebMessage(waTypes.StatusBroadcastJID, message)
 			if err != nil {
 				continue
 			}
@@ -50,10 +63,10 @@ func (app *App) handleHistorySync(evt *waProto.HistorySync) {
 			return
 		}
 
-		_, err = app.sqlDB.Exec(INSERT_CHATS, currentJID, waTypes.StatusBroadcastJID.String(), result)
+		_, err = container.DB.Exec(INSERT_CHATS, currentJID, waTypes.StatusBroadcastJID.String(), result)
 		if err != nil {
 			if strings.Contains(err.Error(), "UNIQUE constraint failed:") {
-				app.upsertMessages(waTypes.StatusBroadcastJID, messages)
+				container.UpsertMessages(waTypes.StatusBroadcastJID, messages)
 			}
 			return
 		}
@@ -73,7 +86,7 @@ func (app *App) handleHistorySync(evt *waProto.HistorySync) {
 			// convert the messages
 			var messages = make([]*events.Message, 0)
 			for _, msg := range conversation.GetMessages() {
-				message, err := app.client.ParseWebMessage(chatJID, msg.Message)
+				message, err := container.ParseWebMessage(chatJID, msg.Message)
 				if err != nil {
 					continue
 				}
@@ -89,10 +102,10 @@ func (app *App) handleHistorySync(evt *waProto.HistorySync) {
 				continue
 			}
 
-			_, err = app.sqlDB.Exec(INSERT_CHATS, currentJID, chatJID.ToNonAD().String(), result)
+			_, err = container.DB.Exec(INSERT_CHATS, currentJID, chatJID.ToNonAD().String(), result)
 			if err != nil {
 				if strings.Contains(err.Error(), "UNIQUE constraint failed:") {
-					app.upsertMessages(chatJID, messages)
+					container.UpsertMessages(chatJID, messages)
 				}
 				return
 			}
@@ -100,15 +113,15 @@ func (app *App) handleHistorySync(evt *waProto.HistorySync) {
 	}
 }
 
-func (app *App) handleMessageUpdates(evt *events.Message) {
+func (container *Container) HandleMessageUpdates(evt *events.Message) {
 	if evt.Message != nil {
-		app.upsertMessages(evt.Info.Chat, []*events.Message{evt})
+		container.UpsertMessages(evt.Info.Chat, []*events.Message{evt})
 		return
 	}
 }
 
-func (app *App) upsertMessages(jid waTypes.JID, message []*events.Message) {
-	chats := app.getChatInJID(jid)
+func (container *Container) UpsertMessages(jid waTypes.JID, message []*events.Message) {
+	chats := container.GetChatInJID(jid)
 	if len(chats) >= 1 {
 		chats = append(chats, message...)
 
@@ -121,7 +134,7 @@ func (app *App) upsertMessages(jid waTypes.JID, message []*events.Message) {
 			return
 		}
 
-		_, err = app.sqlDB.Exec(UPSERT_CHATS, app.clientJID.String(), jid.ToNonAD().String(), result)
+		_, err = container.DB.Exec(UPSERT_CHATS, container.clientJID.String(), jid.ToNonAD().String(), result)
 		if err != nil {
 			return
 		}
@@ -135,19 +148,19 @@ func (app *App) upsertMessages(jid waTypes.JID, message []*events.Message) {
 			return
 		}
 
-		_, err = app.sqlDB.Exec(INSERT_CHATS, app.clientJID.String(), jid.ToNonAD().String(), result)
+		_, err = container.DB.Exec(INSERT_CHATS, container.clientJID.String(), jid.ToNonAD().String(), result)
 		if err != nil {
 			return
 		}
 	}
 }
 
-func (app *App) getAllChats() []*events.Message {
+func (container *Container) GetAllChats() []*events.Message {
 	ctx, cancel := context.WithTimeout(context.Background(), time.Second*15)
 	defer cancel()
 
-	var currentJID = app.clientJID.String()
-	rows, err := app.sqlDB.QueryContext(ctx, SELECT_ALL_CHATS, currentJID)
+	var currentJID = container.clientJID.String()
+	rows, err := container.DB.QueryContext(ctx, SELECT_ALL_CHATS, currentJID)
 	if err != nil {
 		return nil
 	}
@@ -181,12 +194,12 @@ func (app *App) getAllChats() []*events.Message {
 	return model
 }
 
-func (app *App) getChatInJID(jid waTypes.JID) []*events.Message {
+func (container *Container) GetChatInJID(jid waTypes.JID) []*events.Message {
 	ctx, cancel := context.WithTimeout(context.Background(), time.Second*15)
 	defer cancel()
 
 	var rawMessage []byte
-	row := app.sqlDB.QueryRowContext(ctx, SELECT_CHATS_BY_JID, app.clientJID.String(), jid.ToNonAD().String())
+	row := container.DB.QueryRowContext(ctx, SELECT_CHATS_BY_JID, container.clientJID.String(), jid.ToNonAD().String())
 	err := row.Scan(&rawMessage)
 	if err != nil {
 		return nil
@@ -205,12 +218,12 @@ func (app *App) getChatInJID(jid waTypes.JID) []*events.Message {
 	return message
 }
 
-func (app *App) getStatusMessages() []*events.Message {
+func (container *Container) GetStatusMessages() []*events.Message {
 	ctx, cancel := context.WithTimeout(context.Background(), time.Second*15)
 	defer cancel()
 
 	var rawMessage []byte
-	row := app.sqlDB.QueryRowContext(ctx, SELECT_CHATS_BY_JID, app.clientJID.String(), waTypes.StatusBroadcastJID.String())
+	row := container.DB.QueryRowContext(ctx, SELECT_CHATS_BY_JID, container.clientJID.String(), waTypes.StatusBroadcastJID.String())
 	err := row.Scan(&rawMessage)
 	if err != nil {
 		return nil
@@ -229,12 +242,12 @@ func (app *App) getStatusMessages() []*events.Message {
 	return message
 }
 
-func (app *App) findMessageByID(jid waTypes.JID, id string) *events.Message {
+func (container *Container) FindMessageByID(jid waTypes.JID, id string) *events.Message {
 	ctx, cancel := context.WithTimeout(context.Background(), time.Second*15)
 	defer cancel()
 
 	var rawMessage []byte
-	row := app.sqlDB.QueryRowContext(ctx, SELECT_CHATS_BY_JID, app.clientJID.String(), jid.ToNonAD().String())
+	row := container.DB.QueryRowContext(ctx, SELECT_CHATS_BY_JID, container.clientJID.String(), jid.ToNonAD().String())
 	err := row.Scan(&rawMessage)
 	if err != nil {
 		return nil
@@ -260,13 +273,46 @@ func (app *App) findMessageByID(jid waTypes.JID, id string) *events.Message {
 	return nil
 }
 
-func (app *App) initializeTables() {
-	// create chats table
-	ctx, cancel := context.WithTimeout(context.Background(), time.Second*15)
-	defer cancel()
-
-	_, err := app.sqlDB.ExecContext(ctx, CHATS_TABLE)
-	if err != nil {
-		return
+func (container *Container) ParseWebMessage(chatJID waTypes.JID, webMsg *waProto.WebMessageInfo) (*events.Message, error) {
+	var err error
+	if chatJID.IsEmpty() {
+		chatJID, err = waTypes.ParseJID(webMsg.GetKey().GetRemoteJid())
+		if err != nil {
+			return nil, fmt.Errorf("no chat JID provided and failed to parse remote JID: %w", err)
+		}
 	}
+	info := waTypes.MessageInfo{
+		MessageSource: waTypes.MessageSource{
+			Chat:     chatJID,
+			IsFromMe: webMsg.GetKey().GetFromMe(),
+			IsGroup:  chatJID.Server == waTypes.GroupServer,
+		},
+		ID:        webMsg.GetKey().GetId(),
+		PushName:  webMsg.GetPushName(),
+		Timestamp: time.Unix(int64(webMsg.GetMessageTimestamp()), 0),
+	}
+	if info.IsFromMe {
+		info.Sender = container.clientJID.ToNonAD()
+		if info.Sender.IsEmpty() {
+			return nil, errors.New("the store doesn't contain a device JID")
+		}
+	} else if chatJID.Server == waTypes.DefaultUserServer || chatJID.Server == waTypes.NewsletterServer {
+		info.Sender = chatJID
+	} else if webMsg.GetParticipant() != "" {
+		info.Sender, err = waTypes.ParseJID(webMsg.GetParticipant())
+	} else if webMsg.GetKey().GetParticipant() != "" {
+		info.Sender, err = waTypes.ParseJID(webMsg.GetKey().GetParticipant())
+	} else {
+		return nil, fmt.Errorf("couldn't find sender of message %s", info.ID)
+	}
+	if err != nil {
+		return nil, fmt.Errorf("failed to parse sender of message %s: %v", info.ID, err)
+	}
+	evt := &events.Message{
+		RawMessage:   webMsg.GetMessage(),
+		SourceWebMsg: webMsg,
+		Info:         info,
+	}
+	evt.UnwrapRaw()
+	return evt, nil
 }

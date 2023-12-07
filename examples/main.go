@@ -1,10 +1,10 @@
 package main
 
 import (
-	"github.com/itzngga/Roxy/core"
+	roxy "github.com/itzngga/Roxy"
 	_ "github.com/itzngga/Roxy/examples/cmd"
 	"github.com/itzngga/Roxy/options"
-	_ "github.com/mattn/go-sqlite3"
+
 	"log"
 
 	"os"
@@ -14,7 +14,7 @@ import (
 
 func main() {
 	opt := options.NewDefaultOptions()
-	app, err := core.NewGoRoxyBase(opt)
+	app, err := roxy.NewRoxyBase(opt)
 	if err != nil {
 		log.Fatal(err)
 	}
