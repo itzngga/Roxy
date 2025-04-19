@@ -2,8 +2,8 @@ package context
 
 import (
 	"bytes"
-	waProto "github.com/go-whatsapp/whatsmeow/binary/proto"
 	"github.com/itzngga/Roxy/util"
+	waProto "go.mau.fi/whatsmeow/binary/proto"
 	"io"
 	"os"
 )

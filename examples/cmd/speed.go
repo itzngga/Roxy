@@ -2,9 +2,9 @@ package cmd
 
 import (
 	"fmt"
-	waProto "github.com/go-whatsapp/whatsmeow/binary/proto"
 	"github.com/itzngga/Roxy"
 	"github.com/itzngga/Roxy/context"
+	waProto "go.mau.fi/whatsmeow/binary/proto"
 	"time"
 )
 

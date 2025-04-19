@@ -4,13 +4,13 @@ import (
 	"database/sql"
 	"errors"
 	"fmt"
-	"github.com/go-whatsapp/whatsmeow/store"
-	"github.com/go-whatsapp/whatsmeow/store/sqlstore"
-	waTypes "github.com/go-whatsapp/whatsmeow/types"
-	waLog "github.com/go-whatsapp/whatsmeow/util/log"
 	"github.com/itzngga/Roxy/options"
 	"github.com/uptrace/bun/driver/pgdriver"
 	"github.com/uptrace/bun/driver/sqliteshim"
+	"go.mau.fi/whatsmeow/store"
+	"go.mau.fi/whatsmeow/store/sqlstore"
+	waTypes "go.mau.fi/whatsmeow/types"
+	waLog "go.mau.fi/whatsmeow/util/log"
 	"sync"
 )
 
@@ -55,7 +55,7 @@ func (container *Container) AcquireDevice(hostNumber string) (*store.Device, err
 			container.NewDevice = true
 			device = container.storeContainer.NewDevice()
 		} else {
-			container.clientJID = *device.JID
+			container.clientJID = *device.ID
 		}
 
 		return device, err
@@ -67,7 +67,7 @@ func (container *Container) AcquireDevice(hostNumber string) (*store.Device, err
 
 		var device *store.Device
 		for _, containerDevice := range devices {
-			if containerDevice.JID.ToNonAD().User == hostNumber {
+			if containerDevice.ID.ToNonAD().User == hostNumber {
 				device = containerDevice
 				break
 			}
@@ -77,7 +77,7 @@ func (container *Container) AcquireDevice(hostNumber string) (*store.Device, err
 			container.NewDevice = true
 			device = container.storeContainer.NewDevice()
 		} else {
-			container.clientJID = *device.JID
+			container.clientJID = *device.ID
 		}
 
 		return device, nil
@@ -118,7 +118,7 @@ func NewContainer(options *options.Options) (*Container, error) {
 			return nil, fmt.Errorf("failed to open database: %w", err)
 		}
 
-		_, err = db.Exec("PRAGMA journal_mode=WAL")
+		_, err = db.Exec("PRAGMA journal_mode=WAL;PRAGMA foreign_keys = ON;")
 		if err != nil {
 			return nil, fmt.Errorf("error sqlite: %w", err)
 		}

@@ -3,7 +3,7 @@ package options
 import (
 	"database/sql"
 	"errors"
-	waTypes "github.com/go-whatsapp/whatsmeow/types"
+	waTypes "go.mau.fi/whatsmeow/types"
 	"time"
 )
 

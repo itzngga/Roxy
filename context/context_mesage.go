@@ -3,9 +3,9 @@ package context
 import (
 	"fmt"
 	"github.com/gabriel-vasile/mimetype"
-	waProto "github.com/go-whatsapp/whatsmeow/binary/proto"
-	waTypes "github.com/go-whatsapp/whatsmeow/types"
 	"github.com/itzngga/Roxy/util"
+	waProto "go.mau.fi/whatsmeow/binary/proto"
+	waTypes "go.mau.fi/whatsmeow/types"
 	"google.golang.org/protobuf/proto"
 	"strings"
 )
@@ -352,9 +352,9 @@ func (context *Ctx) SendMessage(obj any) {
 // EditMessageText edit current text message to given text
 func (context *Ctx) EditMessageText(to string) error {
 	msgKey := &waProto.MessageKey{
-		RemoteJid: proto.String(context.ChatJID().String()),
+		RemoteJID: proto.String(context.ChatJID().String()),
 		FromMe:    proto.Bool(true),
-		Id:        proto.String(context.MessageInfo().ID),
+		ID:        proto.String(context.MessageInfo().ID),
 	}
 	if context.Message().GetExtendedTextMessage() != nil {
 		context.Message().ExtendedTextMessage.Text = proto.String(to)

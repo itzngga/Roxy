@@ -4,10 +4,10 @@ import (
 	"bufio"
 	"errors"
 	"github.com/gabriel-vasile/mimetype"
-	"github.com/go-whatsapp/whatsmeow"
-	waProto "github.com/go-whatsapp/whatsmeow/binary/proto"
 	"github.com/itzngga/Roxy/util"
 	"github.com/itzngga/Roxy/util/thumbnail"
+	"go.mau.fi/whatsmeow"
+	waProto "go.mau.fi/whatsmeow/binary/proto"
 	"google.golang.org/protobuf/proto"
 	"os"
 
@@ -103,15 +103,15 @@ func (context *Ctx) UploadImageMessageFromPath(path, caption string) (*waProto.I
 		Mimetype: proto.String(mimetypeString.String()),
 
 		ThumbnailDirectPath: &thumbnail.DirectPath,
-		ThumbnailSha256:     thumbnail.FileSHA256,
-		ThumbnailEncSha256:  thumbnail.FileEncSHA256,
-		JpegThumbnail:       thumbnailByte,
+		ThumbnailSHA256:     thumbnail.FileSHA256,
+		ThumbnailEncSHA256:  thumbnail.FileEncSHA256,
+		JPEGThumbnail:       thumbnailByte,
 
-		Url:           &resp.URL,
+		URL:           &resp.URL,
 		DirectPath:    &resp.DirectPath,
 		MediaKey:      resp.MediaKey,
-		FileEncSha256: resp.FileEncSHA256,
-		FileSha256:    resp.FileSHA256,
+		FileEncSHA256: resp.FileEncSHA256,
+		FileSHA256:    resp.FileSHA256,
 		FileLength:    &resp.FileLength,
 	}, nil
 }
@@ -144,15 +144,15 @@ func (context *Ctx) UploadImageMessageFromBytes(bytes []byte, caption string) (*
 		Mimetype: proto.String(mimetypeString.String()),
 
 		ThumbnailDirectPath: &thumbnail.DirectPath,
-		ThumbnailSha256:     thumbnail.FileSHA256,
-		ThumbnailEncSha256:  thumbnail.FileEncSHA256,
-		JpegThumbnail:       thumbnailByte,
+		ThumbnailSHA256:     thumbnail.FileSHA256,
+		ThumbnailEncSHA256:  thumbnail.FileEncSHA256,
+		JPEGThumbnail:       thumbnailByte,
 
-		Url:           &resp.URL,
+		URL:           &resp.URL,
 		DirectPath:    &resp.DirectPath,
 		MediaKey:      resp.MediaKey,
-		FileEncSha256: resp.FileEncSHA256,
-		FileSha256:    resp.FileSHA256,
+		FileEncSHA256: resp.FileEncSHA256,
+		FileSHA256:    resp.FileSHA256,
 		FileLength:    &resp.FileLength,
 	}, nil
 }
@@ -195,15 +195,15 @@ func (context *Ctx) UploadVideoMessageFromPath(path, caption string) (*waProto.V
 		Mimetype: proto.String(mimetypeString.String()),
 
 		ThumbnailDirectPath: &thumbnail.DirectPath,
-		ThumbnailSha256:     thumbnail.FileSHA256,
-		ThumbnailEncSha256:  thumbnail.FileEncSHA256,
-		JpegThumbnail:       thumbnailByte,
+		ThumbnailSHA256:     thumbnail.FileSHA256,
+		ThumbnailEncSHA256:  thumbnail.FileEncSHA256,
+		JPEGThumbnail:       thumbnailByte,
 
-		Url:           &resp.URL,
+		URL:           &resp.URL,
 		DirectPath:    &resp.DirectPath,
 		MediaKey:      resp.MediaKey,
-		FileEncSha256: resp.FileEncSHA256,
-		FileSha256:    resp.FileSHA256,
+		FileEncSHA256: resp.FileEncSHA256,
+		FileSHA256:    resp.FileSHA256,
 		FileLength:    &resp.FileLength,
 	}, nil
 }
@@ -236,15 +236,15 @@ func (context *Ctx) UploadVideoMessageFromBytes(bytes []byte, caption string) (*
 		Mimetype: proto.String(mimetypeString.String()),
 
 		ThumbnailDirectPath: &thumbnail.DirectPath,
-		ThumbnailSha256:     thumbnail.FileSHA256,
-		ThumbnailEncSha256:  thumbnail.FileEncSHA256,
-		JpegThumbnail:       thumbnailByte,
+		ThumbnailSHA256:     thumbnail.FileSHA256,
+		ThumbnailEncSHA256:  thumbnail.FileEncSHA256,
+		JPEGThumbnail:       thumbnailByte,
 
-		Url:           &resp.URL,
+		URL:           &resp.URL,
 		DirectPath:    &resp.DirectPath,
 		MediaKey:      resp.MediaKey,
-		FileEncSha256: resp.FileEncSHA256,
-		FileSha256:    resp.FileSHA256,
+		FileEncSHA256: resp.FileEncSHA256,
+		FileSHA256:    resp.FileSHA256,
 		FileLength:    &resp.FileLength,
 	}, nil
 }
@@ -273,11 +273,11 @@ func (context *Ctx) UploadStickerMessageFromPath(path string) (*waProto.StickerM
 	return &waProto.StickerMessage{
 		Mimetype: proto.String("image/webp"),
 
-		Url:           &resp.URL,
+		URL:           &resp.URL,
 		DirectPath:    &resp.DirectPath,
 		MediaKey:      resp.MediaKey,
-		FileEncSha256: resp.FileEncSHA256,
-		FileSha256:    resp.FileSHA256,
+		FileEncSHA256: resp.FileEncSHA256,
+		FileSHA256:    resp.FileSHA256,
 		FileLength:    &resp.FileLength,
 	}, nil
 }
@@ -298,11 +298,11 @@ func (context *Ctx) UploadStickerMessageFromBytes(bytes []byte) (*waProto.Sticke
 
 		Mimetype: proto.String("image/webp"),
 
-		Url:           &resp.URL,
+		URL:           &resp.URL,
 		DirectPath:    &resp.DirectPath,
 		MediaKey:      resp.MediaKey,
-		FileEncSha256: resp.FileEncSHA256,
-		FileSha256:    resp.FileSHA256,
+		FileEncSHA256: resp.FileEncSHA256,
+		FileSHA256:    resp.FileSHA256,
 		FileLength:    &resp.FileLength,
 	}, nil
 }
@@ -334,11 +334,11 @@ func (context *Ctx) UploadDocumentMessageFromPath(path, title string) (*waProto.
 		FileName: proto.String(documentInfo.Name()),
 		Mimetype: proto.String(mimetypeString.String()),
 
-		Url:           &resp.URL,
+		URL:           &resp.URL,
 		DirectPath:    &resp.DirectPath,
 		MediaKey:      resp.MediaKey,
-		FileEncSha256: resp.FileEncSHA256,
-		FileSha256:    resp.FileSHA256,
+		FileEncSHA256: resp.FileEncSHA256,
+		FileSHA256:    resp.FileSHA256,
 		FileLength:    &resp.FileLength,
 	}, nil
 }
@@ -362,11 +362,11 @@ func (context *Ctx) UploadDocumentMessageFromBytes(bytes []byte, title, filename
 		FileName: proto.String(filename),
 		Mimetype: proto.String(mimetypeString.String()),
 
-		Url:           &resp.URL,
+		URL:           &resp.URL,
 		DirectPath:    &resp.DirectPath,
 		MediaKey:      resp.MediaKey,
-		FileEncSha256: resp.FileEncSHA256,
-		FileSha256:    resp.FileSHA256,
+		FileEncSHA256: resp.FileEncSHA256,
+		FileSHA256:    resp.FileSHA256,
 		FileLength:    &resp.FileLength,
 	}, nil
 }
@@ -397,11 +397,11 @@ func (context *Ctx) UploadAudioMessageFromPath(path string) (*waProto.AudioMessa
 	return &waProto.AudioMessage{
 		Mimetype: proto.String(mimetypeString.String()),
 
-		Url:           &resp.URL,
+		URL:           &resp.URL,
 		DirectPath:    &resp.DirectPath,
 		MediaKey:      resp.MediaKey,
-		FileEncSha256: resp.FileEncSHA256,
-		FileSha256:    resp.FileSHA256,
+		FileEncSHA256: resp.FileEncSHA256,
+		FileSHA256:    resp.FileSHA256,
 		FileLength:    &resp.FileLength,
 	}, nil
 }
@@ -422,11 +422,11 @@ func (context *Ctx) UploadAudioMessageFromBytes(bytes []byte) (*waProto.AudioMes
 	return &waProto.AudioMessage{
 		Mimetype: proto.String(mimetypeString.String()),
 
-		Url:           &resp.URL,
+		URL:           &resp.URL,
 		DirectPath:    &resp.DirectPath,
 		MediaKey:      resp.MediaKey,
-		FileEncSha256: resp.FileEncSHA256,
-		FileSha256:    resp.FileSHA256,
+		FileEncSHA256: resp.FileEncSHA256,
+		FileSHA256:    resp.FileSHA256,
 		FileLength:    &resp.FileLength,
 	}, nil
 }

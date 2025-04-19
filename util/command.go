@@ -1,8 +1,8 @@
 package util
 
 import (
-	waProto "github.com/go-whatsapp/whatsmeow/binary/proto"
-	"github.com/go-whatsapp/whatsmeow/types/events"
+	waProto "go.mau.fi/whatsmeow/binary/proto"
+	"go.mau.fi/whatsmeow/types/events"
 	"regexp"
 	"strings"
 )

@@ -1,10 +1,10 @@
 package roxy
 
 import (
-	waProto "github.com/go-whatsapp/whatsmeow/binary/proto"
-	"github.com/go-whatsapp/whatsmeow/types/events"
 	"github.com/itzngga/Roxy/util"
 	"github.com/sajari/fuzzy"
+	waProto "go.mau.fi/whatsmeow/proto/waE2E"
+	"go.mau.fi/whatsmeow/types/events"
 	"google.golang.org/protobuf/proto"
 	"strings"
 )

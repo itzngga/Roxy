@@ -2,9 +2,9 @@ package roxy
 
 import (
 	"fmt"
-	waTypes "github.com/go-whatsapp/whatsmeow/types"
-	"github.com/go-whatsapp/whatsmeow/types/events"
 	"github.com/itzngga/Roxy/util"
+	waTypes "go.mau.fi/whatsmeow/types"
+	"go.mau.fi/whatsmeow/types/events"
 )
 
 func (muxer *Muxer) FindGroupByJid(groupJid waTypes.JID) (group *waTypes.GroupInfo, err error) {

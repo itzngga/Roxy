@@ -2,11 +2,9 @@ package roxy
 
 import (
 	"bytes"
-	"github.com/go-whatsapp/whatsmeow"
-	waProto "github.com/go-whatsapp/whatsmeow/binary/proto"
-	waTypes "github.com/go-whatsapp/whatsmeow/types"
-	"github.com/go-whatsapp/whatsmeow/types/events"
-	waLog "github.com/go-whatsapp/whatsmeow/util/log"
+	"strings"
+	"time"
+
 	"github.com/google/uuid"
 	"github.com/itzngga/Roxy/context"
 	"github.com/itzngga/Roxy/options"
@@ -14,9 +12,13 @@ import (
 	"github.com/itzngga/Roxy/util"
 	"github.com/puzpuzpuz/xsync"
 	"github.com/sajari/fuzzy"
+	"go.mau.fi/whatsmeow"
+	"go.mau.fi/whatsmeow/proto/waCommon"
+	waProto "go.mau.fi/whatsmeow/proto/waE2E"
+	waTypes "go.mau.fi/whatsmeow/types"
+	"go.mau.fi/whatsmeow/types/events"
+	waLog "go.mau.fi/whatsmeow/util/log"
 	"google.golang.org/protobuf/proto"
-	"strings"
-	"time"
 )
 
 type Muxer struct {
@@ -254,11 +256,11 @@ func (muxer *Muxer) globalMiddlewareProcessing(c *whatsmeow.Client, evt *events.
 }
 
 func (muxer *Muxer) handlePollingState(c *whatsmeow.Client, evt *events.Message) {
-	if evt.Message.PollUpdateMessage.PollCreationMessageKey == nil && evt.Message.PollUpdateMessage.PollCreationMessageKey.Id == nil {
+	if evt.Message.PollUpdateMessage.PollCreationMessageKey == nil && evt.Message.PollUpdateMessage.PollCreationMessageKey.ID == nil {
 		return
 	}
 
-	pollingState, ok := muxer.PollingState.Load(*evt.Message.PollUpdateMessage.PollCreationMessageKey.Id)
+	pollingState, ok := muxer.PollingState.Load(*evt.Message.PollUpdateMessage.PollCreationMessageKey.ID)
 	if ok {
 		pollMessage, err := c.DecryptPollVote(evt)
 		if err != nil {
@@ -456,10 +458,10 @@ func (muxer *Muxer) SendEmojiMessage(event *events.Message, emoji string) {
 	id := event.Info.ID
 	chat := event.Info.Chat
 	sender := event.Info.Sender
-	key := &waProto.MessageKey{
+	key := &waCommon.MessageKey{
 		FromMe:    proto.Bool(true),
-		Id:        proto.String(id),
-		RemoteJid: proto.String(chat.String()),
+		ID:        proto.String(id),
+		RemoteJID: proto.String(chat.String()),
 	}
 
 	if !sender.IsEmpty() && sender.User != muxer.AppMethods.ClientJID().ToNonAD().String() {
@@ -471,7 +473,7 @@ func (muxer *Muxer) SendEmojiMessage(event *events.Message, emoji string) {
 		ReactionMessage: &waProto.ReactionMessage{
 			Key:               key,
 			Text:              proto.String(emoji),
-			SenderTimestampMs: proto.Int64(time.Now().UnixMilli()),
+			SenderTimestampMS: proto.Int64(time.Now().UnixMilli()),
 		},
 	}
 
