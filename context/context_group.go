@@ -2,8 +2,8 @@ package context
 
 import (
 	"fmt"
-	waTypes "github.com/go-whatsapp/whatsmeow/types"
 	"github.com/itzngga/Roxy/util"
+	waTypes "go.mau.fi/whatsmeow/types"
 )
 
 // FindGroupByJid find group by jid from cache

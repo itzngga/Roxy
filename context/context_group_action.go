@@ -2,8 +2,8 @@ package context
 
 import (
 	"fmt"
-	"github.com/go-whatsapp/whatsmeow"
-	waTypes "github.com/go-whatsapp/whatsmeow/types"
+	"go.mau.fi/whatsmeow"
+	waTypes "go.mau.fi/whatsmeow/types"
 )
 
 // WARN: UNSAFE COMMANDS! use it wisely

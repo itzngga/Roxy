@@ -4,20 +4,22 @@ import (
 	contextCtx "context"
 	"errors"
 	"fmt"
-	"github.com/go-whatsapp/whatsmeow"
-	waBinary "github.com/go-whatsapp/whatsmeow/binary"
-	waProto "github.com/go-whatsapp/whatsmeow/binary/proto"
-	"github.com/go-whatsapp/whatsmeow/store"
-	waTypes "github.com/go-whatsapp/whatsmeow/types"
-	"github.com/go-whatsapp/whatsmeow/types/events"
-	waLog "github.com/go-whatsapp/whatsmeow/util/log"
+	"os"
+	"time"
+
 	"github.com/goccy/go-json"
 	"github.com/itzngga/Roxy/container"
 	"github.com/itzngga/Roxy/context"
 	"github.com/itzngga/Roxy/options"
 	"github.com/mdp/qrterminal/v3"
-	"os"
-	"time"
+	"go.mau.fi/whatsmeow"
+	waBinary "go.mau.fi/whatsmeow/binary"
+	"go.mau.fi/whatsmeow/proto/waCompanionReg"
+	waProto "go.mau.fi/whatsmeow/proto/waE2E"
+	"go.mau.fi/whatsmeow/store"
+	waTypes "go.mau.fi/whatsmeow/types"
+	"go.mau.fi/whatsmeow/types/events"
+	waLog "go.mau.fi/whatsmeow/util/log"
 )
 
 type App struct {
@@ -72,7 +74,7 @@ func (app *App) InitializeClient() error {
 
 	waBinary.IndentXML = true
 	store.SetOSInfo(app.options.OSInfo, store.GetWAVersion())
-	store.DeviceProps.PlatformType = waProto.DeviceProps_DESKTOP.Enum()
+	store.DeviceProps.PlatformType = waCompanionReg.DeviceProps_DESKTOP.Enum()
 
 	app.client = whatsmeow.NewClient(app.device, waLog.Stdout("WhatsMeow", "ERROR", true))
 	app.client.EnableAutoReconnect = true
@@ -80,9 +82,14 @@ func (app *App) InitializeClient() error {
 	//app.client.AutomaticMessageRerequestFromPhone = true
 	app.client.AddEventHandler(app.HandleEvents)
 
-	if !app.container.NewDevice {
-		err = app.client.Connect()
+	// NOTE: Client shoud be connected into websocket before run any task
+	if err := app.client.Connect(); err != nil {
 		return err
+	}
+
+	// NOTE: Skip login if already connected
+	if !app.container.NewDevice {
+		return nil
 	}
 
 	if app.options.LoginOptions == options.SCAN_QR {
@@ -116,12 +123,6 @@ func (app *App) InitializeClient() error {
 		}
 
 		app.log.Infof("PairCode: %s", pairCode)
-
-		for res := range app.pairCodeChan {
-			if res {
-				break
-			}
-		}
 	}
 
 	return nil
@@ -149,7 +150,7 @@ func (app *App) HandleEvents(event interface{}) {
 			app.pairCodeChan <- true
 		}
 		app.log.Infof("Connected!")
-		app.clientJID = *app.client.Store.JID
+		app.clientJID = *app.client.Store.ID
 		app.container.SetClientJID(app.clientJID)
 		_ = app.client.SendPresence(waTypes.PresenceAvailable)
 		//app.muxer.CacheAllGroup()

@@ -3,9 +3,9 @@ package context
 import (
 	"errors"
 	"fmt"
-	"github.com/go-whatsapp/whatsmeow"
-	waTypes "github.com/go-whatsapp/whatsmeow/types"
 	"github.com/itzngga/Roxy/util"
+	"go.mau.fi/whatsmeow"
+	waTypes "go.mau.fi/whatsmeow/types"
 	"strings"
 )
 

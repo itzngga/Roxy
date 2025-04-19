@@ -1,8 +1,8 @@
 package context
 
 import (
-	waProto "github.com/go-whatsapp/whatsmeow/binary/proto"
 	"github.com/itzngga/Roxy/util"
+	waProto "go.mau.fi/whatsmeow/binary/proto"
 )
 
 // UploadMediaFromUrl upload media detected from mimetype

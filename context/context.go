@@ -1,14 +1,14 @@
 package context
 
 import (
-	"github.com/go-whatsapp/whatsmeow"
-	waProto "github.com/go-whatsapp/whatsmeow/binary/proto"
-	waTypes "github.com/go-whatsapp/whatsmeow/types"
-	"github.com/go-whatsapp/whatsmeow/types/events"
-	waLog "github.com/go-whatsapp/whatsmeow/util/log"
 	"github.com/itzngga/Roxy/options"
 	"github.com/itzngga/Roxy/types"
 	"github.com/puzpuzpuz/xsync"
+	"go.mau.fi/whatsmeow"
+	waProto "go.mau.fi/whatsmeow/binary/proto"
+	waTypes "go.mau.fi/whatsmeow/types"
+	"go.mau.fi/whatsmeow/types/events"
+	waLog "go.mau.fi/whatsmeow/util/log"
 	"strings"
 	"sync"
 	"time"

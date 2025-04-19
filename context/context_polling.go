@@ -1,8 +1,8 @@
 package context
 
 import (
-	"github.com/go-whatsapp/whatsmeow"
 	"github.com/itzngga/Roxy/util"
+	"go.mau.fi/whatsmeow"
 	"time"
 )
 

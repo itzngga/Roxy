@@ -1,7 +1,7 @@
 package context
 
 import (
-	waTypes "github.com/go-whatsapp/whatsmeow/types"
+	waTypes "go.mau.fi/whatsmeow/types"
 	"time"
 )
 
