@@ -3,7 +3,7 @@ package roxy
 import (
 	"github.com/itzngga/Roxy/util"
 	"github.com/sajari/fuzzy"
-	waProto "go.mau.fi/whatsmeow/binary/proto"
+	waProto "go.mau.fi/whatsmeow/proto/waE2E"
 	"go.mau.fi/whatsmeow/types/events"
 	"google.golang.org/protobuf/proto"
 	"strings"

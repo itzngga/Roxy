@@ -2,6 +2,9 @@ package roxy
 
 import (
 	"bytes"
+	"strings"
+	"time"
+
 	"github.com/google/uuid"
 	"github.com/itzngga/Roxy/context"
 	"github.com/itzngga/Roxy/options"
@@ -10,13 +13,12 @@ import (
 	"github.com/puzpuzpuz/xsync"
 	"github.com/sajari/fuzzy"
 	"go.mau.fi/whatsmeow"
-	waProto "go.mau.fi/whatsmeow/binary/proto"
+	"go.mau.fi/whatsmeow/proto/waCommon"
+	waProto "go.mau.fi/whatsmeow/proto/waE2E"
 	waTypes "go.mau.fi/whatsmeow/types"
 	"go.mau.fi/whatsmeow/types/events"
 	waLog "go.mau.fi/whatsmeow/util/log"
 	"google.golang.org/protobuf/proto"
-	"strings"
-	"time"
 )
 
 type Muxer struct {
@@ -456,7 +458,7 @@ func (muxer *Muxer) SendEmojiMessage(event *events.Message, emoji string) {
 	id := event.Info.ID
 	chat := event.Info.Chat
 	sender := event.Info.Sender
-	key := &waProto.MessageKey{
+	key := &waCommon.MessageKey{
 		FromMe:    proto.Bool(true),
 		ID:        proto.String(id),
 		RemoteJID: proto.String(chat.String()),
