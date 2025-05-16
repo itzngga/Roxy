@@ -9,6 +9,15 @@ import (
 	"strings"
 )
 
+func Or[T comparable](A, B T) T {
+	var C T
+	if A != C {
+		return A
+	} else {
+		return B
+	}
+}
+
 func RemoveDuplicate[T string | int](sliceList []T) []T {
 	allKeys := make(map[T]bool)
 	list := []T{}

@@ -11,6 +11,7 @@ import (
 	"github.com/itzngga/Roxy/container"
 	"github.com/itzngga/Roxy/context"
 	"github.com/itzngga/Roxy/options"
+	"github.com/itzngga/Roxy/util"
 	"github.com/mdp/qrterminal/v3"
 	"go.mau.fi/whatsmeow"
 	waBinary "go.mau.fi/whatsmeow/binary"
@@ -27,12 +28,11 @@ type App struct {
 	options   *options.Options
 	container *container.Container
 
-	muxer        *Muxer
-	startTime    time.Time
-	device       *store.Device
-	client       *whatsmeow.Client
-	clientJID    waTypes.JID
-	pairCodeChan chan bool
+	muxer     *Muxer
+	startTime time.Time
+	device    *store.Device
+	client    *whatsmeow.Client
+	clientJID waTypes.JID
 }
 
 func NewRoxyBase(options *options.Options) (*App, error) {
@@ -42,9 +42,8 @@ func NewRoxyBase(options *options.Options) (*App, error) {
 	}
 	stdLog := waLog.Stdout("WaBOT", options.LogLevel, true)
 	app := &App{
-		log:          stdLog,
-		options:      options,
-		pairCodeChan: make(chan bool),
+		log:     stdLog,
+		options: options,
 	}
 	err = app.InitializeClient()
 	if err != nil {
@@ -88,7 +87,7 @@ func (app *App) InitializeClient() error {
 	}
 
 	// NOTE: Skip login if already connected
-	if !app.container.NewDevice {
+	if app.client.Store.ID != nil {
 		return nil
 	}
 
@@ -128,7 +127,7 @@ func (app *App) InitializeClient() error {
 	return nil
 }
 
-func (app *App) HandleEvents(event interface{}) {
+func (app *App) HandleEvents(event any) {
 	switch v := event.(type) {
 	case *events.LoggedOut:
 		app.log.Warnf("%s client logged out", app.clientJID)
@@ -143,16 +142,11 @@ func (app *App) HandleEvents(event interface{}) {
 		app.clientJID = v.ID
 	case *events.Connected:
 		app.startTime = time.Now()
-		if len(app.client.Store.PushName) == 0 {
-			return
-		}
-		if app.options.LoginOptions == options.PAIR_CODE {
-			app.pairCodeChan <- true
-		}
-		app.log.Infof("Connected!")
+		app.log.Infof("Client connected as %s", util.Or(app.client.Store.PushName, "Unknown"))
+
 		app.clientJID = *app.client.Store.ID
 		app.container.SetClientJID(app.clientJID)
-		_ = app.client.SendPresence(waTypes.PresenceAvailable)
+		app.client.SendPresence(waTypes.PresenceAvailable)
 		//app.muxer.CacheAllGroup()
 	case *events.Message:
 		go func() {
@@ -227,10 +221,7 @@ func (app *App) HandleEvents(event interface{}) {
 	case *events.AppState:
 		// Ignore
 	case *events.PushNameSetting:
-		err := app.client.SendPresence(waTypes.PresenceAvailable)
-		if err != nil {
-			app.log.Warnf("Failed to send presence after push name update: %v\n", err)
-		}
+		app.log.Infof("Name changed to %s", app.client.Store.PushName)
 	case *events.JoinedGroup:
 		app.muxer.UnCacheOneGroup(nil, v)
 	case *events.GroupInfo:
@@ -240,12 +231,6 @@ func (app *App) HandleEvents(event interface{}) {
 			app.container.HandleHistorySync(v.Data)
 			return
 		}
-	}
-}
-
-func (app *App) handlePanic(p interface{}) {
-	if p != nil {
-		app.log.Errorf("panic: \n%v", p)
 	}
 }
 
