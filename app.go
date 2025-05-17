@@ -222,6 +222,8 @@ func (app *App) HandleEvents(event any) {
 		// ignore
 	case *events.AppState:
 		// Ignore
+	case *events.IdentityChange:
+		// println("Evoked IdentityChange")
 	case *events.PushNameSetting:
 		app.log.Infof("Name changed to %s", app.client.Store.PushName)
 	case *events.JoinedGroup:

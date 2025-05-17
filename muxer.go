@@ -2,6 +2,7 @@ package roxy
 
 import (
 	"bytes"
+	"fmt"
 	"strings"
 	"time"
 
@@ -329,80 +330,39 @@ func (muxer *Muxer) handleQuestionState(c *whatsmeow.Client, evt *events.Message
 }
 
 func (muxer *Muxer) RunCommand(c *whatsmeow.Client, evt *events.Message) {
-	if muxer.Options.AllowFromPrivate && !muxer.Options.AllowFromGroup && evt.Info.IsGroup {
-		return
-	}
-	if muxer.Options.AllowFromGroup && !muxer.Options.AllowFromPrivate && !evt.Info.IsGroup {
-		return
-	}
-	if !muxer.Options.AllowFromGroup && !muxer.Options.AllowFromPrivate {
-		return
-	}
-	if muxer.Options.OnlyFromSelf && !evt.Info.IsFromMe {
+	if !muxer.isAllowedSource(evt) || !muxer.isFromValidSender(evt) || evt.Info.ID == "status@broadcast" {
 		return
 	}
 
-	if evt.Info.ID == "status@broadcast" {
-		return
-	}
-
-	if evt.Message.GetPollUpdateMessage() != nil {
+	if poll := evt.Message.GetPollUpdateMessage(); poll != nil {
 		muxer.handlePollingState(c, evt)
 		return
 	}
 
 	number := evt.Info.Sender.ToNonAD().String()
 	parsed := util.ParseMessageText(evt)
-	_, ok := muxer.QuestionState.Load(number)
-	if ok {
+
+	if _, ok := muxer.QuestionState.Load(number); ok {
 		muxer.handleQuestionState(c, evt, number, parsed)
 		return
 	}
 
-	if midOk := muxer.globalMiddlewareProcessing(c, evt); !midOk {
+	if !muxer.globalMiddlewareProcessing(c, evt) {
 		return
 	}
 
 	prefix, cmd, isCmd := muxer.CommandParser(parsed)
 	cmdLoad, isAvailable := muxer.Commands.Load(cmd)
-	if muxer.Options.CommandSuggestion && isCmd && !isAvailable {
+
+	if isCmd && muxer.Options.CommandSuggestion && !isAvailable {
 		muxer.SuggestCommand(evt, prefix, cmd)
 		return
 	}
 
 	if isCmd && isAvailable {
-		if cmdLoad.GroupOnly {
-			if !evt.Info.IsGroup {
-				return
-			}
-		}
-		if cmdLoad.PrivateOnly {
-			if evt.Info.IsGroup {
-				return
-			}
-		}
-		if cmdLoad.OnlyAdminGroup && evt.Info.IsGroup {
-			if ok, _ := muxer.IsGroupAdmin(evt.Info.Chat, evt.Info.Sender); !ok {
-				return
-			}
-		}
-		if cmdLoad.OnlyIfBotAdmin && evt.Info.IsGroup {
-			if ok, _ := muxer.IsClientGroupAdmin(evt.Info.Chat); !ok {
-				return
-			}
-		}
-
-		go func() {
-			if muxer.Options.WithCommandLog {
-				muxer.Log.Infof("[CMD] [%s] command > %s", number, cmdLoad.Name)
-			}
-			err := c.MarkRead([]waTypes.MessageID{evt.Info.ID}, evt.Info.Timestamp, evt.Info.Chat, evt.Info.Sender)
-			if err != nil {
-				muxer.Log.Errorf("read message error: %v", err)
-			}
-		}()
-
 		ctx := context.NewCtx(muxer.Locals)
+		defer context.ReleaseCtx(ctx)
+
 		ctx.SetClient(c)
 		ctx.SetLogger(muxer.Log)
 		ctx.SetOptions(muxer.Options)
@@ -413,45 +373,112 @@ func (muxer *Muxer) RunCommand(c *whatsmeow.Client, evt *events.Message) {
 		ctx.SetClientMethods(muxer)
 		ctx.SetQuestionChan(muxer.QuestionChan)
 		ctx.SetPollingChan(muxer.PollingChan)
-		defer context.ReleaseCtx(ctx)
 
-		if muxer.Middlewares.Size() >= 1 {
-			midAreOk := true
-			muxer.Middlewares.Range(func(key string, value context.MiddlewareFunc) bool {
-				if !value(ctx) {
-					midAreOk = false
-					return false
-				}
-				return true
-			})
-			if !midAreOk {
+		if len(cmdLoad.SubCommands) > 0 && len(ctx.Arguments) > 0 {
+			if child, ok := cmdLoad.SubCommands[ctx.Arguments[0]]; ok {
+				ctx.Arguments = ctx.Arguments[1:]
+				go muxer.markAsReadAndLogCommand(c, evt, number, fmt.Sprintf("%s+%s", cmdLoad.Name, child.Name))
+				muxer.executeCommand(evt, ctx, child, parsed)
 				return
 			}
 		}
-		if cmdLoad.Middleware != nil {
-			if !cmdLoad.Middleware(ctx) {
-				return
-			}
-		}
-		var msg *waProto.Message
-		if cmdLoad.Cache {
-			msg = muxer.getCachedCommandResponse(parsed)
-			if msg == nil {
-				msg = cmdLoad.RunFunc(ctx)
-			}
-		} else {
+
+		go muxer.markAsReadAndLogCommand(c, evt, number, cmdLoad.Name)
+		muxer.executeCommand(evt, ctx, cmdLoad, parsed)
+	}
+}
+
+func (muxer *Muxer) executeCommand(evt *events.Message, ctx *context.Ctx, cmdLoad *Command, parsed string) {
+	if !muxer.passesCommandGuards(evt, cmdLoad) {
+		return
+	}
+
+	if !muxer.runMiddlewares(ctx, cmdLoad) {
+		return
+	}
+
+	var msg *waProto.Message
+	if cmdLoad.Cache {
+		msg = muxer.getCachedCommandResponse(parsed)
+		if msg == nil {
 			msg = cmdLoad.RunFunc(ctx)
 		}
-		if msg != nil {
-			_, err := muxer.SendMessage(evt.Info.Chat, msg)
-			if err == nil {
-				if cmdLoad.Cache {
-					muxer.setCacheCommandResponse(parsed, msg)
-				}
-				return
-			}
+	} else {
+		msg = cmdLoad.RunFunc(ctx)
+	}
+
+	if msg != nil {
+		if _, err := muxer.SendMessage(evt.Info.Chat, msg); err == nil && cmdLoad.Cache {
+			muxer.setCacheCommandResponse(parsed, msg)
 		}
 	}
+}
+
+func (muxer *Muxer) isAllowedSource(evt *events.Message) bool {
+	switch {
+	case muxer.Options.AllowFromPrivate && !muxer.Options.AllowFromGroup && evt.Info.IsGroup:
+		return false
+	case muxer.Options.AllowFromGroup && !muxer.Options.AllowFromPrivate && !evt.Info.IsGroup:
+		return false
+	case !muxer.Options.AllowFromGroup && !muxer.Options.AllowFromPrivate:
+		return false
+	}
+	return true
+}
+
+func (muxer *Muxer) isFromValidSender(evt *events.Message) bool {
+	return !muxer.Options.OnlyFromSelf || evt.Info.IsFromMe
+}
+
+func (muxer *Muxer) passesCommandGuards(evt *events.Message, cmd *Command) bool {
+	if cmd.GroupOnly && !evt.Info.IsGroup {
+		return false
+	}
+	if cmd.PrivateOnly && evt.Info.IsGroup {
+		return false
+	}
+	if cmd.OnlyAdminGroup && evt.Info.IsGroup {
+		if ok, _ := muxer.IsGroupAdmin(evt.Info.Chat, evt.Info.Sender); !ok {
+			return false
+		}
+	}
+	if cmd.OnlyIfBotAdmin && evt.Info.IsGroup {
+		if ok, _ := muxer.IsClientGroupAdmin(evt.Info.Chat); !ok {
+			return false
+		}
+	}
+	return true
+}
+
+func (muxer *Muxer) markAsReadAndLogCommand(c *whatsmeow.Client, evt *events.Message, number string, cmd string) {
+	if muxer.Options.WithCommandLog {
+		muxer.Log.Infof("[CMD] [%s] command > %s", number, cmd)
+	}
+	if err := c.MarkRead([]waTypes.MessageID{evt.Info.ID}, evt.Info.Timestamp, evt.Info.Chat, evt.Info.Sender); err != nil {
+		muxer.Log.Errorf("read message error: %v", err)
+	}
+}
+
+func (muxer *Muxer) runMiddlewares(ctx *context.Ctx, cmd *Command) bool {
+	if muxer.Middlewares.Size() > 0 {
+		allPassed := true
+		muxer.Middlewares.Range(func(_ string, middleware context.MiddlewareFunc) bool {
+			if !middleware(ctx) {
+				allPassed = false
+				return false
+			}
+			return true
+		})
+		if !allPassed {
+			return false
+		}
+	}
+
+	if cmd.Middleware != nil && !cmd.Middleware(ctx) {
+		return false
+	}
+
+	return true
 }
 
 func (muxer *Muxer) SendEmojiMessage(event *events.Message, emoji string) {

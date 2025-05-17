@@ -17,7 +17,8 @@ import (
 
 type (
 	MiddlewareFunc func(c *Ctx) bool
-	RunFunc        func(c *Ctx) *waE2E.Message
+	RunFunc        func(c *Ctx) Result
+	Result         *waE2E.Message
 )
 
 var contextPool sync.Pool
@@ -53,7 +54,7 @@ type Ctx struct {
 	number    string
 	prefix    string
 	parsedMsg string
-	arguments []string
+	Arguments []string
 
 	message   *waE2E.Message
 	logger    waLog.Logger
@@ -117,16 +118,12 @@ func (context *Ctx) Prefix() string {
 }
 
 func (context *Ctx) SetParsedMsg(parsedMsg string) {
-	context.arguments = strings.Split(parsedMsg, " ")[1:]
+	context.Arguments = strings.Split(parsedMsg, " ")[1:]
 	context.parsedMsg = parsedMsg
 }
 
 func (context *Ctx) ParsedMsg() string {
 	return context.parsedMsg
-}
-
-func (context *Ctx) Arguments() []string {
-	return context.arguments
 }
 
 func (context *Ctx) SetLogger(logger waLog.Logger) {

@@ -203,7 +203,7 @@ func (state *QuestionState) NoAskCaptureMediaQuestion(answer **waE2E.Message) *Q
 
 // ExecWithParser Run question engine with argument parser
 func (state *QuestionState) ExecWithParser() {
-	questions := strings.Split(strings.Join(state.Ctx.Arguments(), " "), state.Separator)
+	questions := strings.Split(strings.Join(state.Ctx.Arguments, " "), state.Separator)
 	if questions[0] != "" && len(state.Questions) == len(questions) {
 		for i := range state.Questions {
 			state.Questions[i].SetAnswer(questions[i])
