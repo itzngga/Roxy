@@ -1,11 +1,12 @@
 package util
 
 import (
+	"strings"
+
 	waProto "go.mau.fi/whatsmeow/proto/waE2E"
 	waTypes "go.mau.fi/whatsmeow/types"
 	"go.mau.fi/whatsmeow/types/events"
 	"google.golang.org/protobuf/proto"
-	"strings"
 )
 
 func ParseQuotedMessage(m *waProto.Message) *waProto.Message {
@@ -70,29 +71,29 @@ func ParseQuotedRemoteJid(m *waProto.Message) *string {
 
 func ParseMentionedJid(m *waProto.Message) []string {
 	if m.GetExtendedTextMessage().GetContextInfo() != nil {
-		return m.GetExtendedTextMessage().GetContextInfo().GetMentionedJid()
+		return m.GetExtendedTextMessage().GetContextInfo().GetMentionedJID()
 	} else if m.GetImageMessage().GetContextInfo() != nil {
-		return m.GetImageMessage().GetContextInfo().GetMentionedJid()
+		return m.GetImageMessage().GetContextInfo().GetMentionedJID()
 	} else if m.GetVideoMessage().GetContextInfo() != nil {
-		return m.GetVideoMessage().GetContextInfo().GetMentionedJid()
+		return m.GetVideoMessage().GetContextInfo().GetMentionedJID()
 	} else if m.GetDocumentMessage().GetContextInfo() != nil {
-		return m.GetDocumentMessage().GetContextInfo().GetMentionedJid()
+		return m.GetDocumentMessage().GetContextInfo().GetMentionedJID()
 	} else if m.GetAudioMessage().GetContextInfo() != nil {
-		return m.GetAudioMessage().GetContextInfo().GetMentionedJid()
+		return m.GetAudioMessage().GetContextInfo().GetMentionedJID()
 	} else if m.GetStickerMessage().GetContextInfo() != nil {
-		return m.GetStickerMessage().GetContextInfo().GetMentionedJid()
+		return m.GetStickerMessage().GetContextInfo().GetMentionedJID()
 	} else if m.GetButtonsMessage().GetContextInfo() != nil {
-		return m.GetButtonsMessage().GetContextInfo().GetMentionedJid()
+		return m.GetButtonsMessage().GetContextInfo().GetMentionedJID()
 	} else if m.GetGroupInviteMessage().GetContextInfo() != nil {
-		return m.GetGroupInviteMessage().GetContextInfo().GetMentionedJid()
+		return m.GetGroupInviteMessage().GetContextInfo().GetMentionedJID()
 	} else if m.GetProductMessage().GetContextInfo() != nil {
-		return m.GetProductMessage().GetContextInfo().GetMentionedJid()
+		return m.GetProductMessage().GetContextInfo().GetMentionedJID()
 	} else if m.GetListMessage().GetContextInfo() != nil {
-		return m.GetListMessage().GetContextInfo().GetMentionedJid()
+		return m.GetListMessage().GetContextInfo().GetMentionedJID()
 	} else if m.GetTemplateMessage().GetContextInfo() != nil {
-		return m.GetTemplateMessage().GetContextInfo().GetMentionedJid()
+		return m.GetTemplateMessage().GetContextInfo().GetMentionedJID()
 	} else if m.GetContactMessage().GetContextInfo() != nil {
-		return m.GetContactMessage().GetContextInfo().GetMentionedJid()
+		return m.GetContactMessage().GetContextInfo().GetMentionedJID()
 	} else {
 		return make([]string, 0)
 	}
@@ -152,7 +153,7 @@ func ParseQuotedBy(m *waProto.Message, str string) *waProto.Message {
 func WithReply(m *events.Message) *waProto.ContextInfo {
 	return &waProto.ContextInfo{
 		StanzaID:      &m.Info.ID,
-		Participant:   proto.String(m.Info.MessageSource.Sender.String()),
+		Participant:   proto.String(m.Info.Sender.String()),
 		QuotedMessage: m.Message,
 	}
 }

@@ -1,15 +1,17 @@
 package util
 
 import (
-	waProto "go.mau.fi/whatsmeow/binary/proto"
-	"go.mau.fi/whatsmeow/types/events"
 	"regexp"
 	"strings"
+
+	"go.mau.fi/whatsmeow/proto/waE2E"
+	"go.mau.fi/whatsmeow/types/events"
 )
 
-var cmdRegex = regexp.MustCompile("^(!|#|\\?|.|@|&|\\*|-|=|\\+|/)?(.*)")
-
-var ListPrefixes = []string{"!", "/", "#", "?", ".", "@", "&", "*", "-", "=", "+"}
+var (
+	cmdRegex     = regexp.MustCompile(`^(!|#|\?|.|@|&|\*|-|=|\+|/)?(.*)`)
+	ListPrefixes = []string{"!", "/", "#", "?", ".", "@", "&", "*", "-", "=", "+"}
+)
 
 func ParseCmd(str string) (prefix string, cmd string, ok bool) {
 	if str == "" {
@@ -60,7 +62,7 @@ func ParseCmd(str string) (prefix string, cmd string, ok bool) {
 }
 
 func GetQuotedText(m *events.Message) string {
-	var pesan *waProto.Message
+	var pesan *waE2E.Message
 	if m.IsViewOnce {
 		pesan = m.Message.GetViewOnceMessage().GetMessage()
 	} else if m.IsEphemeral {
@@ -85,7 +87,7 @@ func GetQuotedText(m *events.Message) string {
 }
 
 func ParseMessageText(m *events.Message) string {
-	var pesan *waProto.Message
+	var pesan *waE2E.Message
 	if m.IsViewOnce {
 		pesan = m.Message.GetViewOnceMessage().GetMessage()
 	} else if m.IsEphemeral {

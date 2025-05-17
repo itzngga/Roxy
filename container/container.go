@@ -4,6 +4,8 @@ import (
 	"database/sql"
 	"errors"
 	"fmt"
+	"sync"
+
 	"github.com/itzngga/Roxy/options"
 	"github.com/uptrace/bun/driver/pgdriver"
 	"github.com/uptrace/bun/driver/sqliteshim"
@@ -11,14 +13,13 @@ import (
 	"go.mau.fi/whatsmeow/store/sqlstore"
 	waTypes "go.mau.fi/whatsmeow/types"
 	waLog "go.mau.fi/whatsmeow/util/log"
-	"sync"
 )
 
 var containerPool sync.Pool
 
 func init() {
 	containerPool = sync.Pool{
-		New: func() interface{} {
+		New: func() any {
 			return &Container{}
 		},
 	}

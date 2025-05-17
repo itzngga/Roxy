@@ -3,20 +3,24 @@ package context
 import (
 	"bufio"
 	"errors"
+	"os"
+	"slices"
+
 	"github.com/gabriel-vasile/mimetype"
 	"github.com/itzngga/Roxy/util"
 	"github.com/itzngga/Roxy/util/thumbnail"
 	"go.mau.fi/whatsmeow"
-	waProto "go.mau.fi/whatsmeow/binary/proto"
+	"go.mau.fi/whatsmeow/proto/waE2E"
 	"google.golang.org/protobuf/proto"
-	"os"
 
 	context2 "context"
 )
 
-var imageExtensions = []string{".png", ".jpg", ".webp", ".gif", ".bmp", ".ico", ".svg"}
-var videoExtensions = []string{".mp4", ".mov", ".mpeg", ".webp", ".3gp", ".avi", ".mkv"}
-var audioExtensions = []string{".mp3", ".ogg", ".m4a", ".wav", ".flac"}
+var (
+	imageExtensions = []string{".png", ".jpg", ".webp", ".gif", ".bmp", ".ico", ".svg"}
+	videoExtensions = []string{".mp4", ".mov", ".mpeg", ".webp", ".3gp", ".avi", ".mkv"}
+	audioExtensions = []string{".mp3", ".ogg", ".m4a", ".wav", ".flac"}
+)
 
 // UploadBytesMedia upload bytes media based from mimetype
 func (context *Ctx) UploadBytesMedia(bytes []byte, vars map[string]string) (any, error) {
@@ -45,10 +49,8 @@ func (context *Ctx) UploadBytesMedia(bytes []byte, vars map[string]string) (any,
 		}
 	}
 
-	for _, audioExtension := range audioExtensions {
-		if extension == audioExtension {
-			return context.UploadAudioMessageFromBytes(bytes)
-		}
+	if slices.Contains(audioExtensions, extension) {
+		return context.UploadAudioMessageFromBytes(bytes)
 	}
 
 	title, ok := vars["title"]
@@ -65,7 +67,7 @@ func (context *Ctx) UploadBytesMedia(bytes []byte, vars map[string]string) (any,
 }
 
 // UploadImageMessageFromPath upload a image from given path
-func (context *Ctx) UploadImageMessageFromPath(path, caption string) (*waProto.ImageMessage, error) {
+func (context *Ctx) UploadImageMessageFromPath(path, caption string) (*waE2E.ImageMessage, error) {
 	imageBuff, err := os.Open(path)
 	if err != nil {
 		return nil, err
@@ -73,11 +75,14 @@ func (context *Ctx) UploadImageMessageFromPath(path, caption string) (*waProto.I
 	defer imageBuff.Close()
 
 	imageInfo, _ := imageBuff.Stat()
-	var imageSize = imageInfo.Size()
+	imageSize := imageInfo.Size()
 	imageBytes := make([]byte, imageSize)
 
 	imageBuffer := bufio.NewReader(imageBuff)
 	_, err = imageBuffer.Read(imageBytes)
+	if err != nil {
+		return nil, err
+	}
 
 	mimetypeString := mimetype.Detect(imageBytes)
 
@@ -97,7 +102,7 @@ func (context *Ctx) UploadImageMessageFromPath(path, caption string) (*waProto.I
 		thumbnailByte = nil
 	}()
 
-	return &waProto.ImageMessage{
+	return &waE2E.ImageMessage{
 		Caption: proto.String(caption),
 
 		Mimetype: proto.String(mimetypeString.String()),
@@ -117,7 +122,7 @@ func (context *Ctx) UploadImageMessageFromPath(path, caption string) (*waProto.I
 }
 
 // UploadImageMessageFromBytes upload image from given bytes
-func (context *Ctx) UploadImageMessageFromBytes(bytes []byte, caption string) (*waProto.ImageMessage, error) {
+func (context *Ctx) UploadImageMessageFromBytes(bytes []byte, caption string) (*waE2E.ImageMessage, error) {
 	mimetypeString := mimetype.Detect(bytes)
 
 	thumbnailByte := thumbnail.CreateImageThumbnail(bytes)
@@ -137,7 +142,7 @@ func (context *Ctx) UploadImageMessageFromBytes(bytes []byte, caption string) (*
 		bytes = nil
 	}()
 
-	return &waProto.ImageMessage{
+	return &waE2E.ImageMessage{
 		ContextInfo: util.WithReply(context.MessageEvent()),
 
 		Caption:  proto.String(caption),
@@ -158,7 +163,7 @@ func (context *Ctx) UploadImageMessageFromBytes(bytes []byte, caption string) (*
 }
 
 // UploadVideoMessageFromPath upload video from given path
-func (context *Ctx) UploadVideoMessageFromPath(path, caption string) (*waProto.VideoMessage, error) {
+func (context *Ctx) UploadVideoMessageFromPath(path, caption string) (*waE2E.VideoMessage, error) {
 	videoBuff, err := os.Open(path)
 	if err != nil {
 		return nil, err
@@ -166,11 +171,14 @@ func (context *Ctx) UploadVideoMessageFromPath(path, caption string) (*waProto.V
 	defer videoBuff.Close()
 
 	videoInfo, _ := videoBuff.Stat()
-	var videoSize = videoInfo.Size()
+	videoSize := videoInfo.Size()
 	videoBytes := make([]byte, videoSize)
 
 	videoBuffer := bufio.NewReader(videoBuff)
 	_, err = videoBuffer.Read(videoBytes)
+	if err != nil {
+		return nil, err
+	}
 
 	mimetypeString := mimetype.Detect(videoBytes)
 
@@ -190,7 +198,7 @@ func (context *Ctx) UploadVideoMessageFromPath(path, caption string) (*waProto.V
 		thumbnailByte = nil
 	}()
 
-	return &waProto.VideoMessage{
+	return &waE2E.VideoMessage{
 		Caption:  proto.String(caption),
 		Mimetype: proto.String(mimetypeString.String()),
 
@@ -209,7 +217,7 @@ func (context *Ctx) UploadVideoMessageFromPath(path, caption string) (*waProto.V
 }
 
 // UploadVideoMessageFromBytes upload video from given bytes
-func (context *Ctx) UploadVideoMessageFromBytes(bytes []byte, caption string) (*waProto.VideoMessage, error) {
+func (context *Ctx) UploadVideoMessageFromBytes(bytes []byte, caption string) (*waE2E.VideoMessage, error) {
 	mimetypeString := mimetype.Detect(bytes)
 
 	thumbnailByte := thumbnail.CreateVideoThumbnail(bytes)
@@ -229,7 +237,7 @@ func (context *Ctx) UploadVideoMessageFromBytes(bytes []byte, caption string) (*
 		bytes = nil
 	}()
 
-	return &waProto.VideoMessage{
+	return &waE2E.VideoMessage{
 		ContextInfo: util.WithReply(context.MessageEvent()),
 
 		Caption:  proto.String(caption),
@@ -250,7 +258,7 @@ func (context *Ctx) UploadVideoMessageFromBytes(bytes []byte, caption string) (*
 }
 
 // UploadStickerMessageFromPath upload sticker from given path
-func (context *Ctx) UploadStickerMessageFromPath(path string) (*waProto.StickerMessage, error) {
+func (context *Ctx) UploadStickerMessageFromPath(path string) (*waE2E.StickerMessage, error) {
 	stickerBuff, err := os.Open(path)
 	if err != nil {
 		return nil, err
@@ -258,19 +266,21 @@ func (context *Ctx) UploadStickerMessageFromPath(path string) (*waProto.StickerM
 	defer stickerBuff.Close()
 
 	stickerInfo, _ := stickerBuff.Stat()
-	var stickerSize = stickerInfo.Size()
+	stickerSize := stickerInfo.Size()
 	stickerBytes := make([]byte, stickerSize)
 
 	stickerBuffer := bufio.NewReader(stickerBuff)
 	_, err = stickerBuffer.Read(stickerBytes)
-
-	resp, err := context.Client().Upload(context2.Background(), stickerBytes, whatsmeow.MediaImage)
-
 	if err != nil {
 		return nil, err
 	}
 
-	return &waProto.StickerMessage{
+	resp, err := context.Client().Upload(context2.Background(), stickerBytes, whatsmeow.MediaImage)
+	if err != nil {
+		return nil, err
+	}
+
+	return &waE2E.StickerMessage{
 		Mimetype: proto.String("image/webp"),
 
 		URL:           &resp.URL,
@@ -283,7 +293,7 @@ func (context *Ctx) UploadStickerMessageFromPath(path string) (*waProto.StickerM
 }
 
 // UploadStickerMessageFromBytes upload sticker from given bytes
-func (context *Ctx) UploadStickerMessageFromBytes(bytes []byte) (*waProto.StickerMessage, error) {
+func (context *Ctx) UploadStickerMessageFromBytes(bytes []byte) (*waE2E.StickerMessage, error) {
 	resp, err := context.Client().Upload(context2.Background(), bytes, whatsmeow.MediaImage)
 	if err != nil {
 		return nil, err
@@ -293,7 +303,7 @@ func (context *Ctx) UploadStickerMessageFromBytes(bytes []byte) (*waProto.Sticke
 		bytes = nil
 	}()
 
-	return &waProto.StickerMessage{
+	return &waE2E.StickerMessage{
 		ContextInfo: util.WithReply(context.MessageEvent()),
 
 		Mimetype: proto.String("image/webp"),
@@ -308,7 +318,7 @@ func (context *Ctx) UploadStickerMessageFromBytes(bytes []byte) (*waProto.Sticke
 }
 
 // UploadDocumentMessageFromPath upload document from given path
-func (context *Ctx) UploadDocumentMessageFromPath(path, title string) (*waProto.DocumentMessage, error) {
+func (context *Ctx) UploadDocumentMessageFromPath(path, title string) (*waE2E.DocumentMessage, error) {
 	documentBuff, err := os.Open(path)
 	if err != nil {
 		return nil, err
@@ -316,11 +326,14 @@ func (context *Ctx) UploadDocumentMessageFromPath(path, title string) (*waProto.
 	defer documentBuff.Close()
 
 	documentInfo, _ := documentBuff.Stat()
-	var documentSize = documentInfo.Size()
+	documentSize := documentInfo.Size()
 	documentBytes := make([]byte, documentSize)
 
 	documentBuffer := bufio.NewReader(documentBuff)
 	_, err = documentBuffer.Read(documentBytes)
+	if err != nil {
+		return nil, err
+	}
 
 	mimetypeString := mimetype.Detect(documentBytes)
 
@@ -329,7 +342,7 @@ func (context *Ctx) UploadDocumentMessageFromPath(path, title string) (*waProto.
 		return nil, err
 	}
 
-	return &waProto.DocumentMessage{
+	return &waE2E.DocumentMessage{
 		Title:    proto.String(title),
 		FileName: proto.String(documentInfo.Name()),
 		Mimetype: proto.String(mimetypeString.String()),
@@ -344,11 +357,10 @@ func (context *Ctx) UploadDocumentMessageFromPath(path, title string) (*waProto.
 }
 
 // UploadDocumentMessageFromBytes upload document from given bytes
-func (context *Ctx) UploadDocumentMessageFromBytes(bytes []byte, title, filename string) (*waProto.DocumentMessage, error) {
+func (context *Ctx) UploadDocumentMessageFromBytes(bytes []byte, title, filename string) (*waE2E.DocumentMessage, error) {
 	mimetypeString := mimetype.Detect(bytes)
 
 	resp, err := context.Client().Upload(context2.Background(), bytes, whatsmeow.MediaDocument)
-
 	if err != nil {
 		return nil, err
 	}
@@ -357,7 +369,7 @@ func (context *Ctx) UploadDocumentMessageFromBytes(bytes []byte, title, filename
 		bytes = nil
 	}()
 
-	return &waProto.DocumentMessage{
+	return &waE2E.DocumentMessage{
 		Title:    proto.String(title),
 		FileName: proto.String(filename),
 		Mimetype: proto.String(mimetypeString.String()),
@@ -372,7 +384,7 @@ func (context *Ctx) UploadDocumentMessageFromBytes(bytes []byte, title, filename
 }
 
 // UploadAudioMessageFromPath upload audio message from given path
-func (context *Ctx) UploadAudioMessageFromPath(path string) (*waProto.AudioMessage, error) {
+func (context *Ctx) UploadAudioMessageFromPath(path string) (*waE2E.AudioMessage, error) {
 	audioBuff, err := os.Open(path)
 	if err != nil {
 		return nil, err
@@ -380,21 +392,23 @@ func (context *Ctx) UploadAudioMessageFromPath(path string) (*waProto.AudioMessa
 	defer audioBuff.Close()
 
 	audioInfo, _ := audioBuff.Stat()
-	var audioSize = audioInfo.Size()
+	audioSize := audioInfo.Size()
 	audioBytes := make([]byte, audioSize)
 
 	audioBuffer := bufio.NewReader(audioBuff)
 	_, err = audioBuffer.Read(audioBytes)
-
-	mimetypeString := mimetype.Detect(audioBytes)
-
-	resp, err := context.Client().Upload(context2.Background(), audioBytes, whatsmeow.MediaAudio)
-
 	if err != nil {
 		return nil, err
 	}
 
-	return &waProto.AudioMessage{
+	mimetypeString := mimetype.Detect(audioBytes)
+
+	resp, err := context.Client().Upload(context2.Background(), audioBytes, whatsmeow.MediaAudio)
+	if err != nil {
+		return nil, err
+	}
+
+	return &waE2E.AudioMessage{
 		Mimetype: proto.String(mimetypeString.String()),
 
 		URL:           &resp.URL,
@@ -407,7 +421,7 @@ func (context *Ctx) UploadAudioMessageFromPath(path string) (*waProto.AudioMessa
 }
 
 // UploadAudioMessageFromBytes upload audio from given bytes
-func (context *Ctx) UploadAudioMessageFromBytes(bytes []byte) (*waProto.AudioMessage, error) {
+func (context *Ctx) UploadAudioMessageFromBytes(bytes []byte) (*waE2E.AudioMessage, error) {
 	mimetypeString := mimetype.Detect(bytes)
 
 	resp, err := context.Client().Upload(context2.Background(), bytes, whatsmeow.MediaAudio)
@@ -419,7 +433,7 @@ func (context *Ctx) UploadAudioMessageFromBytes(bytes []byte) (*waProto.AudioMes
 		bytes = nil
 	}()
 
-	return &waProto.AudioMessage{
+	return &waE2E.AudioMessage{
 		Mimetype: proto.String(mimetypeString.String()),
 
 		URL:           &resp.URL,

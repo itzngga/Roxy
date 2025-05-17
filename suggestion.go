@@ -1,12 +1,13 @@
 package roxy
 
 import (
+	"strings"
+
 	"github.com/itzngga/Roxy/util"
 	"github.com/sajari/fuzzy"
 	waProto "go.mau.fi/whatsmeow/proto/waE2E"
 	"go.mau.fi/whatsmeow/types/events"
 	"google.golang.org/protobuf/proto"
-	"strings"
 )
 
 func (muxer *Muxer) GenerateSuggestionModel() {
@@ -17,9 +18,7 @@ func (muxer *Muxer) GenerateSuggestionModel() {
 	var words []string
 	muxer.Commands.Range(func(key string, value *Command) bool {
 		words = append(words, value.Name)
-		for _, alias := range value.Aliases {
-			words = append(words, alias)
-		}
+		words = append(words, value.Aliases...)
 		return true
 	})
 
@@ -38,7 +37,7 @@ func (muxer *Muxer) SuggestCommand(event *events.Message, prefix, command string
 		suggested[i] = prefix + s
 	}
 
-	var parsed = "Did you mean?: \n" + strings.Join(suggested, " or ")
+	parsed := "Did you mean?: \n" + strings.Join(suggested, " or ")
 	message := &waProto.Message{
 		ExtendedTextMessage: &waProto.ExtendedTextMessage{
 			Text:        proto.String(parsed),
@@ -46,7 +45,5 @@ func (muxer *Muxer) SuggestCommand(event *events.Message, prefix, command string
 		},
 	}
 
-	_, _ = muxer.AppMethods.SendMessage(event.Info.Chat, message)
-	return
-
+	muxer.SendMessage(event.Info.Chat, message)
 }

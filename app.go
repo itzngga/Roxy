@@ -11,6 +11,7 @@ import (
 	"github.com/itzngga/Roxy/container"
 	"github.com/itzngga/Roxy/context"
 	"github.com/itzngga/Roxy/options"
+	"github.com/itzngga/Roxy/util"
 	"github.com/mdp/qrterminal/v3"
 	"go.mau.fi/whatsmeow"
 	waBinary "go.mau.fi/whatsmeow/binary"
@@ -27,12 +28,11 @@ type App struct {
 	options   *options.Options
 	container *container.Container
 
-	muxer        *Muxer
-	startTime    time.Time
-	device       *store.Device
-	client       *whatsmeow.Client
-	clientJID    waTypes.JID
-	pairCodeChan chan bool
+	muxer     *Muxer
+	startTime time.Time
+	device    *store.Device
+	client    *whatsmeow.Client
+	clientJID waTypes.JID
 }
 
 func NewRoxyBase(options *options.Options) (*App, error) {
@@ -42,9 +42,8 @@ func NewRoxyBase(options *options.Options) (*App, error) {
 	}
 	stdLog := waLog.Stdout("WaBOT", options.LogLevel, true)
 	app := &App{
-		log:          stdLog,
-		options:      options,
-		pairCodeChan: make(chan bool),
+		log:     stdLog,
+		options: options,
 	}
 	err = app.InitializeClient()
 	if err != nil {
@@ -79,7 +78,7 @@ func (app *App) InitializeClient() error {
 	app.client = whatsmeow.NewClient(app.device, waLog.Stdout("WhatsMeow", "ERROR", true))
 	app.client.EnableAutoReconnect = true
 	app.client.AutoTrustIdentity = true
-	//app.client.AutomaticMessageRerequestFromPhone = true
+	// app.client.AutomaticMessageRerequestFromPhone = true
 	app.client.AddEventHandler(app.HandleEvents)
 
 	// NOTE: Client shoud be connected into websocket before run any task
@@ -88,19 +87,20 @@ func (app *App) InitializeClient() error {
 	}
 
 	// NOTE: Skip login if already connected
-	if !app.container.NewDevice {
+	if app.client.Store.ID != nil {
 		return nil
 	}
 
 	if app.options.LoginOptions == options.SCAN_QR {
 		qrChan, _ := app.client.GetQRChannel(contextCtx.Background())
 		for evt := range qrChan {
-			if evt.Event == "code" {
+			switch evt.Event {
+			case "code":
 				qrterminal.GenerateHalfBlock(evt.Code, qrterminal.L, os.Stdout)
 				app.log.Infof("QR Generated!")
-			} else if evt.Event == "success" {
+			case "success":
 				app.log.Infof("QR Scanned!")
-			} else {
+			default:
 				app.log.Infof("QR channel result: %s", evt.Event)
 			}
 		}
@@ -128,7 +128,7 @@ func (app *App) InitializeClient() error {
 	return nil
 }
 
-func (app *App) HandleEvents(event interface{}) {
+func (app *App) HandleEvents(event any) {
 	switch v := event.(type) {
 	case *events.LoggedOut:
 		app.log.Warnf("%s client logged out", app.clientJID)
@@ -143,17 +143,12 @@ func (app *App) HandleEvents(event interface{}) {
 		app.clientJID = v.ID
 	case *events.Connected:
 		app.startTime = time.Now()
-		if len(app.client.Store.PushName) == 0 {
-			return
-		}
-		if app.options.LoginOptions == options.PAIR_CODE {
-			app.pairCodeChan <- true
-		}
-		app.log.Infof("Connected!")
+		app.log.Infof("Client connected as %s", util.Or(app.client.Store.PushName, "Unknown"))
+
 		app.clientJID = *app.client.Store.ID
 		app.container.SetClientJID(app.clientJID)
-		_ = app.client.SendPresence(waTypes.PresenceAvailable)
-		//app.muxer.CacheAllGroup()
+		app.client.SendPresence(waTypes.PresenceAvailable)
+		// app.muxer.CacheAllGroup()
 	case *events.Message:
 		go func() {
 			if !app.startTime.IsZero() && v.Info.Timestamp.After(app.startTime) {
@@ -184,68 +179,62 @@ func (app *App) HandleEvents(event interface{}) {
 		}
 		app.log.Errorf("error: %s", message)
 	case *events.CallOffer, *events.CallOfferNotice:
-		var (
-			callId string
-			caller string
-		)
-
-		if val, ok := v.(*events.CallOffer); ok {
-			callId = val.CallID
-			caller = val.CallCreator.ToNonAD().String()
-		} else if val, ok := v.(*events.CallOfferNotice); ok {
-			callId = val.CallID
-			caller = val.From.ToNonAD().String()
-		}
-
-		if app.options.AutoRejectCall {
-			err := app.client.DangerousInternals().SendNode(waBinary.Node{
-				Tag: "call",
-				Attrs: waBinary.Attrs{
-					"id":   whatsmeow.GenerateMessageID(),
-					"from": app.clientJID.ToNonAD().String(),
-					"to":   caller,
-				},
-				Content: []waBinary.Node{
-					{
-						Tag: "reject",
-						Attrs: waBinary.Attrs{
-							"call-id":      callId,
-							"call-creator": caller,
-							"count":        "0",
-						},
-						Content: nil,
-					},
-				},
-			})
-			if err != nil {
-				app.log.Errorf("failed to reject call: %v\n", err)
-				return
-			}
-		}
+	// NOTE: Method deprecated
+	// var (
+	// 	callId string
+	// 	caller string
+	// )
+	//
+	// if val, ok := v.(*events.CallOffer); ok {
+	// 	callId = val.CallID
+	// 	caller = val.CallCreator.ToNonAD().String()
+	// } else if val, ok := v.(*events.CallOfferNotice); ok {
+	// 	callId = val.CallID
+	// 	caller = val.From.ToNonAD().String()
+	// }
+	//
+	// if app.options.AutoRejectCall {
+	// 	err := app.client.DangerousInternals().SendNode(waBinary.Node{
+	// 		Tag: "call",
+	// 		Attrs: waBinary.Attrs{
+	// 			"id":   whatsmeow.GenerateMessageID(),
+	// 			"from": app.clientJID.ToNonAD().String(),
+	// 			"to":   caller,
+	// 		},
+	// 		Content: []waBinary.Node{
+	// 			{
+	// 				Tag: "reject",
+	// 				Attrs: waBinary.Attrs{
+	// 					"call-id":      callId,
+	// 					"call-creator": caller,
+	// 					"count":        "0",
+	// 				},
+	// 				Content: nil,
+	// 			},
+	// 		},
+	// 	})
+	// 	if err != nil {
+	// 		app.log.Errorf("failed to reject call: %v\n", err)
+	// 		return
+	// 	}
+	// }
 	case *events.CallTerminate, *events.CallRelayLatency, *events.CallAccept, *events.UnknownCallEvent:
 		// ignore
 	case *events.AppState:
 		// Ignore
+	case *events.IdentityChange:
+		// println("Evoked IdentityChange")
 	case *events.PushNameSetting:
-		err := app.client.SendPresence(waTypes.PresenceAvailable)
-		if err != nil {
-			app.log.Warnf("Failed to send presence after push name update: %v\n", err)
-		}
+		app.log.Infof("Name changed to %s", app.client.Store.PushName)
 	case *events.JoinedGroup:
 		app.muxer.UnCacheOneGroup(nil, v)
 	case *events.GroupInfo:
 		app.muxer.UnCacheOneGroup(v, nil)
 	case *events.HistorySync:
 		if app.options.HistorySync {
-			app.container.HandleHistorySync(v.Data)
+			app.container.HandleHistorySync(v)
 			return
 		}
-	}
-}
-
-func (app *App) handlePanic(p interface{}) {
-	if p != nil {
-		app.log.Errorf("panic: \n%v", p)
 	}
 }
 
@@ -289,7 +278,6 @@ func (app *App) SendMessage(to waTypes.JID, message *waProto.Message, extra ...w
 
 func (app *App) UpsertMessages(jid waTypes.JID, message []*events.Message) {
 	app.container.UpsertMessages(jid, message)
-	return
 }
 
 func (app *App) GetAllChats() []*events.Message {

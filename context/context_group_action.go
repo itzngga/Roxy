@@ -2,6 +2,7 @@ package context
 
 import (
 	"fmt"
+
 	"go.mau.fi/whatsmeow"
 	waTypes "go.mau.fi/whatsmeow/types"
 )
@@ -15,9 +16,7 @@ func (context *Ctx) RemoveMemberFromGroup(jids []waTypes.JID) error {
 	}
 
 	changes := make([]waTypes.JID, 0)
-	for _, jid := range jids {
-		changes = append(changes, jid)
-	}
+	changes = append(changes, jids...)
 
 	_, err := context.Client().UpdateGroupParticipants(context.ChatJID(), changes, whatsmeow.ParticipantChangeRemove)
 	return err
@@ -30,9 +29,7 @@ func (context *Ctx) AddMemberToGroup(jids []waTypes.JID) error {
 	}
 
 	changes := make([]waTypes.JID, 0)
-	for _, jid := range jids {
-		changes = append(changes, jid)
-	}
+	changes = append(changes, jids...)
 
 	_, err := context.Client().UpdateGroupParticipants(context.ChatJID(), changes, whatsmeow.ParticipantChangeAdd)
 	return err
@@ -45,9 +42,7 @@ func (context *Ctx) PromoteMemberInGroup(jids []waTypes.JID) error {
 	}
 
 	changes := make([]waTypes.JID, 0)
-	for _, jid := range jids {
-		changes = append(changes, jid)
-	}
+	changes = append(changes, jids...)
 
 	_, err := context.Client().UpdateGroupParticipants(context.ChatJID(), changes, whatsmeow.ParticipantChangePromote)
 	return err
@@ -60,9 +55,7 @@ func (context *Ctx) DemoteMemberInGroup(jids []waTypes.JID) error {
 	}
 
 	changes := make([]waTypes.JID, 0)
-	for _, jid := range jids {
-		changes = append(changes, jid)
-	}
+	changes = append(changes, jids...)
 
 	_, err := context.Client().UpdateGroupParticipants(context.ChatJID(), changes, whatsmeow.ParticipantChangeDemote)
 	return err

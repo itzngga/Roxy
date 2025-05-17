@@ -92,7 +92,7 @@ func (p *PollingState) Exec() []string {
 	}
 	p.Ctx.pollingChan <- p
 
-	_ = <-p.ResultChan
+	<-p.ResultChan
 	result := util.RemoveDuplicate(p.PollingResult)
 	return result
 }

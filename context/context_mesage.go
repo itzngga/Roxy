@@ -2,27 +2,29 @@ package context
 
 import (
 	"fmt"
+	"strings"
+
 	"github.com/gabriel-vasile/mimetype"
 	"github.com/itzngga/Roxy/util"
-	waProto "go.mau.fi/whatsmeow/binary/proto"
+	"go.mau.fi/whatsmeow/proto/waCommon"
+	"go.mau.fi/whatsmeow/proto/waE2E"
+	"go.mau.fi/whatsmeow/proto/waHistorySync"
 	waTypes "go.mau.fi/whatsmeow/types"
 	"google.golang.org/protobuf/proto"
-	"strings"
 )
 
 // RevokeMessage revoke message from given jid and client message id
 func (context *Ctx) RevokeMessage(jid waTypes.JID, messageId waTypes.MessageID) {
 	_, _ = context.Methods().SendMessage(jid, context.Client().BuildRevoke(jid, waTypes.EmptyJID, messageId))
-	return
 }
 
 // ByteToMessage convert byte to whatsmeow message object
-func (context *Ctx) ByteToMessage(value []byte, withReply bool, caption string) *waProto.Message {
-	var message *waProto.Message
+func (context *Ctx) ByteToMessage(value []byte, withReply bool, caption string) *waE2E.Message {
+	var message *waE2E.Message
 	mimetypeString := mimetype.Detect(value)
 	if mimetypeString.Is("image/webp") {
 		sticker, _ := context.UploadStickerMessageFromBytes(value)
-		message = &waProto.Message{
+		message = &waE2E.Message{
 			StickerMessage: sticker,
 		}
 		if withReply {
@@ -30,7 +32,7 @@ func (context *Ctx) ByteToMessage(value []byte, withReply bool, caption string) 
 		}
 	} else if strings.Contains(mimetypeString.String(), "image") {
 		image, _ := context.UploadImageMessageFromBytes(value, caption)
-		message = &waProto.Message{
+		message = &waE2E.Message{
 			ImageMessage: image,
 		}
 		if withReply {
@@ -38,7 +40,7 @@ func (context *Ctx) ByteToMessage(value []byte, withReply bool, caption string) 
 		}
 	} else if strings.Contains(mimetypeString.String(), "video") {
 		video, _ := context.UploadVideoMessageFromBytes(value, caption)
-		message = &waProto.Message{
+		message = &waE2E.Message{
 			VideoMessage: video,
 		}
 		if withReply {
@@ -46,7 +48,7 @@ func (context *Ctx) ByteToMessage(value []byte, withReply bool, caption string) 
 		}
 	} else if strings.Contains(mimetypeString.String(), "audio") {
 		audio, _ := context.UploadAudioMessageFromBytes(value)
-		message = &waProto.Message{
+		message = &waE2E.Message{
 			AudioMessage: audio,
 		}
 		if withReply {
@@ -54,7 +56,7 @@ func (context *Ctx) ByteToMessage(value []byte, withReply bool, caption string) 
 		}
 	} else {
 		document, _ := context.UploadDocumentMessageFromBytes(value, caption, "document."+mimetypeString.Extension())
-		message = &waProto.Message{
+		message = &waE2E.Message{
 			DocumentMessage: document,
 		}
 		if withReply {
@@ -66,11 +68,11 @@ func (context *Ctx) ByteToMessage(value []byte, withReply bool, caption string) 
 
 // SendReplyMessage send reply message in current chat
 func (context *Ctx) SendReplyMessage(obj any) {
-	var message *waProto.Message
+	var message *waE2E.Message
 	switch value := obj.(type) {
 	case string:
-		message = &waProto.Message{
-			ExtendedTextMessage: &waProto.ExtendedTextMessage{
+		message = &waE2E.Message{
+			ExtendedTextMessage: &waE2E.ExtendedTextMessage{
 				Text:        &value,
 				ContextInfo: util.WithReply(context.MessageEvent()),
 			},
@@ -88,89 +90,88 @@ func (context *Ctx) SendReplyMessage(obj any) {
 		}
 	case []byte:
 		message = context.ByteToMessage(value, true, "")
-	case *waProto.Conversation:
+	case *waHistorySync.Conversation:
 		a := value.String()
-		message = &waProto.Message{
-			ExtendedTextMessage: &waProto.ExtendedTextMessage{
+		message = &waE2E.Message{
+			ExtendedTextMessage: &waE2E.ExtendedTextMessage{
 				Text:        &a,
 				ContextInfo: util.WithReply(context.MessageEvent()),
 			},
 		}
-	case *waProto.ImageMessage:
-		message = &waProto.Message{
+	case *waE2E.ImageMessage:
+		message = &waE2E.Message{
 			ImageMessage: value,
 		}
 		value.ContextInfo = util.WithReply(context.MessageEvent())
-	case *waProto.ExtendedTextMessage:
-		message = &waProto.Message{
+	case *waE2E.ExtendedTextMessage:
+		message = &waE2E.Message{
 			ExtendedTextMessage: value,
 		}
 		value.ContextInfo = util.WithReply(context.MessageEvent())
-	case *waProto.DocumentMessage:
-		message = &waProto.Message{
+	case *waE2E.DocumentMessage:
+		message = &waE2E.Message{
 			DocumentMessage: value,
 		}
 		value.ContextInfo = util.WithReply(context.MessageEvent())
-	case *waProto.VideoMessage:
-		message = &waProto.Message{
+	case *waE2E.VideoMessage:
+		message = &waE2E.Message{
 			VideoMessage: value,
 		}
 		value.ContextInfo = util.WithReply(context.MessageEvent())
-	case *waProto.AudioMessage:
-		message = &waProto.Message{
+	case *waE2E.AudioMessage:
+		message = &waE2E.Message{
 			AudioMessage: value,
 		}
 		value.ContextInfo = util.WithReply(context.MessageEvent())
-	case *waProto.StickerMessage:
-		message = &waProto.Message{
+	case *waE2E.StickerMessage:
+		message = &waE2E.Message{
 			StickerMessage: value,
 		}
 		value.ContextInfo = util.WithReply(context.MessageEvent())
-	//case *waProto.ButtonsMessage:
+	// case *waProto.ButtonsMessage:
 	//	message = &waProto.Message{
 	//		ButtonsMessage: value,
 	//	}
 	//	value.ContextInfo = util.WithReply(context.MessageEvent())
-	case *waProto.GroupInviteMessage:
-		message = &waProto.Message{
+	case *waE2E.GroupInviteMessage:
+		message = &waE2E.Message{
 			GroupInviteMessage: value,
 		}
 		value.ContextInfo = util.WithReply(context.MessageEvent())
-	case *waProto.ProductMessage:
-		message = &waProto.Message{
+	case *waE2E.ProductMessage:
+		message = &waE2E.Message{
 			ProductMessage: value,
 		}
 		value.ContextInfo = util.WithReply(context.MessageEvent())
-	//case *waProto.ListMessage:
+	// case *waProto.ListMessage:
 	//	message = &waProto.Message{
 	//		ListMessage: value,
 	//	}
 	//	value.ContextInfo = util.WithReply(context.MessageEvent())
-	//case *waProto.TemplateMessage:
+	// case *waProto.TemplateMessage:
 	//	message = &waProto.Message{
 	//		TemplateMessage: value,
 	//	}
 	//	value.ContextInfo = util.WithReply(context.MessageEvent())
-	case *waProto.Message:
+	case *waE2E.Message:
 		message = value
-	case *waProto.ContactMessage:
-		message = &waProto.Message{
+	case *waE2E.ContactMessage:
+		message = &waE2E.Message{
 			ContactMessage: value,
 		}
 		value.ContextInfo = util.WithReply(context.MessageEvent())
 	}
 
-	_, _ = context.Methods().SendMessage(context.MessageEvent().Info.Chat, message)
-	return
+	context.Methods().SendMessage(context.MessageEvent().Info.Chat, message)
 }
 
 // GenerateReplyMessage generate reply message to whatsmeow message object
-func (context *Ctx) GenerateReplyMessage(obj any) *waProto.Message {
-	var message *waProto.Message
+func (context *Ctx) GenerateReplyMessage(obj any) *waE2E.Message {
+	var message *waE2E.Message
 	switch value := obj.(type) {
 	case string:
-		message = &waProto.Message{
-			ExtendedTextMessage: &waProto.ExtendedTextMessage{
+		message = &waE2E.Message{
+			ExtendedTextMessage: &waE2E.ExtendedTextMessage{
 				Text:        &value,
 				ContextInfo: util.WithReply(context.MessageEvent()),
 			},
@@ -188,73 +189,73 @@ func (context *Ctx) GenerateReplyMessage(obj any) *waProto.Message {
 		}
 	case []byte:
 		message = context.ByteToMessage(value, true, "")
-	case *waProto.Conversation:
+	case *waHistorySync.Conversation:
 		a := value.String()
-		message = &waProto.Message{
-			ExtendedTextMessage: &waProto.ExtendedTextMessage{
+		message = &waE2E.Message{
+			ExtendedTextMessage: &waE2E.ExtendedTextMessage{
 				Text:        &a,
 				ContextInfo: util.WithReply(context.MessageEvent()),
 			},
 		}
-	case *waProto.ImageMessage:
-		message = &waProto.Message{
+	case *waE2E.ImageMessage:
+		message = &waE2E.Message{
 			ImageMessage: value,
 		}
 		value.ContextInfo = util.WithReply(context.MessageEvent())
-	case *waProto.ExtendedTextMessage:
-		message = &waProto.Message{
+	case *waE2E.ExtendedTextMessage:
+		message = &waE2E.Message{
 			ExtendedTextMessage: value,
 		}
 		value.ContextInfo = util.WithReply(context.MessageEvent())
-	case *waProto.DocumentMessage:
-		message = &waProto.Message{
+	case *waE2E.DocumentMessage:
+		message = &waE2E.Message{
 			DocumentMessage: value,
 		}
 		value.ContextInfo = util.WithReply(context.MessageEvent())
-	case *waProto.VideoMessage:
-		message = &waProto.Message{
+	case *waE2E.VideoMessage:
+		message = &waE2E.Message{
 			VideoMessage: value,
 		}
 		value.ContextInfo = util.WithReply(context.MessageEvent())
-	case *waProto.AudioMessage:
-		message = &waProto.Message{
+	case *waE2E.AudioMessage:
+		message = &waE2E.Message{
 			AudioMessage: value,
 		}
 		value.ContextInfo = util.WithReply(context.MessageEvent())
-	case *waProto.StickerMessage:
-		message = &waProto.Message{
+	case *waE2E.StickerMessage:
+		message = &waE2E.Message{
 			StickerMessage: value,
 		}
 		value.ContextInfo = util.WithReply(context.MessageEvent())
-	//case *waProto.ButtonsMessage:
+	// case *waProto.ButtonsMessage:
 	//	message = &waProto.Message{
 	//		ButtonsMessage: value,
 	//	}
 	//	value.ContextInfo = util.WithReply(context.MessageEvent())
-	case *waProto.GroupInviteMessage:
-		message = &waProto.Message{
+	case *waE2E.GroupInviteMessage:
+		message = &waE2E.Message{
 			GroupInviteMessage: value,
 		}
 		value.ContextInfo = util.WithReply(context.MessageEvent())
-	case *waProto.ProductMessage:
-		message = &waProto.Message{
+	case *waE2E.ProductMessage:
+		message = &waE2E.Message{
 			ProductMessage: value,
 		}
 		value.ContextInfo = util.WithReply(context.MessageEvent())
-	//case *waProto.ListMessage:
+	// case *waProto.ListMessage:
 	//	message = &waProto.Message{
 	//		ListMessage: value,
 	//	}
 	//	value.ContextInfo = util.WithReply(context.MessageEvent())
-	//case *waProto.TemplateMessage:
+	// case *waProto.TemplateMessage:
 	//	message = &waProto.Message{
 	//		TemplateMessage: value,
 	//	}
 	//	value.ContextInfo = util.WithReply(context.MessageEvent())
-	case *waProto.Message:
+	case *waE2E.Message:
 		message = value
-	case *waProto.ContactMessage:
-		message = &waProto.Message{
+	case *waE2E.ContactMessage:
+		message = &waE2E.Message{
 			ContactMessage: value,
 		}
 		value.ContextInfo = util.WithReply(context.MessageEvent())
@@ -264,11 +265,11 @@ func (context *Ctx) GenerateReplyMessage(obj any) *waProto.Message {
 }
 
 func (context *Ctx) SendMessage(obj any) {
-	var message *waProto.Message
+	var message *waE2E.Message
 	switch value := obj.(type) {
 	case string:
-		message = &waProto.Message{
-			ExtendedTextMessage: &waProto.ExtendedTextMessage{
+		message = &waE2E.Message{
+			ExtendedTextMessage: &waE2E.ExtendedTextMessage{
 				Text:        &value,
 				ContextInfo: util.WithReply(context.MessageEvent()),
 			},
@@ -286,72 +287,71 @@ func (context *Ctx) SendMessage(obj any) {
 		}
 	case []byte:
 		message = context.ByteToMessage(value, false, "")
-	case *waProto.Conversation:
+	case *waHistorySync.Conversation:
 		a := value.String()
-		message = &waProto.Message{
-			ExtendedTextMessage: &waProto.ExtendedTextMessage{
+		message = &waE2E.Message{
+			ExtendedTextMessage: &waE2E.ExtendedTextMessage{
 				Text: &a,
 			},
 		}
-	case *waProto.ImageMessage:
-		message = &waProto.Message{
+	case *waE2E.ImageMessage:
+		message = &waE2E.Message{
 			ImageMessage: value,
 		}
-	case *waProto.ExtendedTextMessage:
-		message = &waProto.Message{
+	case *waE2E.ExtendedTextMessage:
+		message = &waE2E.Message{
 			ExtendedTextMessage: value,
 		}
-	case *waProto.DocumentMessage:
-		message = &waProto.Message{
+	case *waE2E.DocumentMessage:
+		message = &waE2E.Message{
 			DocumentMessage: value,
 		}
-	case *waProto.VideoMessage:
-		message = &waProto.Message{
+	case *waE2E.VideoMessage:
+		message = &waE2E.Message{
 			VideoMessage: value,
 		}
-	case *waProto.AudioMessage:
-		message = &waProto.Message{
+	case *waE2E.AudioMessage:
+		message = &waE2E.Message{
 			AudioMessage: value,
 		}
-	case *waProto.StickerMessage:
-		message = &waProto.Message{
+	case *waE2E.StickerMessage:
+		message = &waE2E.Message{
 			StickerMessage: value,
 		}
-	//case *waProto.ButtonsMessage:
+	// case *waProto.ButtonsMessage:
 	//	message = &waProto.Message{
 	//		ButtonsMessage: value,
 	//	}
-	case *waProto.GroupInviteMessage:
-		message = &waProto.Message{
+	case *waE2E.GroupInviteMessage:
+		message = &waE2E.Message{
 			GroupInviteMessage: value,
 		}
-	case *waProto.ProductMessage:
-		message = &waProto.Message{
+	case *waE2E.ProductMessage:
+		message = &waE2E.Message{
 			ProductMessage: value,
 		}
-	//case *waProto.ListMessage:
+	// case *waProto.ListMessage:
 	//	message = &waProto.Message{
 	//		ListMessage: value,
 	//	}
-	//case *waProto.TemplateMessage:
+	// case *waProto.TemplateMessage:
 	//	message = &waProto.Message{
 	//		TemplateMessage: value,
 	//	}
-	case *waProto.Message:
+	case *waE2E.Message:
 		message = value
-	case *waProto.ContactMessage:
-		message = &waProto.Message{
+	case *waE2E.ContactMessage:
+		message = &waE2E.Message{
 			ContactMessage: value,
 		}
 	}
 
 	_, _ = context.Methods().SendMessage(context.MessageEvent().Info.Chat, message)
-	return
 }
 
 // EditMessageText edit current text message to given text
 func (context *Ctx) EditMessageText(to string) error {
-	msgKey := &waProto.MessageKey{
+	msgKey := &waCommon.MessageKey{
 		RemoteJID: proto.String(context.ChatJID().String()),
 		FromMe:    proto.Bool(true),
 		ID:        proto.String(context.MessageInfo().ID),
@@ -364,10 +364,10 @@ func (context *Ctx) EditMessageText(to string) error {
 		return fmt.Errorf("error: invalid message type")
 	}
 
-	message := &waProto.Message{
-		ProtocolMessage: &waProto.ProtocolMessage{
+	message := &waE2E.Message{
+		ProtocolMessage: &waE2E.ProtocolMessage{
 			Key:           msgKey,
-			Type:          (*waProto.ProtocolMessage_Type)(proto.Int32(14)),
+			Type:          (*waE2E.ProtocolMessage_Type)(proto.Int32(14)),
 			EditedMessage: context.Message(),
 		},
 	}
@@ -379,5 +379,4 @@ func (context *Ctx) EditMessageText(to string) error {
 // SendEmoji send emoji to current text message
 func (context *Ctx) SendEmoji(emoji string) {
 	context.Methods().SendEmojiMessage(context.MessageEvent(), emoji)
-	return
 }

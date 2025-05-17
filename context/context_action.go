@@ -1,8 +1,9 @@
 package context
 
 import (
-	waTypes "go.mau.fi/whatsmeow/types"
 	"time"
+
+	waTypes "go.mau.fi/whatsmeow/types"
 )
 
 // SendReadPresence send read status in current chat
@@ -11,7 +12,6 @@ func (context *Ctx) SendReadPresence() {
 		context.info.ID,
 	}
 	context.client.MarkRead(jids, context.info.Timestamp, context.info.Chat, context.info.Sender)
-	return
 }
 
 // SendTypingPresence send typing action in current chat
