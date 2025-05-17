@@ -143,7 +143,6 @@ func (muxer *Muxer) addEmbedCommands() {
 	middlewares := Middlewares.Get()
 	for _, mid := range middlewares {
 		muxer.AddMiddleware(mid)
-
 	}
 	globalMiddleware := GlobalMiddlewares.Get()
 	for _, mid := range globalMiddleware {
@@ -181,7 +180,7 @@ func (muxer *Muxer) AddCommand(cmd *Command) {
 }
 
 func (muxer *Muxer) GetActiveCommand() []*Command {
-	var cmd = make([]*Command, 0)
+	cmd := make([]*Command, 0)
 	muxer.Commands.Range(func(key string, value *Command) bool {
 		// filter alias commands
 		if key == value.Name {
@@ -194,7 +193,7 @@ func (muxer *Muxer) GetActiveCommand() []*Command {
 }
 
 func (muxer *Muxer) GetActiveGlobalMiddleware() []context.MiddlewareFunc {
-	var middleware = make([]context.MiddlewareFunc, 0)
+	middleware := make([]context.MiddlewareFunc, 0)
 	muxer.GlobalMiddlewares.Range(func(key string, value context.MiddlewareFunc) bool {
 		middleware = append(middleware, value)
 		return true
@@ -202,8 +201,9 @@ func (muxer *Muxer) GetActiveGlobalMiddleware() []context.MiddlewareFunc {
 
 	return middleware
 }
+
 func (muxer *Muxer) GetActiveMiddleware() []context.MiddlewareFunc {
-	var middleware = make([]context.MiddlewareFunc, 0)
+	middleware := make([]context.MiddlewareFunc, 0)
 	muxer.Middlewares.Range(func(key string, value context.MiddlewareFunc) bool {
 		middleware = append(middleware, value)
 		return true
@@ -235,7 +235,7 @@ func (muxer *Muxer) globalMiddlewareProcessing(c *whatsmeow.Client, evt *events.
 		ctx.SetLogger(muxer.Log)
 		ctx.SetOptions(muxer.Options)
 		ctx.SetMessageEvent(evt)
-		ctx.SetClientJID(muxer.AppMethods.ClientJID())
+		ctx.SetClientJID(muxer.ClientJID())
 		ctx.SetClientMethods(muxer)
 		ctx.SetQuestionChan(muxer.QuestionChan)
 		ctx.SetPollingChan(muxer.PollingChan)
@@ -407,7 +407,7 @@ func (muxer *Muxer) RunCommand(c *whatsmeow.Client, evt *events.Message) {
 		ctx.SetLogger(muxer.Log)
 		ctx.SetOptions(muxer.Options)
 		ctx.SetMessageEvent(evt)
-		ctx.SetClientJID(muxer.AppMethods.ClientJID())
+		ctx.SetClientJID(muxer.ClientJID())
 		ctx.SetParsedMsg(parsed)
 		ctx.SetPrefix(prefix)
 		ctx.SetClientMethods(muxer)
@@ -416,7 +416,7 @@ func (muxer *Muxer) RunCommand(c *whatsmeow.Client, evt *events.Message) {
 		defer context.ReleaseCtx(ctx)
 
 		if muxer.Middlewares.Size() >= 1 {
-			var midAreOk = true
+			midAreOk := true
 			muxer.Middlewares.Range(func(key string, value context.MiddlewareFunc) bool {
 				if !value(ctx) {
 					midAreOk = false
@@ -443,7 +443,7 @@ func (muxer *Muxer) RunCommand(c *whatsmeow.Client, evt *events.Message) {
 			msg = cmdLoad.RunFunc(ctx)
 		}
 		if msg != nil {
-			_, err := muxer.AppMethods.SendMessage(evt.Info.Chat, msg)
+			_, err := muxer.SendMessage(evt.Info.Chat, msg)
 			if err == nil {
 				if cmdLoad.Cache {
 					muxer.setCacheCommandResponse(parsed, msg)
@@ -477,6 +477,5 @@ func (muxer *Muxer) SendEmojiMessage(event *events.Message, emoji string) {
 		},
 	}
 
-	_, _ = muxer.AppMethods.SendMessage(event.Info.Chat, message)
-	return
+	muxer.SendMessage(event.Info.Chat, message)
 }

@@ -41,7 +41,7 @@ func (dsn *PostgresDSN) Validate() error {
 		dsn.SslMode = "disable"
 	}
 	if dsn.SslMode != "disable" && dsn.SslMode != "verify-full" {
-		return errors.New(fmt.Sprintf("error: invalid dsn ssl mode, given %s", dsn.SslMode))
+		return fmt.Errorf("error: invalid dsn ssl mode, given %s", dsn.SslMode)
 	}
 
 	return nil

@@ -2,15 +2,16 @@ package context
 
 import (
 	"bytes"
-	"github.com/itzngga/Roxy/util"
-	waProto "go.mau.fi/whatsmeow/binary/proto"
 	"io"
 	"os"
+
+	"github.com/itzngga/Roxy/util"
+	"go.mau.fi/whatsmeow/proto/waE2E"
 )
 
 // Download message with get quoted message
 func (context *Ctx) Download(quoted bool) ([]byte, error) {
-	var msg *waProto.Message
+	var msg *waE2E.Message
 	if quoted {
 		result := util.ParseQuotedMessage(context.Message())
 		if result != nil {
@@ -27,7 +28,7 @@ func (context *Ctx) Download(quoted bool) ([]byte, error) {
 
 // DownloadToFile download message to file with quoted message
 func (context *Ctx) DownloadToFile(quoted bool, fileName string) (*os.File, error) {
-	var msg *waProto.Message
+	var msg *waE2E.Message
 	if quoted {
 		result := util.ParseQuotedMessage(context.Message())
 		if result != nil {
@@ -61,8 +62,8 @@ func (context *Ctx) DownloadToFile(quoted bool, fileName string) (*os.File, erro
 }
 
 // DownloadMessage download with given message
-func (context *Ctx) DownloadMessage(message *waProto.Message, quoted bool) ([]byte, error) {
-	var msg *waProto.Message
+func (context *Ctx) DownloadMessage(message *waE2E.Message, quoted bool) ([]byte, error) {
+	var msg *waE2E.Message
 	if quoted {
 		result := util.ParseQuotedMessage(message)
 		if result != nil {
@@ -78,8 +79,8 @@ func (context *Ctx) DownloadMessage(message *waProto.Message, quoted bool) ([]by
 }
 
 // DownloadMessageToFile download with given message to file
-func (context *Ctx) DownloadMessageToFile(message *waProto.Message, quoted bool, fileName string) (*os.File, error) {
-	var msg *waProto.Message
+func (context *Ctx) DownloadMessageToFile(message *waE2E.Message, quoted bool, fileName string) (*os.File, error) {
+	var msg *waE2E.Message
 	if quoted {
 		result := util.ParseQuotedMessage(message)
 		if result != nil {
@@ -113,8 +114,8 @@ func (context *Ctx) DownloadMessageToFile(message *waProto.Message, quoted bool,
 }
 
 // GetDownloadable get downloadable type
-func (context *Ctx) GetDownloadable(quoted bool) *waProto.Message {
-	var msg *waProto.Message
+func (context *Ctx) GetDownloadable(quoted bool) *waE2E.Message {
+	var msg *waE2E.Message
 	if quoted {
 		result := util.ParseQuotedMessage(context.Message())
 		if result != nil {
@@ -143,8 +144,8 @@ func (context *Ctx) GetDownloadable(quoted bool) *waProto.Message {
 }
 
 // GetDownloadableMessage get downloadable with given message
-func (context *Ctx) GetDownloadableMessage(message *waProto.Message, quoted bool) *waProto.Message {
-	var msg *waProto.Message
+func (context *Ctx) GetDownloadableMessage(message *waE2E.Message, quoted bool) *waE2E.Message {
+	var msg *waE2E.Message
 	if quoted {
 		result := util.ParseQuotedMessage(message)
 		if result != nil {

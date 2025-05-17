@@ -78,7 +78,7 @@ func (app *App) InitializeClient() error {
 	app.client = whatsmeow.NewClient(app.device, waLog.Stdout("WhatsMeow", "ERROR", true))
 	app.client.EnableAutoReconnect = true
 	app.client.AutoTrustIdentity = true
-	//app.client.AutomaticMessageRerequestFromPhone = true
+	// app.client.AutomaticMessageRerequestFromPhone = true
 	app.client.AddEventHandler(app.HandleEvents)
 
 	// NOTE: Client shoud be connected into websocket before run any task
@@ -94,12 +94,13 @@ func (app *App) InitializeClient() error {
 	if app.options.LoginOptions == options.SCAN_QR {
 		qrChan, _ := app.client.GetQRChannel(contextCtx.Background())
 		for evt := range qrChan {
-			if evt.Event == "code" {
+			switch evt.Event {
+			case "code":
 				qrterminal.GenerateHalfBlock(evt.Code, qrterminal.L, os.Stdout)
 				app.log.Infof("QR Generated!")
-			} else if evt.Event == "success" {
+			case "success":
 				app.log.Infof("QR Scanned!")
-			} else {
+			default:
 				app.log.Infof("QR channel result: %s", evt.Event)
 			}
 		}
@@ -147,7 +148,7 @@ func (app *App) HandleEvents(event any) {
 		app.clientJID = *app.client.Store.ID
 		app.container.SetClientJID(app.clientJID)
 		app.client.SendPresence(waTypes.PresenceAvailable)
-		//app.muxer.CacheAllGroup()
+		// app.muxer.CacheAllGroup()
 	case *events.Message:
 		go func() {
 			if !app.startTime.IsZero() && v.Info.Timestamp.After(app.startTime) {
@@ -178,44 +179,45 @@ func (app *App) HandleEvents(event any) {
 		}
 		app.log.Errorf("error: %s", message)
 	case *events.CallOffer, *events.CallOfferNotice:
-		var (
-			callId string
-			caller string
-		)
-
-		if val, ok := v.(*events.CallOffer); ok {
-			callId = val.CallID
-			caller = val.CallCreator.ToNonAD().String()
-		} else if val, ok := v.(*events.CallOfferNotice); ok {
-			callId = val.CallID
-			caller = val.From.ToNonAD().String()
-		}
-
-		if app.options.AutoRejectCall {
-			err := app.client.DangerousInternals().SendNode(waBinary.Node{
-				Tag: "call",
-				Attrs: waBinary.Attrs{
-					"id":   whatsmeow.GenerateMessageID(),
-					"from": app.clientJID.ToNonAD().String(),
-					"to":   caller,
-				},
-				Content: []waBinary.Node{
-					{
-						Tag: "reject",
-						Attrs: waBinary.Attrs{
-							"call-id":      callId,
-							"call-creator": caller,
-							"count":        "0",
-						},
-						Content: nil,
-					},
-				},
-			})
-			if err != nil {
-				app.log.Errorf("failed to reject call: %v\n", err)
-				return
-			}
-		}
+	// NOTE: Method deprecated
+	// var (
+	// 	callId string
+	// 	caller string
+	// )
+	//
+	// if val, ok := v.(*events.CallOffer); ok {
+	// 	callId = val.CallID
+	// 	caller = val.CallCreator.ToNonAD().String()
+	// } else if val, ok := v.(*events.CallOfferNotice); ok {
+	// 	callId = val.CallID
+	// 	caller = val.From.ToNonAD().String()
+	// }
+	//
+	// if app.options.AutoRejectCall {
+	// 	err := app.client.DangerousInternals().SendNode(waBinary.Node{
+	// 		Tag: "call",
+	// 		Attrs: waBinary.Attrs{
+	// 			"id":   whatsmeow.GenerateMessageID(),
+	// 			"from": app.clientJID.ToNonAD().String(),
+	// 			"to":   caller,
+	// 		},
+	// 		Content: []waBinary.Node{
+	// 			{
+	// 				Tag: "reject",
+	// 				Attrs: waBinary.Attrs{
+	// 					"call-id":      callId,
+	// 					"call-creator": caller,
+	// 					"count":        "0",
+	// 				},
+	// 				Content: nil,
+	// 			},
+	// 		},
+	// 	})
+	// 	if err != nil {
+	// 		app.log.Errorf("failed to reject call: %v\n", err)
+	// 		return
+	// 	}
+	// }
 	case *events.CallTerminate, *events.CallRelayLatency, *events.CallAccept, *events.UnknownCallEvent:
 		// ignore
 	case *events.AppState:
@@ -228,7 +230,7 @@ func (app *App) HandleEvents(event any) {
 		app.muxer.UnCacheOneGroup(v, nil)
 	case *events.HistorySync:
 		if app.options.HistorySync {
-			app.container.HandleHistorySync(v.Data)
+			app.container.HandleHistorySync(v)
 			return
 		}
 	}
@@ -274,7 +276,6 @@ func (app *App) SendMessage(to waTypes.JID, message *waProto.Message, extra ...w
 
 func (app *App) UpsertMessages(jid waTypes.JID, message []*events.Message) {
 	app.container.UpsertMessages(jid, message)
-	return
 }
 
 func (app *App) GetAllChats() []*events.Message {

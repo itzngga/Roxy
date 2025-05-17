@@ -2,9 +2,10 @@ package context
 
 import (
 	"encoding/json"
-	"github.com/itzngga/Roxy/util"
-	waProto "go.mau.fi/whatsmeow/binary/proto"
 	"strings"
+
+	"github.com/itzngga/Roxy/util"
+	"go.mau.fi/whatsmeow/proto/waE2E"
 )
 
 type Questions struct {
@@ -31,7 +32,7 @@ func (q *Questions) SetAnswer(answer any) {
 	switch v := answer.(type) {
 	case string:
 		*q.Answer.(*string) = v
-	case *waProto.Message:
+	case *waE2E.Message:
 		if q.CaptureMedia {
 			m := util.ParseQuotedMessage(v)
 			if m != nil {
@@ -39,20 +40,20 @@ func (q *Questions) SetAnswer(answer any) {
 			}
 			switch {
 			case v.ImageMessage != nil:
-				*q.Answer.(**waProto.Message) = v
+				*q.Answer.(**waE2E.Message) = v
 			case v.VideoMessage != nil:
-				*q.Answer.(**waProto.Message) = v
+				*q.Answer.(**waE2E.Message) = v
 			case v.AudioMessage != nil:
-				*q.Answer.(**waProto.Message) = v
+				*q.Answer.(**waE2E.Message) = v
 			case v.DocumentMessage != nil:
-				*q.Answer.(**waProto.Message) = v
+				*q.Answer.(**waE2E.Message) = v
 			case v.StickerMessage != nil:
-				*q.Answer.(**waProto.Message) = v
+				*q.Answer.(**waE2E.Message) = v
 			default:
-				*q.Answer.(**waProto.Message) = nil
+				*q.Answer.(**waE2E.Message) = nil
 			}
 		} else {
-			*q.Answer.(**waProto.Message) = v
+			*q.Answer.(**waE2E.Message) = v
 		}
 	}
 }
@@ -61,7 +62,7 @@ func (q *Questions) GetAnswer() string {
 	switch v := q.Answer.(type) {
 	case *string:
 		return *q.Answer.(*string)
-	case *waProto.Message:
+	case *waE2E.Message:
 		result, err := json.Marshal(&v)
 		if err != nil {
 			return ""
@@ -155,7 +156,7 @@ func (state *QuestionState) SetNoAskReplyQuestion(answer any) *QuestionState {
 }
 
 // CaptureQuestion Set a question to capture message object with json string format
-func (state *QuestionState) CaptureQuestion(question string, answer **waProto.Message) *QuestionState {
+func (state *QuestionState) CaptureQuestion(question string, answer **waE2E.Message) *QuestionState {
 	state.Questions = append(state.Questions, &Questions{
 		Index:    len(state.Questions) + 1,
 		Question: question,
@@ -166,7 +167,7 @@ func (state *QuestionState) CaptureQuestion(question string, answer **waProto.Me
 }
 
 // NoAskCaptureQuestion Set no asking question to capture message object with json string format
-func (state *QuestionState) NoAskCaptureQuestion(answer **waProto.Message) *QuestionState {
+func (state *QuestionState) NoAskCaptureQuestion(answer **waE2E.Message) *QuestionState {
 	state.Questions = append(state.Questions, &Questions{
 		Index:    len(state.Questions) + 1,
 		Question: "",
@@ -177,7 +178,7 @@ func (state *QuestionState) NoAskCaptureQuestion(answer **waProto.Message) *Ques
 }
 
 // CaptureMediaQuestion Set a question to capture media object
-func (state *QuestionState) CaptureMediaQuestion(question string, answer **waProto.Message) *QuestionState {
+func (state *QuestionState) CaptureMediaQuestion(question string, answer **waE2E.Message) *QuestionState {
 	state.Questions = append(state.Questions, &Questions{
 		Index:        len(state.Questions) + 1,
 		Question:     question,
@@ -189,7 +190,7 @@ func (state *QuestionState) CaptureMediaQuestion(question string, answer **waPro
 }
 
 // NoAskCaptureMediaQuestion Set no asking question to capture media object
-func (state *QuestionState) NoAskCaptureMediaQuestion(answer **waProto.Message) *QuestionState {
+func (state *QuestionState) NoAskCaptureMediaQuestion(answer **waE2E.Message) *QuestionState {
 	state.Questions = append(state.Questions, &Questions{
 		Index:        len(state.Questions) + 1,
 		Question:     "",
@@ -204,7 +205,7 @@ func (state *QuestionState) NoAskCaptureMediaQuestion(answer **waProto.Message) 
 func (state *QuestionState) ExecWithParser() {
 	questions := strings.Split(strings.Join(state.Ctx.Arguments(), " "), state.Separator)
 	if questions[0] != "" && len(state.Questions) == len(questions) {
-		for i, _ := range state.Questions {
+		for i := range state.Questions {
 			state.Questions[i].SetAnswer(questions[i])
 		}
 		return
@@ -212,7 +213,7 @@ func (state *QuestionState) ExecWithParser() {
 		state.Ctx.questionChan <- state
 		defer close(state.ResultChan)
 
-		_ = <-state.ResultChan
+		<-state.ResultChan
 		return
 	}
 }
@@ -250,6 +251,5 @@ func (state *QuestionState) Exec() {
 	state.Ctx.questionChan <- state
 	defer close(state.ResultChan)
 
-	_ = <-state.ResultChan
-	return
+	<-state.ResultChan
 }

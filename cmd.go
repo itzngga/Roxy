@@ -2,15 +2,18 @@ package roxy
 
 import (
 	"fmt"
+	"sort"
+
 	"github.com/itzngga/Roxy/context"
 	"github.com/itzngga/Roxy/types"
-	"sort"
 )
 
-var Commands types.Embed[*Command]
-var GlobalMiddlewares types.Embed[context.MiddlewareFunc]
-var Middlewares types.Embed[context.MiddlewareFunc]
-var Categories types.Embed[string]
+var (
+	Commands          types.Embed[*Command]
+	GlobalMiddlewares types.Embed[context.MiddlewareFunc]
+	Middlewares       types.Embed[context.MiddlewareFunc]
+	Categories        types.Embed[string]
+)
 
 func init() {
 	cmd := types.NewEmbed[*Command]()
@@ -38,7 +41,9 @@ type Command struct {
 
 	OnlyAdminGroup   bool
 	OnlyIfBotAdmin   bool
-	AdditionalValues map[string]interface{}
+	AdditionalValues map[string]any
+
+	SubCommands map[string]*Command
 
 	RunFunc    context.RunFunc
 	Middleware context.MiddlewareFunc
@@ -53,6 +58,12 @@ func (c *Command) Validate() {
 	}
 	if c.PrivateOnly && c.GroupOnly {
 		panic("error: invalid scope group/private?")
+	}
+
+	for _, child := range c.SubCommands {
+		if len(child.SubCommands) > 0 {
+			panic("error: subcommands can't have children")
+		}
 	}
 
 	sort.Strings(c.Aliases)

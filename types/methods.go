@@ -2,7 +2,7 @@ package types
 
 import (
 	"go.mau.fi/whatsmeow"
-	waProto "go.mau.fi/whatsmeow/binary/proto"
+	"go.mau.fi/whatsmeow/proto/waE2E"
 	waTypes "go.mau.fi/whatsmeow/types"
 	"go.mau.fi/whatsmeow/types/events"
 )
@@ -13,7 +13,7 @@ type AppMethods interface {
 	GetChatInJID(jid waTypes.JID) []*events.Message
 	GetStatusMessages() []*events.Message
 	FindMessageByID(jid waTypes.JID, id string) *events.Message
-	SendMessage(to waTypes.JID, message *waProto.Message, extra ...whatsmeow.SendRequestExtra) (whatsmeow.SendResponse, error)
+	SendMessage(to waTypes.JID, message *waE2E.Message, extra ...whatsmeow.SendRequestExtra) (whatsmeow.SendResponse, error)
 	ClientJID() waTypes.JID
 	Client() *whatsmeow.Client
 }

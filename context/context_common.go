@@ -3,10 +3,11 @@ package context
 import (
 	"errors"
 	"fmt"
+	"strings"
+
 	"github.com/itzngga/Roxy/util"
 	"go.mau.fi/whatsmeow"
 	waTypes "go.mau.fi/whatsmeow/types"
-	"strings"
 )
 
 // SetUserStatus set client status
@@ -17,7 +18,7 @@ func (context *Ctx) SetUserStatus(status string) error {
 
 	err := context.client.SetStatusMessage(status)
 	if err != nil {
-		return fmt.Errorf("error: failed to change status : %v\n", err)
+		return fmt.Errorf("error: failed to change status : %v", err)
 	}
 
 	return nil
@@ -29,11 +30,11 @@ func (context *Ctx) JoinGroupInviteLink(link string) error {
 		return errors.New("error: blank link string")
 	}
 	// formatting group link
-	link = strings.Replace(link, "https://chat.whatsapp.com/", "", -1)
+	link = strings.ReplaceAll(link, "https://chat.whatsapp.com/", "")
 
 	groupId, err := context.client.JoinGroupWithLink(link)
 	if err != nil {
-		return fmt.Errorf("error: failed to join group with invite link : %v\n", err)
+		return fmt.Errorf("error: failed to join group with invite link : %v", err)
 	}
 
 	fmt.Printf("success: joined to group %s\n", groupId)
@@ -46,11 +47,11 @@ func (context *Ctx) GetGroupInfoFromInviteLink(link string) (*waTypes.GroupInfo,
 		return nil, errors.New("error: blank link string")
 	}
 	// formatting group link
-	link = strings.Replace(link, "https://chat.whatsapp.com/", "", -1)
+	link = strings.ReplaceAll(link, "https://chat.whatsapp.com/", "")
 
 	groupInfo, err := context.client.GetGroupInfoFromLink(link)
 	if err != nil {
-		return nil, fmt.Errorf("error: failed to get group info with invite link: %v\n", err)
+		return nil, fmt.Errorf("error: failed to get group info with invite link: %v", err)
 	}
 
 	return groupInfo, nil
@@ -65,7 +66,7 @@ func (context *Ctx) GetGroupInviteLink(jid any) (string, error) {
 
 	link, err := context.client.GetGroupInviteLink(jids, false)
 	if err != nil {
-		return "", fmt.Errorf("error: failed to get group invite link : %v\n", err)
+		return "", fmt.Errorf("error: failed to get group invite link : %v", err)
 	}
 
 	return "https://chat.whatsapp.com/" + link, nil
@@ -75,7 +76,7 @@ func (context *Ctx) GetGroupInviteLink(jid any) (string, error) {
 func (context *Ctx) GetJoinedGroups() ([]*waTypes.GroupInfo, error) {
 	groups, err := context.client.GetJoinedGroups()
 	if err != nil {
-		return nil, fmt.Errorf("error: failed to get joined group : %v\n", err)
+		return nil, fmt.Errorf("error: failed to get joined group : %v", err)
 	}
 	return groups, nil
 }
@@ -89,7 +90,7 @@ func (context *Ctx) GetGroupInfo(jid any) (*waTypes.GroupInfo, error) {
 
 	group, err := context.Methods().FindGroupByJid(jids)
 	if err != nil {
-		return nil, fmt.Errorf("error: failed to get group info : %v\n", err)
+		return nil, fmt.Errorf("error: failed to get group info : %v", err)
 	}
 
 	return group, nil
@@ -104,7 +105,7 @@ func (context *Ctx) GetGroupProfilePicture(jid any) (string, error) {
 
 	pic, err := context.client.GetProfilePictureInfo(jids, &whatsmeow.GetProfilePictureParams{})
 	if err != nil {
-		return "", fmt.Errorf("error: failed to get group info : %v\n", err)
+		return "", fmt.Errorf("error: failed to get group info : %v", err)
 	}
 	return pic.URL, nil
 }
@@ -184,9 +185,7 @@ func (context *Ctx) GetUserInfo(jid any) (result waTypes.UserInfo, err error) {
 
 	user, err := context.Client().GetUserInfo([]waTypes.JID{jids})
 	if err != nil {
-		if err != nil {
-			return result, fmt.Errorf("error: failed to get user info : %v\n", err)
-		}
+		return result, fmt.Errorf("error: failed to get user info : %v", err)
 	}
 
 	if val, ok := user[jids]; ok {

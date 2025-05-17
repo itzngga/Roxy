@@ -1,27 +1,30 @@
 package context
 
 import (
+	"strings"
+	"sync"
+	"time"
+
 	"github.com/itzngga/Roxy/options"
 	"github.com/itzngga/Roxy/types"
 	"github.com/puzpuzpuz/xsync"
 	"go.mau.fi/whatsmeow"
-	waProto "go.mau.fi/whatsmeow/binary/proto"
+	"go.mau.fi/whatsmeow/proto/waE2E"
 	waTypes "go.mau.fi/whatsmeow/types"
 	"go.mau.fi/whatsmeow/types/events"
 	waLog "go.mau.fi/whatsmeow/util/log"
-	"strings"
-	"sync"
-	"time"
 )
 
-type MiddlewareFunc func(c *Ctx) bool
-type RunFunc func(c *Ctx) *waProto.Message
+type (
+	MiddlewareFunc func(c *Ctx) bool
+	RunFunc        func(c *Ctx) *waE2E.Message
+)
 
 var contextPool sync.Pool
 
 func init() {
 	contextPool = sync.Pool{
-		New: func() interface{} {
+		New: func() any {
 			return &Ctx{}
 		},
 	}
@@ -52,7 +55,7 @@ type Ctx struct {
 	parsedMsg string
 	arguments []string
 
-	message   *waProto.Message
+	message   *waE2E.Message
 	logger    waLog.Logger
 	clientJid waTypes.JID
 	options   *options.Options
@@ -93,7 +96,7 @@ func (context *Ctx) MessageInfo() waTypes.MessageInfo {
 	return context.event.Info
 }
 
-func (context *Ctx) Message() *waProto.Message {
+func (context *Ctx) Message() *waE2E.Message {
 	return context.message
 }
 
@@ -184,12 +187,10 @@ func (context *Ctx) GetLocals(key string) (string, bool) {
 
 func (context *Ctx) SetLocals(key string, value string) {
 	context.locals.Store(key, value)
-	return
 }
 
 func (context *Ctx) DelLocals(key string) {
 	context.locals.Delete(key)
-	return
 }
 
 func (context *Ctx) SetLocalsWithTTL(key string, value string, ttl time.Duration) {
@@ -200,5 +201,4 @@ func (context *Ctx) SetLocalsWithTTL(key string, value string, ttl time.Duration
 		context.locals.Delete(key)
 		timeout.Stop()
 	}()
-	return
 }

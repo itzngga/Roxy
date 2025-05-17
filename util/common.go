@@ -2,11 +2,13 @@ package util
 
 import (
 	"fmt"
-	"github.com/google/uuid"
-	waTypes "go.mau.fi/whatsmeow/types"
 	"net/url"
+	"slices"
 	"strconv"
 	"strings"
+
+	"github.com/google/uuid"
+	waTypes "go.mau.fi/whatsmeow/types"
 )
 
 func Or[T comparable](A, B T) T {
@@ -57,14 +59,7 @@ func IsValidUrl(s string) bool {
 }
 
 func StringIsOnSlice(target string, slice []string) bool {
-	inSlice := false
-	for _, i := range slice {
-		if target == i {
-			inSlice = true
-			break
-		}
-	}
-	return inSlice
+	return slices.Contains(slice, target)
 }
 
 func RemoveElementByIndex[T []any](slice []T, index int) []T {
@@ -81,13 +76,13 @@ func ParseAllJid(jid any) (pJid waTypes.JID, err error) {
 	case string:
 		result, ok := ParseJID(uJid)
 		if !ok {
-			return pJid, fmt.Errorf("error: failed to parse jid : %s\n", jid)
+			return pJid, fmt.Errorf("error: failed to parse jid : %s", jid)
 		}
 		pJid = result
 	case waTypes.JID:
 		pJid = uJid
 	default:
-		return pJid, fmt.Errorf("error: unsupported jid types : %s\n", jid)
+		return pJid, fmt.Errorf("error: unsupported jid types : %s", jid)
 	}
 	return pJid.ToNonAD(), nil
 }
@@ -97,17 +92,17 @@ func ParseGroupJid(jid any) (pJid waTypes.JID, err error) {
 	case string:
 		result, ok := ParseJID(uJid)
 		if !ok {
-			return pJid, fmt.Errorf("error: failed to parse jid : %s\n", jid)
+			return pJid, fmt.Errorf("error: failed to parse jid : %s", jid)
 		} else if result.Server != waTypes.GroupServer {
-			return pJid, fmt.Errorf("error: given jid is not group jid : %s\n", jid)
+			return pJid, fmt.Errorf("error: given jid is not group jid : %s", jid)
 		}
 		pJid = result
 	case waTypes.JID:
 		if uJid.Server != waTypes.GroupServer {
-			return pJid, fmt.Errorf("error: given jid is not group jid : %s\n", jid)
+			return pJid, fmt.Errorf("error: given jid is not group jid : %s", jid)
 		}
 	default:
-		return pJid, fmt.Errorf("error: unsupported jid types : %s\n", jid)
+		return pJid, fmt.Errorf("error: unsupported jid types : %s", jid)
 	}
 	return pJid.ToNonAD(), nil
 }
@@ -117,17 +112,17 @@ func ParseUserJid(jid any) (pJid waTypes.JID, err error) {
 	case string:
 		result, ok := ParseJID(uJid)
 		if !ok {
-			return pJid, fmt.Errorf("error: failed to parse jid : %s\n", jid)
+			return pJid, fmt.Errorf("error: failed to parse jid : %s", jid)
 		} else if result.Server != waTypes.DefaultUserServer {
-			return pJid, fmt.Errorf("error: given jid is not user jid : %s\n", jid)
+			return pJid, fmt.Errorf("error: given jid is not user jid : %s", jid)
 		}
 		pJid = result
 	case waTypes.JID:
 		if uJid.Server != waTypes.DefaultUserServer {
-			return pJid, fmt.Errorf("error: given jid is not user jid : %s\n", jid)
+			return pJid, fmt.Errorf("error: given jid is not user jid : %s", jid)
 		}
 	default:
-		return pJid, fmt.Errorf("error: unsupported jid types : %s\n", jid)
+		return pJid, fmt.Errorf("error: unsupported jid types : %s", jid)
 	}
 	return pJid.ToNonAD(), nil
 }
