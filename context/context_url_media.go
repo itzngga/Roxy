@@ -2,7 +2,7 @@ package context
 
 import (
 	"github.com/itzngga/Roxy/util"
-	waProto "go.mau.fi/whatsmeow/binary/proto"
+	"go.mau.fi/whatsmeow/proto/waE2E"
 )
 
 // UploadMediaFromUrl upload media detected from mimetype
@@ -16,7 +16,7 @@ func (context *Ctx) UploadMediaFromUrl(url string, vars map[string]string) (any,
 }
 
 // UploadImageFromUrl upload image from given url
-func (context *Ctx) UploadImageFromUrl(url, caption string) (*waProto.ImageMessage, error) {
+func (context *Ctx) UploadImageFromUrl(url, caption string) (*waE2E.ImageMessage, error) {
 	bytes, err := util.DoHTTPRequest("GET", url)
 	if err != nil {
 		return nil, err
@@ -26,7 +26,7 @@ func (context *Ctx) UploadImageFromUrl(url, caption string) (*waProto.ImageMessa
 }
 
 // UploadVideoFromUrl upload video from given url
-func (context *Ctx) UploadVideoFromUrl(url, caption string) (*waProto.VideoMessage, error) {
+func (context *Ctx) UploadVideoFromUrl(url, caption string) (*waE2E.VideoMessage, error) {
 	bytes, err := util.DoHTTPRequest("GET", url)
 	if err != nil {
 		return nil, err
@@ -36,7 +36,7 @@ func (context *Ctx) UploadVideoFromUrl(url, caption string) (*waProto.VideoMessa
 }
 
 // UploadDocumentFromUrl upload document from given url
-func (context *Ctx) UploadDocumentFromUrl(url, title, filename string) (*waProto.DocumentMessage, error) {
+func (context *Ctx) UploadDocumentFromUrl(url, title, filename string) (*waE2E.DocumentMessage, error) {
 	bytes, err := util.DoHTTPRequest("GET", url)
 	if err != nil {
 		return nil, err
@@ -46,7 +46,7 @@ func (context *Ctx) UploadDocumentFromUrl(url, title, filename string) (*waProto
 }
 
 // UploadAudioFromUrl upload audio from given url
-func (context *Ctx) UploadAudioFromUrl(url string) (*waProto.AudioMessage, error) {
+func (context *Ctx) UploadAudioFromUrl(url string) (*waE2E.AudioMessage, error) {
 	bytes, err := util.DoHTTPRequest("GET", url)
 	if err != nil {
 		return nil, err
@@ -56,7 +56,7 @@ func (context *Ctx) UploadAudioFromUrl(url string) (*waProto.AudioMessage, error
 }
 
 // UploadStickerFromUrl upload sticker from given url
-func (context *Ctx) UploadStickerFromUrl(url string) (*waProto.StickerMessage, error) {
+func (context *Ctx) UploadStickerFromUrl(url string) (*waE2E.StickerMessage, error) {
 	bytes, err := util.DoHTTPRequest("GET", url)
 	if err != nil {
 		return nil, err

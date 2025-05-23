@@ -4,13 +4,14 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"github.com/itzngga/Roxy/util/compress"
-	waProto "go.mau.fi/whatsmeow/binary/proto"
-	waTypes "go.mau.fi/whatsmeow/types"
-	"go.mau.fi/whatsmeow/types/events"
 	"sort"
 	"strings"
 	"time"
+
+	"github.com/itzngga/Roxy/util/compress"
+	"go.mau.fi/whatsmeow/proto/waWeb"
+	waTypes "go.mau.fi/whatsmeow/types"
+	"go.mau.fi/whatsmeow/types/events"
 )
 
 const CHATS_TABLE = `CREATE TABLE IF NOT EXISTS whatsmeow_chats
@@ -22,12 +23,15 @@ const CHATS_TABLE = `CREATE TABLE IF NOT EXISTS whatsmeow_chats
    PRIMARY KEY (our_jid, chat_jid),
    FOREIGN KEY (our_jid) REFERENCES whatsmeow_device(jid) ON DELETE CASCADE ON UPDATE CASCADE
 );`
-const INSERT_CHATS = `INSERT INTO whatsmeow_chats (our_jid, chat_jid, messages) VALUES ($1, $2, $3)`
-const UPSERT_CHATS = `INSERT INTO whatsmeow_chats (our_jid, chat_jid, messages) VALUES ($1, $2, $3) ON CONFLICT (our_jid, chat_jid) DO UPDATE SET messages = excluded.messages`
-const SELECT_CHATS_BY_JID = `SELECT messages FROM whatsmeow_chats WHERE our_jid = $1 AND chat_jid = $2`
-const SELECT_ALL_CHATS = `SELECT messages FROM whatsmeow_chats WHERE our_jid = $1`
-const UPDATE_MESSAGES_IN_CHAT = `UPDATE whatsmeow_chats SET messages = $1 WHERE our_jid = $1 AND chat_jid = $2`
-const DELETE_ALL_CHATS = `DELETE FROM whatsmeow_chats WHERE our_jid = $1`
+
+const (
+	INSERT_CHATS            = `INSERT INTO whatsmeow_chats (our_jid, chat_jid, messages) VALUES ($1, $2, $3)`
+	UPSERT_CHATS            = `INSERT INTO whatsmeow_chats (our_jid, chat_jid, messages) VALUES ($1, $2, $3) ON CONFLICT (our_jid, chat_jid) DO UPDATE SET messages = excluded.messages`
+	SELECT_CHATS_BY_JID     = `SELECT messages FROM whatsmeow_chats WHERE our_jid = $1 AND chat_jid = $2`
+	SELECT_ALL_CHATS        = `SELECT messages FROM whatsmeow_chats WHERE our_jid = $1`
+	UPDATE_MESSAGES_IN_CHAT = `UPDATE whatsmeow_chats SET messages = $1 WHERE our_jid = $1 AND chat_jid = $2`
+	DELETE_ALL_CHATS        = `DELETE FROM whatsmeow_chats WHERE our_jid = $1`
+)
 
 func (container *Container) InitializeTables() {
 	// create chats table
@@ -40,12 +44,12 @@ func (container *Container) InitializeTables() {
 	}
 }
 
-func (container *Container) HandleHistorySync(evt *waProto.HistorySync) {
-	var currentJID = container.clientJID.String()
+func (container *Container) HandleHistorySync(evt *events.HistorySync) {
+	currentJID := container.clientJID.String()
 	// store status messages
-	if len(evt.StatusV3Messages) >= 1 {
-		var messages = make([]*events.Message, 0)
-		for _, message := range evt.StatusV3Messages {
+	if len(evt.Data.StatusV3Messages) >= 1 {
+		messages := make([]*events.Message, 0)
+		for _, message := range evt.Data.StatusV3Messages {
 			// convert the messages
 			msg, err := container.ParseWebMessage(waTypes.StatusBroadcastJID, message)
 			if err != nil {
@@ -72,9 +76,9 @@ func (container *Container) HandleHistorySync(evt *waProto.HistorySync) {
 		}
 	}
 
-	if len(evt.Conversations) >= 1 {
-		for _, conversation := range evt.Conversations {
-			chatJID, _ := waTypes.ParseJID(conversation.GetId())
+	if len(evt.Data.Conversations) >= 1 {
+		for _, conversation := range evt.Data.Conversations {
+			chatJID, _ := waTypes.ParseJID(conversation.GetID())
 			if chatJID.IsEmpty() || chatJID == waTypes.StatusBroadcastJID {
 				continue
 			}
@@ -84,7 +88,7 @@ func (container *Container) HandleHistorySync(evt *waProto.HistorySync) {
 			}
 
 			// convert the messages
-			var messages = make([]*events.Message, 0)
+			messages := make([]*events.Message, 0)
 			for _, msg := range conversation.GetMessages() {
 				message, err := container.ParseWebMessage(chatJID, msg.Message)
 				if err != nil {
@@ -159,14 +163,14 @@ func (container *Container) GetAllChats() []*events.Message {
 	ctx, cancel := context.WithTimeout(context.Background(), time.Second*15)
 	defer cancel()
 
-	var currentJID = container.clientJID.String()
+	currentJID := container.clientJID.String()
 	rows, err := container.DB.QueryContext(ctx, SELECT_ALL_CHATS, currentJID)
 	if err != nil {
 		return nil
 	}
 	defer rows.Close()
 
-	var model = make([]*events.Message, 0)
+	model := make([]*events.Message, 0)
 	for rows.Next() {
 		var rawMessage []byte
 		err = rows.Scan(&rawMessage)
@@ -174,7 +178,7 @@ func (container *Container) GetAllChats() []*events.Message {
 			continue
 		}
 
-		var message = make([]*events.Message, 0)
+		message := make([]*events.Message, 0)
 		err = compress.UnmarshallBrotli(rawMessage, &message)
 		if err != nil {
 			continue
@@ -209,7 +213,7 @@ func (container *Container) GetChatInJID(jid waTypes.JID) []*events.Message {
 		rawMessage = nil
 	}()
 
-	var message = make([]*events.Message, 0)
+	message := make([]*events.Message, 0)
 	err = compress.UnmarshallBrotli(rawMessage, &message)
 	if err != nil {
 		return nil
@@ -233,7 +237,7 @@ func (container *Container) GetStatusMessages() []*events.Message {
 		rawMessage = nil
 	}()
 
-	var message = make([]*events.Message, 0)
+	message := make([]*events.Message, 0)
 	err = compress.UnmarshallBrotli(rawMessage, &message)
 	if err != nil {
 		return nil
@@ -253,7 +257,7 @@ func (container *Container) FindMessageByID(jid waTypes.JID, id string) *events.
 		return nil
 	}
 
-	var message = make([]*events.Message, 0)
+	message := make([]*events.Message, 0)
 	err = compress.UnmarshallBrotli(rawMessage, &message)
 	if err != nil {
 		return nil
@@ -273,10 +277,10 @@ func (container *Container) FindMessageByID(jid waTypes.JID, id string) *events.
 	return nil
 }
 
-func (container *Container) ParseWebMessage(chatJID waTypes.JID, webMsg *waProto.WebMessageInfo) (*events.Message, error) {
+func (container *Container) ParseWebMessage(chatJID waTypes.JID, webMsg *waWeb.WebMessageInfo) (*events.Message, error) {
 	var err error
 	if chatJID.IsEmpty() {
-		chatJID, err = waTypes.ParseJID(webMsg.GetKey().GetRemoteJid())
+		chatJID, err = waTypes.ParseJID(webMsg.GetKey().GetRemoteJID())
 		if err != nil {
 			return nil, fmt.Errorf("no chat JID provided and failed to parse remote JID: %w", err)
 		}
@@ -287,7 +291,7 @@ func (container *Container) ParseWebMessage(chatJID waTypes.JID, webMsg *waProto
 			IsFromMe: webMsg.GetKey().GetFromMe(),
 			IsGroup:  chatJID.Server == waTypes.GroupServer,
 		},
-		ID:        webMsg.GetKey().GetId(),
+		ID:        webMsg.GetKey().GetID(),
 		PushName:  webMsg.GetPushName(),
 		Timestamp: time.Unix(int64(webMsg.GetMessageTimestamp()), 0),
 	}

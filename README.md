@@ -59,52 +59,57 @@ if err != nil {
 ```
 #### custom
 ```go
+const (
+	SCAN_QR   LoginOptions = 0
+	PAIR_CODE LoginOptions = 1
+)
+
 type Options struct {
-    // HostNumber will use the first available device when null
-    HostNumber string
-    
-    // StoreMode can be "postgres" or "sqlite"
-    StoreMode string
-    
-    // LogLevel: "INFO", "ERROR", "WARN", "DEBUG"
-    LogLevel string
-    
-    // This PostgresDsn Must add when StoreMode equal to "postgres"
-    PostgresDsn *PostgresDSN
-    
-    // This SqliteFile Generate "ROXY.DB" when it null
-    SqliteFile string
-    
-    // WithSqlDB wrap with sql.DB interface
-    WithSqlDB *sql.DB
-    
-    WithCommandLog              bool
-    CommandResponseCacheTimeout time.Duration
-    SendMessageTimeout          time.Duration
-    
-    // OSInfo system name in client
-    OSInfo string
-    
-    // LoginOptions constant of ScanQR or PairCode
-    LoginOptions LoginOptions
-    
-    // HistorySync is used to synchronize message history
-    HistorySync bool
-    // AutoRejectCall allow to auto reject incoming calls
-    AutoRejectCall bool
-    
-    // Bot General Settings
-    
-    // AllowFromPrivate allow messages from private
-    AllowFromPrivate bool
-    // AllowFromGroup allow message from groups
-    AllowFromGroup bool
-    // OnlyFromSelf allow only from self messages
-    OnlyFromSelf bool
-    // CommandSuggestion allow command suggestion
-    CommandSuggestion bool
-    // DebugMessage debug incoming message to console
-    DebugMessage bool
+	// HostNumber will use the first available device when null
+	HostNumber string
+
+	// StoreMode can be "postgres" or "sqlite"
+	StoreMode string
+
+	// LogLevel: "INFO", "ERROR", "WARN", "DEBUG"
+	LogLevel string
+
+	// This PostgresDsn Must add when StoreMode equal to "postgres"
+	PostgresDsn *PostgresDSN
+
+	// This SqliteFile Generate "ROXY.DB" when it null
+	SqliteFile string
+
+	// WithSqlDB wrap with sql.DB interface
+	WithSqlDB *sql.DB
+
+	WithCommandLog              bool
+	CommandResponseCacheTimeout time.Duration
+	SendMessageTimeout          time.Duration
+
+	// OSInfo system name in client
+	OSInfo string
+
+	// LoginOptions constant of ScanQR or PairCode
+	LoginOptions LoginOptions
+
+	// HistorySync is used to synchronize message history
+	HistorySync bool
+	// AutoRejectCall allow to auto reject incoming calls
+	AutoRejectCall bool
+
+	// Bot General Settings
+
+	// AllowFromPrivate allow messages from private
+	AllowFromPrivate bool
+	// AllowFromGroup allow message from groups
+	AllowFromGroup bool
+	// OnlyFromSelf allow only from self messages
+	OnlyFromSelf bool
+	// CommandSuggestion allow command suggestion
+	CommandSuggestion bool
+	// DebugMessage debug incoming message to console
+	DebugMessage bool
 }
 ```
 ### PostgresSQL

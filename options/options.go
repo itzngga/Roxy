@@ -193,7 +193,7 @@ func NewDefaultOptions() *Options {
 		AllowFromGroup:              true,
 		AllowFromPrivate:            true,
 		CommandSuggestion:           true,
-		HistorySync:                 false,
+		HistorySync:                 true,
 		AutoRejectCall:              false,
 		LoginOptions:                SCAN_QR,
 		OSInfo:                      "Roxy",
